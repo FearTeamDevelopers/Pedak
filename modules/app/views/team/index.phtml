@@ -1,0 +1,133 @@
+<article class="grid_12">
+    <h1>A Team</h1>
+    {if !empty($teamA)}
+    <div>
+        {foreach $member in $teamA}
+        <div class="grid_6 memberProfile">
+            <div class="memberPhoto">
+                <img src="{echo $member->photo}" alt="" width="170" />
+            </div>
+            <div class="memberData">
+                <table>
+                    <tr></tr>
+                    <tr>
+                        <td>Jméno</td><td>{echo $member->firstname." ".$member->lastname}</td>
+                    </tr>
+                    <tr>
+                        <td>Nick</td><td>{echo $member->nickname}</td>
+                    </tr>
+                    <tr>
+                        <td>Datum narození</td><td>{echo $member->dob}</td>
+                    </tr>
+                    <tr>
+                        <td>Pozice</td>
+                        <td>
+                            {if $member->position == "u"}
+                            Útočník
+                            {/if}
+                            {elseif $member->position == "o"}
+                            Obránce
+                            {/elseif}
+                            {elseif $member->position == "b"}
+                            Brankář
+                            {/elseif}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Číslo</td><td>{echo $member->playerNum}</td>
+                    </tr>
+                    <tr>
+                        <td>Držení hole</td>
+                        <td>
+                            {if $member->grip == "r"}
+                            Pravá
+                            {/if}
+                            {else}
+                            Levá
+                            {/else}
+                        </td>
+                    </tr>
+                    {if $member->cfbuPersonalNum != ""}
+                    <tr>
+                        <td>Statistika</td>
+                        <td><a href="http://fis.cfbu.cz/index.php?pageid=2501&onlycontent=1&personal_id={echo $member->cfbuPersonalNum}" target=_blank>Profil hráče ČFBU</a></td>
+                    </tr>
+                    {/if}
+                    <tr>
+                        <td>Další</td><td>{echo $member->other}</td>
+                    </tr>
+                    
+                </table>
+            </div>
+            <div class="clear"></div>
+        </div>
+        {/foreach}
+    </div>
+    {/if}
+</article>
+
+<article class="grid_12">
+    <h1>B Team</h1>
+    {if !empty($teamB)}
+    <div>
+        {foreach $member in $teamB}
+        <div class="grid_6 memberProfile">
+            <div class="memberPhoto">
+                <img src="{echo $member->photo}" alt="" width="170" />
+            </div>
+            <div class="memberData">
+                <table>
+                    <tr></tr>
+                    <tr>
+                        <td>Jméno</td><td>{echo $member->firstname." ".$member->lastname}</td>
+                    </tr>
+                    <tr>
+                        <td>Nick</td><td>{echo $member->nickname}</td>
+                    </tr>
+                    <tr>
+                        <td>Datum narození</td><td>{echo $member->dob}</td>
+                    </tr>
+                    <tr>
+                        <td>Pozice</td>
+                        <td>
+                            {if $member->position == "u"}
+                            Útočník
+                            {/if}
+                            {elseif $member->position == "o"}
+                            Obránce
+                            {/elseif}
+                            {elseif $member->position == "b"}
+                            Brankář
+                            {/elseif}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Číslo</td><td>{echo $member->playerNum}</td>
+                    </tr>
+                    <tr>
+                        <td>Držení hole</td>
+                        <td>
+                            {if $member->grip == "r"}
+                            Pravá
+                            {/if}
+                            {else}
+                            Levá
+                            {/else}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Statistika</td>
+                        <td><a href="http://fis.cfbu.cz/index.php?pageid=2501&onlycontent=1&personal_id={echo $member->cfbuPersonalNum}" target=_blank>Profil hráče ČFBU</a></td>
+                    </tr>
+                    <tr>
+                        <td>Další</td><td>{echo $member->other}</td>
+                    </tr>
+                    
+                </table>
+            </div>
+            <div class="clear"></div>
+        </div>
+        {/foreach}
+    </div>
+    {/if}
+</article>

@@ -1,0 +1,23 @@
+<article class="grid_12">
+    <h1>Galerie</h1>
+
+    {if !empty($galleries)}
+    {foreach $gallery in $galleries}
+    <div class="grid_6 gallery-cont">
+        <span class="gallery-avatar">
+            {if $gallery->avatar == ""}
+            <img src="/public/images/icons/focus.png" alt="gallery" width="130" />
+            {/if}
+            {else}
+            <img src="{echo $gallery->avatar}" alt="gallery" width="175" />
+            {/else}
+        </span>
+        <p class="gallery-desc">
+            <a href="/galerie/{echo $gallery->id}">{echo $gallery->title}</a>
+            <br/><br/>
+            {echo nl2br($gallery->description)}
+        </p>
+    </div>
+    {/foreach}
+    {/if}
+</article>

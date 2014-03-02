@@ -1,0 +1,112 @@
+<article>
+    <h1>Detail zapasu</h1>
+
+    <table>
+        <tr></tr>
+        <tr>
+            <td>Datum zápasu</td><td>{echo date("d. m. Y", strtotime($matchDet->date))}</td>
+        </tr>
+        <tr>
+            <td>Domácí</td><td>{echo $matchDet->home}</td>
+        </tr>
+        <tr>
+            <td>Hosté</td><td>{echo $matchDet->host}</td>
+        </tr>
+        <tr>
+            <td>Hala</td><td>{echo $matchDet->hall}</td>
+        </tr>
+        <tr>
+            <td>Sezona</td><td>{echo $matchDet->season}</td>
+        </tr>
+        {if $matchDet->scoreHome != -1}
+        <tr>
+            <td>Výsledek</td><td>{echo $matchDet->scoreHome} - {echo $matchDet->scoreHost}</td>
+        </tr>
+        <tr>
+            <td colspan="2">{echo $matchDet->report}</td>
+        </tr>
+        {/if}
+        {else}
+        <tr>
+            <td>Výsledek</td><td>Neodehráno</td>
+        </tr>
+        {/else}
+    </table>
+
+</article>
+
+<article>
+    <h1>K Zápasu</h1>
+
+    {if isset($messages)}
+    {foreach $message in $messages}
+    <article class="messageWrapper relative">
+        <div class="message">
+            <span class="title">{echo $message->title}</span><br/>
+            <p class="messageBody">{echo $message->body}</p>
+            <span class="meta">Autor: {echo $message->author} </span>
+            <span class="meta">Vytvořeno: {echo date("d.m. Y H:i", strtotime($message->created))} </span><br/>
+        </div>
+        <div class="clear"></div>
+
+        {script $replies = App_MatchChatModel::fetchReplies($message->id)}
+        {foreach $reply in $replies}
+        <div class="reply">
+            <span class="title">{echo $reply->title}</span><br />
+            <p class="messageBody">{echo $reply->body}</p>
+            <span class="meta">Autor: {echo $reply->author} </span>
+            <span class="meta">Vytvořeno: {echo date("d.m. Y H:i", strtotime($reply->created))}</span>
+        </div>
+        <div class="clear"></div>
+        {/foreach}
+
+        <a href="#" class="showReplyForm">Reply</a>
+        <div class="replyForm">
+            <form method="post" action="/match/addMessage/{echo $matchDet->id}" class="stdform">
+                <input type="hidden" value="{echo $message->id}" name="reply" />
+                <p>
+                    <label>Title</label>
+                    <span class="field">
+                        <input type="text" name="title" class="mediuminput" value="RE {echo $message->title}"/>
+                    </span>
+                </p>
+                <p>
+                    <label>Text</label>
+                    <span class="field">
+                        <textarea name="body" class="mediuminput" rows="5"></textarea>
+                    </span>
+                </p>
+                <p>
+                    <label></label>
+                    <span class="field">
+                        <input type="submit" name="sendMessage" value="Send Reply" />
+                    </span>
+                </p>
+            </form>
+        </div>
+    </article>
+    {/foreach}
+    {/if}
+
+    <form method="post" action="/match/addMessage/{echo $matchDet->id}" class="stdform">
+        <p>
+            <label>Title</label>
+            <span class="field">
+                <input type="text" name="title" class="mediuminput"/>
+            </span>
+        </p>
+        <p>
+            <label>Text</label>
+            <span class="field">
+                <textarea name="body" class="mediuminput" rows="5"></textarea>
+            </span>
+        </p>
+        <p>
+            <label></label>
+            <span class="field">
+                <input type="submit" name="sendMessage" value="Send" />
+            </span>
+        </p>
+    </form>
+
+</article>
