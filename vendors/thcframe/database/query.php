@@ -76,7 +76,7 @@ class Query extends Base
      */
     protected function _getImplementationException($method)
     {
-        return new Exception\Implementation(sprintf("%s method not implemented", $method));
+        return new Exception\Implementation(sprintf('%s method not implemented', $method));
     }
 
     /**
@@ -101,12 +101,12 @@ class Query extends Base
                 array_push($buffer, $this->_quote($i));
             }
 
-            $buffer = join(", ", $buffer);
+            $buffer = join(', ', $buffer);
             return "({$buffer})";
         }
 
         if (is_null($value)) {
-            return "NULL";
+            return 'NULL';
         }
 
         if (is_bool($value)) {
@@ -123,8 +123,8 @@ class Query extends Base
     protected function _buildSelect()
     {
         $fields = array();
-        $where = $order = $limit = $join = "";
-        $template = "SELECT %s FROM %s %s %s %s %s %s %s";
+        $where = $order = $limit = $join = '';
+        $template = 'SELECT %s FROM %s %s %s %s %s %s %s';
 
         foreach ($this->fields as $table => $_fields) {
             foreach ($_fields as $field => $alias) {
@@ -136,22 +136,22 @@ class Query extends Base
             }
         }
 
-        $joinedFields = join(", ", $fields);
+        $joinedFields = join(', ', $fields);
 
         $_join = $this->join;
         if (!empty($_join)) {
-            $join = join(" ", $_join);
+            $join = join(' ', $_join);
         }
 
         $_where = $this->where;
         $_orwhere = $this->orwhere;
         $joinedWhere = '';
         if (!empty($_where)) {
-            $joinedWhere .= join(" AND ", $_where);
+            $joinedWhere .= join(' AND ', $_where);
         }
 
         if (!empty($_orwhere)) {
-            $joinedWhere .= join(" OR ", $_orwhere);
+            $joinedWhere .= join(' OR ', $_orwhere);
         }
 
         if ($joinedWhere != '') {
@@ -165,14 +165,14 @@ class Query extends Base
 
             $_having = $this->having;
             if (!empty($_having)) {
-                $joinedHaving = join(" AND ", $_having);
+                $joinedHaving = join(' AND ', $_having);
                 $having = "HAVING {$joinedHaving}";
             }
         }
 
         $_order = $this->order;
         if (!empty($_order)) {
-            $joindeOrder = join(", ", $_order);
+            $joindeOrder = join(', ', $_order);
             $order = "ORDER BY {$joindeOrder}";
         }
 
@@ -199,15 +199,15 @@ class Query extends Base
     {
         $fields = array();
         $values = array();
-        $template = "INSERT INTO `%s` (`%s`) VALUES (%s)";
+        $template = 'INSERT INTO `%s` (`%s`) VALUES (%s)';
 
         foreach ($data as $field => $value) {
             $fields[] = $field;
             $values[] = $this->_quote($value);
         }
 
-        $fields = join("`, `", $fields);
-        $values = join(", ", $values);
+        $fields = join('`, `', $fields);
+        $values = join(', ', $values);
 
         return sprintf($template, $this->from, $fields, $values);
     }
@@ -220,18 +220,18 @@ class Query extends Base
     protected function _buildUpdate($data)
     {
         $parts = array();
-        $where = $limit = "";
-        $template = "UPDATE %s SET %s %s %s";
+        $where = $limit = '';
+        $template = 'UPDATE %s SET %s %s %s';
 
         foreach ($data as $field => $value) {
             $parts[] = "{$field} = " . $this->_quote($value);
         }
 
-        $parts = join(", ", $parts);
+        $parts = join(', ', $parts);
 
         $_where = $this->where;
         if (!empty($_where)) {
-            $joined = join(", ", $_where);
+            $joined = join(', ', $_where);
             $where = "WHERE {$joined}";
         }
 
@@ -250,12 +250,12 @@ class Query extends Base
      */
     protected function _buildDelete()
     {
-        $where = $limit = "";
-        $template = "DELETE FROM %s %s %s";
+        $where = $limit = '';
+        $template = 'DELETE FROM %s %s %s';
 
         $_where = $this->where;
         if (!empty($_where)) {
-            $joined = join(", ", $_where);
+            $joined = join(', ', $_where);
             $where = "WHERE {$joined}";
         }
 
@@ -276,10 +276,10 @@ class Query extends Base
     public function getConnector()
     {
         if (empty($this->_connector)) {
-            $database = Registry::get("database");
+            $database = Registry::get('database');
 
             if (!$database) {
-                throw new Exception\Connector("No connector availible");
+                throw new Exception\Connector('No connector availible');
             }
 
             $this->_connector = $database->initialize();
@@ -307,7 +307,7 @@ class Query extends Base
         $result = $this->connector->execute($sql);
 
         if ($result === false) {
-            throw new Exception\Sql(sprintf("SQL: %s", $this->connector->getLastError()));
+            throw new Exception\Sql(sprintf('SQL: %s', $this->connector->getLastError()));
         }
 
         if ($isInsert) {
@@ -328,7 +328,7 @@ class Query extends Base
         $result = $this->connector->execute($sql);
 
         if ($result === false) {
-            throw new Exception\Sql(sprintf("SQL: %s", $this->connector->getLastError()));
+            throw new Exception\Sql(sprintf('SQL: %s', $this->connector->getLastError()));
         }
 
         return $this->connector->affectedRows;
@@ -341,10 +341,10 @@ class Query extends Base
      * @return \THCFrame\Database\Query
      * @throws Exception\Argument
      */
-    public function from($from, $fields = array("*"))
+    public function from($from, $fields = array('*'))
     {
         if (empty($from)) {
-            throw new Exception\Argument("Invalid argument");
+            throw new Exception\Argument('Invalid argument');
         }
 
         $this->_from = $from;
@@ -367,11 +367,11 @@ class Query extends Base
     public function join($join, $on, $alias = null, $fields = array())
     {
         if (empty($join)) {
-            throw new Exception\Argument("Invalid argument");
+            throw new Exception\Argument('Invalid argument');
         }
 
         if (empty($on)) {
-            throw new Exception\Argument("Invalid argument");
+            throw new Exception\Argument('Invalid argument');
         }
 
         if (NULL !== $alias) {
@@ -395,7 +395,7 @@ class Query extends Base
     public function limit($limit, $page = 1)
     {
         if (empty($limit)) {
-            throw new Exception\Argument("Invalid argument");
+            throw new Exception\Argument('Invalid argument');
         }
 
         $this->_limit = $limit;
@@ -416,13 +416,13 @@ class Query extends Base
      * @return \THCFrame\Database\Query
      * @throws Exception\Argument
      */
-    public function order($order, $direction = "asc")
+    public function order($order, $direction = 'asc')
     {
         if (empty($order)) {
-            throw new Exception\Argument("Invalid argument");
+            throw new Exception\Argument('Invalid argument');
         }
 
-        $this->_order[] = $order . " " . $direction;
+        $this->_order[] = $order . ' ' . $direction;
 
         return $this;
     }
@@ -437,16 +437,16 @@ class Query extends Base
         $arguments = func_get_args();
 
         if (count($arguments) < 1) {
-            throw new Exception\Argument("Invalid argument");
+            throw new Exception\Argument('Invalid argument');
         }
 
-        $arguments[0] = preg_replace("#\?#", "%s", $arguments[0]);
+        $arguments[0] = preg_replace('#\?#', '%s', $arguments[0]);
 
         foreach (array_slice($arguments, 1, null, true) as $i => $parameter) {
             $arguments[$i] = $this->_quote($arguments[$i]);
         }
 
-        $this->_where[] = call_user_func_array("sprintf", $arguments);
+        $this->_where[] = call_user_func_array('sprintf', $arguments);
 
         return $this;
     }
@@ -461,16 +461,16 @@ class Query extends Base
         $arguments = func_get_args();
 
         if (count($arguments) < 1) {
-            throw new Exception\Argument("Invalid argument");
+            throw new Exception\Argument('Invalid argument');
         }
 
-        $arguments[0] = preg_replace("#\?#", "%s", $arguments[0]);
+        $arguments[0] = preg_replace('#\?#', '%s', $arguments[0]);
 
         foreach (array_slice($arguments, 1, null, true) as $i => $parameter) {
             $arguments[$i] = $this->_quote($arguments[$i]);
         }
 
-        $this->_orwhere[] = call_user_func_array("sprintf", $arguments);
+        $this->_orwhere[] = call_user_func_array('sprintf', $arguments);
 
         return $this;
     }
@@ -485,16 +485,16 @@ class Query extends Base
         $arguments = func_get_args();
 
         if (count($arguments) < 1) {
-            throw new Exception\Argument("Invalid argument");
+            throw new Exception\Argument('Invalid argument');
         }
 
-        $arguments[0] = preg_replace("#\?#", "%s", $arguments[0]);
+        $arguments[0] = preg_replace('#\?#', '%s', $arguments[0]);
 
         foreach (array_slice($arguments, 1, null, true) as $i => $parameter) {
             $arguments[$i] = $this->_quote($arguments[$i]);
         }
 
-        $this->_having[] = call_user_func_array("sprintf", $arguments);
+        $this->_having[] = call_user_func_array('sprintf', $arguments);
 
         return $this;
     }
@@ -508,7 +508,7 @@ class Query extends Base
     public function groupby($field)
     {
         if (empty($field)) {
-            throw new Exception\Argument("Invalid argument");
+            throw new Exception\Argument('Invalid argument');
         }
 
         $this->_groupby = $field;
@@ -550,7 +550,7 @@ class Query extends Base
         $offset = $this->offset;
         $fields = $this->fields;
 
-        $this->_fields = array($this->from => array("COUNT(1)" => "rows"));
+        $this->_fields = array($this->from => array('COUNT(1)' => 'rows'));
 
         $this->limit(1);
         $row = $this->first();
@@ -567,14 +567,14 @@ class Query extends Base
             $this->_offset = $offset;
         }
 
-        return $row["rows"];
+        return $row['rows'];
     }
 
     /**
      * 
      * @return type
      */
-    public function assembleSelect()
+    public function assemble()
     {
         $sql = $this->_buildSelect();
         return (string) $sql;

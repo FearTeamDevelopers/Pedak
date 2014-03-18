@@ -1,28 +1,29 @@
 <?php
 
-define("DEBUG", TRUE);
-define("APP_PATH", __DIR__);
+define('ENV', 'dev');
+//define('ENV', 'qa');
+//define('ENV', 'live');
+
+define('APP_PATH', __DIR__);
 
 // core
-require("./vendors/THCFrame/core/core.php");
+require('./vendors/thcframe/core/core.php');
 THCFrame\Core\Core::initialize();
 
 // plugins
 
-$path = APP_PATH . "/application/plugins";
+$path = APP_PATH . '/application/plugins';
 $iterator = new \DirectoryIterator($path);
 
 foreach ($iterator as $item) {
     if (!$item->isDot() && $item->isDir()) {
-        include($path . "/" . $item->getFilename() . "/initialize.php");
+        include($path . '/' . $item->getFilename() . '/initialize.php');
     }
 }
 
 //module loading
-
-THCFrame\Core\Core::registerModule(new App_Module());
-THCFrame\Core\Core::registerModule(new Admin_Module());
-THCFrame\Core\Core::registerModule(new Cron_Module());
+$modules = array('App', 'Admin', 'Cron');
+THCFrame\Core\Core::registerModules($modules);
 
 // load services and run dispatcher
 THCFrame\Core\Core::run();

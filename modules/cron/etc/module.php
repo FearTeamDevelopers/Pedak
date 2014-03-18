@@ -7,7 +7,7 @@ use THCFrame\Module\Module as Module;
  *
  * @author Tomy
  */
-class Cron_Module extends Module{
+class Cron_Etc_Module extends Module{
 
     /**
      * @read

@@ -1,6 +1,6 @@
 <?php
 
-use App\Libraries\Controller as Controller;
+use App\Etc\Controller as Controller;
 use THCFrame\Registry\Registry;
 
 /**
@@ -20,25 +20,27 @@ class App_Controller_Team extends Controller {
                         array(
                     'active = ?' => true,
                     'team = ?' => 'a'
-                        ), array(
-                    'id', 'firstname', 'lastname', 'dob',
+                        ), 
+                array('id', 'firstname', 'lastname', 'dob',
                     'playerNum', 'cfbuPersonalNum', 'team',
-                    'nickname', 'photo', 'position', 'grip', 'other'
-                        ), 'lastname', 'asc');
+                    'nickname', 'photo', 'position', 'grip', 'other'), 
+                array('lastname' => 'asc')
+        );
 
-        $view->set("teamA", $teamA);
+        $view->set('teamA', $teamA);
 
         $teamB = App_Model_User::all(
                         array(
                     'active = ?' => true,
                     'team = ?' => 'b'
-                        ), array(
-                    'id', 'firstname', 'lastname', 'dob',
+                        ), 
+                array('id', 'firstname', 'lastname', 'dob',
                     'playerNum', 'cfbuPersonalNum', 'team',
-                    'nickname', 'photo', 'position', 'grip', 'other'
-                        ), 'lastname', 'asc');
+                    'nickname', 'photo', 'position', 'grip', 'other'), 
+                array('lastname' => 'asc')
+        );
 
-        $view->set("teamB", $teamB);
+        $view->set('teamB', $teamB);
     }
 
 }

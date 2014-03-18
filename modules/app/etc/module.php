@@ -7,7 +7,7 @@ use THCFrame\Module\Module as Module;
  *
  * @author Tomy
  */
-class App_Module extends Module{
+class App_Etc_Module extends Module{
 
     /**
      * @read

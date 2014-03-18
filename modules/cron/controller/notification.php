@@ -1,6 +1,6 @@
 <?php
 
-use Cron\Libraries\Controller;
+use Cron\Etc\Controller;
 
 /**
  * Description of NotificationController

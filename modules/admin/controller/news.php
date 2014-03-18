@@ -1,6 +1,6 @@
 <?php
 
-use Admin\Libraries\Controller as Controller;
+use Admin\Etc\Controller as Controller;
 use THCFrame\Request\RequestMethods as RequestMethods;
 
 /**

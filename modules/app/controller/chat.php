@@ -1,7 +1,6 @@
 <?php
 
-use App\Libraries\Controller as Controller;
-use THCFrame\Registry\Registry;
+use App\Etc\Controller as Controller;
 use THCFrame\Request\RequestMethods;
 
 /**
@@ -9,37 +8,40 @@ use THCFrame\Request\RequestMethods;
  *
  * @author Tomy
  */
-class App_Controller_Chat extends Controller {
+class App_Controller_Chat extends Controller
+{
 
     /**
      * @before _secured
      */
-    public function index() {
+    public function index()
+    {
         $view = $this->getActionView();
 
         $messages = App_Model_Chat::all(array(
-                    "active = ?" => true,
-                    "reply = ?" => 0
-                        ), array("*"), "created", "asc", 10);
+                    'active = ?' => true,
+                    'reply = ?' => 0
+                        ), array('*'), array('created' => 'asc'), 10
+        );
 
-        if (RequestMethods::post("sendMessage")) {
+        if (RequestMethods::post('sendMessage')) {
             $user = $this->getUser();
 
             $chat = new App_Model_Chat(array(
-                "author" => $user->getWholeName(),
-                "title" => RequestMethods::post("title"),
-                "body" => RequestMethods::post("body"),
-                "reply" => RequestMethods::post("reply")
+                'author' => $user->getWholeName(),
+                'title' => RequestMethods::post('title'),
+                'body' => RequestMethods::post('body'),
+                'reply' => RequestMethods::post('reply')
             ));
 
             if ($chat->validate()) {
                 $chat->save();
-                self::redirect("/kecarna");
+                self::redirect('/kecarna');
             }
-            $view->set("errors", $chat->getErrors());
+            $view->set('errors', $chat->getErrors());
         }
 
-        $view->set("messages", $messages);
+        $view->set('messages', $messages);
     }
 
 }

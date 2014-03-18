@@ -1,6 +1,6 @@
 <?php
 
-namespace Cron\Libraries;
+namespace App\Etc;
 
 use THCFrame\Events\Events as Events;
 use THCFrame\Registry\Registry as Registry;
@@ -14,7 +14,7 @@ use THCFrame\Controller\Controller as BaseController;
 class Controller extends BaseController {
 
     protected static $_imageExtensions = array('gif', 'jpg', 'png', 'jpeg');
-
+    
     /**
      * @protected
      */
@@ -43,11 +43,14 @@ class Controller extends BaseController {
     /**
      * @protected
      */
-    public function _cron() {
-        $u_agent = $_SERVER['HTTP_USER_AGENT'];
+    public function _admin() {
+        $security = Registry::get("security");
+        $view = $this->getActionView();
 
-        if(!preg_match("/curl/i", $u_agent)) {
-            exit();
+        if ($security->getUser() && !$security->isGranted("role_admin")) {
+            $view->flashMessage("Access denied! Administrator access level required.");
+            $security->logout();
+            self::redirect("/login");
         }
     }
 
@@ -60,7 +63,7 @@ class Controller extends BaseController {
 
         $database = Registry::get("database");
         $database->connect();
-
+        
         // schedule disconnect from database 
         Events::add("framework.controller.destruct.after", function($name) {
                     $database = Registry::get("database");
@@ -82,8 +85,17 @@ class Controller extends BaseController {
      * 
      */
     public function render() {
-        $this->setWillRenderLayoutView(false);
-        $this->setWillRenderActionView(false);
+        if ($this->getUser()) {
+            if ($this->getActionView()) {
+                $this->getActionView()
+                        ->set("authUser", $this->getUser());
+            }
+
+            if ($this->getLayoutView()) {
+                $this->getLayoutView()
+                        ->set("authUser", $this->getUser());
+            }
+        }
 
         parent::render();
     }

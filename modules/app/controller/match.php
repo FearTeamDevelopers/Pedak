@@ -1,6 +1,6 @@
 <?php
 
-use App\Libraries\Controller as Controller;
+use App\Etc\Controller as Controller;
 use THCFrame\Registry\Registry;
 use THCFrame\Request\RequestMethods;
 
@@ -16,29 +16,31 @@ class App_Controller_Match extends Controller {
      */
     public function index() {
         $view = $this->getActionView();
-        $security = Registry::get("security");
+        $security = Registry::get('security');
 
         $matchesA = App_Model_Match::all(
                         array(
                     'team = ?' => 'a',
                     'active = ?' => true
-                        ), array(
-                    'id', 'home', 'host', 'hall', 'date', 'scoreHome', 'scoreHost'
-                        ), "date", "ASC");
+                        ), 
+                array('id', 'home', 'host', 'hall', 'date', 'scoreHome', 'scoreHost'), 
+                array('date' => 'ASC')
+        );
 
         $matchesB = App_Model_Match::all(
                         array(
                     'team = ?' => 'b',
                     'active = ?' => true
-                        ), array(
-                    'id', 'home', 'host', 'hall', 'date', 'scoreHome', 'scoreHost'
-                        ), "date", "ASC");
+                        ), 
+                array('id', 'home', 'host', 'hall', 'date', 'scoreHome', 'scoreHost'), 
+                array('date' => 'ASC')
+        );
 
-        $member = $security->isGranted("role_member");
+        $member = $security->isGranted('role_member');
 
-        $view->set("matchesA", $matchesA)
-                ->set("matchesB", $matchesB)
-                ->set("member", $member);
+        $view->set('matchesA', $matchesA)
+                ->set('matchesB', $matchesB)
+                ->set('member', $member);
     }
 
     /**
@@ -46,24 +48,23 @@ class App_Controller_Match extends Controller {
      */
     public function detail($id) {
         $view = $this->getActionView();
-        $security = Registry::get("security");
 
         $match = App_Model_Match::first(
-                        array("id = ?" => $id, 'active = ?' => true));
+                        array('id = ?' => $id, 'active = ?' => true));
 
         if (NULL === $match) {
-            $view->flashMessage("Match not found");
-            self::redirect("/zapasy");
+            $view->flashMessage('Match not found');
+            self::redirect('/zapasy');
         }
 
         $messages = App_MatchChatModel::all(array(
-                    "matchId = ?" => $id,
-                    "active = ?" => true,
-                    "reply = ?" => 0
-                        ), array("*"), "created", "asc");
+                    'matchId = ?' => $id,
+                    'active = ?' => true,
+                    'reply = ?' => 0
+                        ), array('*'), 'created', 'asc');
 
-        $view->set("messages", $messages)
-                ->set("matchDet", $match);
+        $view->set('messages', $messages)
+                ->set('matchDet', $match);
     }
 
     /**
@@ -73,20 +74,20 @@ class App_Controller_Match extends Controller {
      */
     public function addMessage($id) {
 
-        if (RequestMethods::post("sendMessage")) {
+        if (RequestMethods::post('sendMessage')) {
             $user = $this->getUser();
 
             $message = new App_Model_MatchChat(array(
-                "matchId" => $id,
-                "author" => $user->getWholeName(),
-                "title" => RequestMethods::post("title"),
-                "body" => RequestMethods::post("body"),
-                "reply" => RequestMethods::post("reply")
+                'matchId' => $id,
+                'author' => $user->getWholeName(),
+                'title' => RequestMethods::post('title'),
+                'body' => RequestMethods::post('body'),
+                'reply' => RequestMethods::post('reply')
             ));
 
             if ($message->validate()) {
                 $message->save();
-                self::redirect("/zapasy/detail/{$id}");
+                self::redirect('/zapasy/detail/{$id}');
             }
         }
     }

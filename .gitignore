@@ -1,3 +1,6 @@
 /application/logs/
 /application/configuration/install.sql
-/application/configuration/config.ini
+/application/configuration/config_live.ini
+/application/configuration/config_qa.ini
+/temp/cache/
+/nbproject/

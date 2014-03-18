@@ -1,6 +1,6 @@
 <?php
 
-use App\Libraries\Controller as Controller;
+use App\Etc\Controller as Controller;
 
 /**
  * Description of TrainingController
@@ -15,24 +15,16 @@ class App_Controller_Training extends Controller {
      * @param type $id
      */
     protected function _getAttendace($id) {
-        $attendanceModel = new App_Model_Attendance();
-        $connector = $attendanceModel->getConnector();
-        $id = $connector->escape($id);
-
-        $sql = "SELECT u.firstname, u.lastname, ta.* ";
-        $sql .= "FROM tb_attendance ta ";
-        $sql .= "JOIN tb_user u ON ta.userId = u.id ";
-        $sql .= "WHERE ta.active = true AND trainingId = '{$id}'";
-
-        $result = $connector->execute($sql);
-
-        $rows = array();
-
-        for ($i = 0; $i < $result->num_rows; $i++) {
-            $rows[] = $result->fetch_array(MYSQLI_ASSOC);
-        }
-
-        return $rows;
+        
+        $query = App_Model_Training::getQuery(array('tb_training.*'));
+        
+        $query->join('tb_attendance', 'tb_training.id = ta.trainingId', 'ta', array('*'));
+        $query->join('tb_user', 'ta.userId = u.id', 'u', array('u.firstname' => 'firstname', 'u.lastname' => 'lastname'));
+        $query->where('tb_training.active', true);
+        $query->where('ta.active', $id);
+        $trainings = App_Model_Training::initialize($query);
+        
+        return $trainings;
     }
 
     /**
@@ -41,18 +33,15 @@ class App_Controller_Training extends Controller {
     public function index() {
         $view = $this->getActionView();
 
-        $trainings = App_Model_Training::all(
-                        array(
-                    "active = ?" => true,
-                    "date >= ?" => date("Y-m-d")
-                        ), array("id", "title", "date"), "date", "ASC", 6
-        );
-
-        foreach ($trainings as $key => $training) {
-            $trainings[$key]->attendance = $this->_getAttendace($training->id);
-        }
-
-        $view->set("trainings", $trainings);
+        $query = App_Model_Training::getQuery(array('tb_training.*'));
+        
+        $query->join('tb_attendance', 'tb_training.id = ta.trainingId', 'ta', array('*'));
+        $query->join('tb_user', 'ta.userId = u.id', 'u', array('u.firstname' => 'firstname', 'u.lastname' => 'lastname'));
+        $query->where('tb_training.active', true);
+        $query->where('ta.active', $id);
+        $trainings = App_Model_Training::initialize($query);
+        
+        $view->set('trainings', $trainings);
     }
 
     /**
@@ -65,9 +54,9 @@ class App_Controller_Training extends Controller {
         $userId = $this->getUser()->getId();
 
         $attend = App_Model_Attendance::first(array(
-                    "userId = ?" => $userId,
-                    "trainingId = ?" => $id,
-                    "active = ?" => true
+                    'userId = ?' => $userId,
+                    'trainingId = ?' => $id,
+                    'active = ?' => true
         ));
 
         if (NULL !== $attend) {
@@ -76,21 +65,21 @@ class App_Controller_Training extends Controller {
             if ($attend->validate()) {
                 $attend->save();
 
-                $view->flashMessage("Your choice has been successfully saved");
-                self::redirect("/treninky");
+                $view->flashMessage('Your choice has been successfully saved');
+                self::redirect('/treninky');
             }
         } else {
             $newAttend = new App_Model_Attendance(array(
-                "userId" => $userId,
-                "trainingId" => $id,
-                "status" => $status
+                'userId' => $userId,
+                'trainingId' => $id,
+                'status' => $status
             ));
 
             if ($newAttend->validate()) {
                 $newAttend->save();
 
-                $view->flashMessage("Your choice has been successfully saved");
-                self::redirect("/treninky");
+                $view->flashMessage('Your choice has been successfully saved');
+                self::redirect('/treninky');
             }
         }
     }
