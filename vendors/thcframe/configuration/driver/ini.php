@@ -25,7 +25,7 @@ class Ini extends Configuration\Driver
     {
         parent::__construct($options);
 
-        $this->parseDefault('./vendors/thcframe/configuration/default/defaultConfig.ini');
+        $this->parseDefaultCofiguration('./vendors/thcframe/configuration/default/defaultConfig.ini');
 
         switch ($this->getEnv()) {
             case 'dev': {
@@ -49,22 +49,16 @@ class Ini extends Configuration\Driver
      */
     private function mergeConfiguration()
     {
-        $merged = $this->_defaultConfig;
-
-        foreach ($this->_parsed as $key => $value) {
-            $merged[$key] = array_merge($this->_defaultConfig[$key], $this->_parsed[$key]);
-        }
-
-        return $merged;
+        return array_replace_recursive($this->_defaultConfig, $this->_parsed);
     }
 
     /**
      * 
      * @param type $path
      */
-    protected function parseDefault($path)
+    protected function parseDefaultCofiguration($path)
     {
-        if (empty($path)) {
+        if (empty($path) || !file_exists($path)) {
             throw new Exception\Argument('Path argument is not valid');
         }
 
@@ -123,7 +117,7 @@ class Ini extends Configuration\Driver
      */
     public function parse($path)
     {
-        if (empty($path)) {
+        if (empty($path) || !file_exists($path)) {
             throw new Exception\Argument('Path argument is not valid');
         }
 

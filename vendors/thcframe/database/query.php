@@ -4,6 +4,7 @@ namespace THCFrame\Database;
 
 use THCFrame\Core\Base as Base;
 use THCFrame\Core\ArrayMethods as ArrayMethods;
+use THCFrame\Core\StringMethods as StringMethods;
 use THCFrame\Database\Exception as Exception;
 
 /**
@@ -23,6 +24,11 @@ class Query extends Base
      * @read
      */
     protected $_from;
+
+    /**
+     * @read
+     */
+    protected $_alias;
 
     /**
      * @read
@@ -62,7 +68,7 @@ class Query extends Base
     /**
      * @read
      */
-    protected $_orwhere = array();
+    protected $_wheresql;
 
     /**
      * @read
@@ -124,7 +130,7 @@ class Query extends Base
     {
         $fields = array();
         $where = $order = $limit = $join = '';
-        $template = 'SELECT %s FROM %s %s %s %s %s %s %s';
+        $template = 'SELECT %s FROM %s %s %s %s %s %s %s %s';
 
         foreach ($this->fields as $table => $_fields) {
             foreach ($_fields as $field => $alias) {
@@ -143,19 +149,15 @@ class Query extends Base
             $join = join(' ', $_join);
         }
 
-        $_where = $this->where;
-        $_orwhere = $this->orwhere;
-        $joinedWhere = '';
-        if (!empty($_where)) {
-            $joinedWhere .= join(' AND ', $_where);
+        $whereConditions = '';
+        if (!empty($this->_where)) {
+            $whereConditions = join(' AND ', $this->_where);
+        } elseif ($this->_wheresql != '') {
+            $whereConditions = $this->_wheresql;
         }
 
-        if (!empty($_orwhere)) {
-            $joinedWhere .= join(' OR ', $_orwhere);
-        }
-
-        if ($joinedWhere != '') {
-            $where = "WHERE {$joinedWhere}";
+        if ($whereConditions != '') {
+            $where = "WHERE {$whereConditions}";
         }
 
         $_groupBy = $this->groupby;
@@ -187,7 +189,9 @@ class Query extends Base
             }
         }
 
-        return sprintf($template, $joinedFields, $this->from, $join, $where, $groupBy, $having, $order, $limit);
+        $input = sprintf($template, $joinedFields, $this->from, $this->alias, $join, $where, $groupBy, $having, $order, $limit);
+        $output = preg_replace('/\s+/', ' ', $input);
+        return $output;
     }
 
     /**
@@ -209,7 +213,9 @@ class Query extends Base
         $fields = join('`, `', $fields);
         $values = join(', ', $values);
 
-        return sprintf($template, $this->from, $fields, $values);
+        $input = sprintf($template, $this->from, $fields, $values);
+        $output = preg_replace('/\s+/', ' ', $input);
+        return $output;
     }
 
     /**
@@ -229,10 +235,15 @@ class Query extends Base
 
         $parts = join(', ', $parts);
 
-        $_where = $this->where;
-        if (!empty($_where)) {
-            $joined = join(', ', $_where);
-            $where = "WHERE {$joined}";
+        $whereConditions = '';
+        if (!empty($this->_where)) {
+            $whereConditions = join(' AND ', $this->_where);
+        } elseif ($this->_wheresql != '') {
+            $whereConditions = $this->_wheresql;
+        }
+
+        if ($whereConditions != '') {
+            $where = "WHERE {$whereConditions}";
         }
 
         $_limit = $this->limit;
@@ -241,7 +252,9 @@ class Query extends Base
             $limit = "LIMIT {$_limit} {$_offset}";
         }
 
-        return sprintf($template, $this->from, $parts, $where, $limit);
+        $input = sprintf($template, $this->from, $parts, $where, $limit);
+        $output = preg_replace('/\s+/', ' ', $input);
+        return $output;
     }
 
     /**
@@ -253,10 +266,15 @@ class Query extends Base
         $where = $limit = '';
         $template = 'DELETE FROM %s %s %s';
 
-        $_where = $this->where;
-        if (!empty($_where)) {
-            $joined = join(', ', $_where);
-            $where = "WHERE {$joined}";
+        $whereConditions = '';
+        if (!empty($this->_where)) {
+            $whereConditions = join(' AND ', $this->_where);
+        } elseif ($this->_wheresql != '') {
+            $whereConditions = $this->_wheresql;
+        }
+
+        if ($whereConditions != '') {
+            $where = "WHERE {$whereConditions}";
         }
 
         $_limit = $this->limit;
@@ -265,7 +283,9 @@ class Query extends Base
             $limit = "LIMIT {$_limit} {$_offset}";
         }
 
-        return sprintf($template, $this->from, $where, $limit);
+        $input = sprintf($template, $this->from, $where, $limit);
+        $output = preg_replace('/\s+/', ' ', $input);
+        return $output;
     }
 
     /**
@@ -290,6 +310,42 @@ class Query extends Base
 
     /**
      * 
+     * @return type
+     */
+    public function getTableAlias()
+    {
+        return $this->_alias;
+    }
+
+    /**
+     * 
+     * @param type $alias
+     */
+    public function setTableAlias($alias)
+    {
+        if (StringMethods::match($alias, '#^([a-z_-]*)$#')) {
+            $this->_alias = $alias;
+        } else {
+            throw new Exception('Table alias is not valid alias');
+        }
+
+        return $this;
+    }
+
+    /**
+     * 
+     * @param type $alias
+     * @return \THCFrame\Database\Query
+     */
+    public function setAlias($alias)
+    {
+        $this->setTableAlias($alias);
+
+        return $this;
+    }
+
+    /**
+     * 
      * @param type $data
      * @return int
      * @throws Exception\Sql
@@ -307,11 +363,15 @@ class Query extends Base
         $result = $this->connector->execute($sql);
 
         if ($result === false) {
-            throw new Exception\Sql(sprintf('SQL: %s', $this->connector->getLastError()));
+            if (ENV == 'dev') {
+                throw new Exception\Sql(sprintf('SQL: %s', $this->connector->getLastError()));
+            } else {
+                throw new Exception\Sql('There was an error with your SQL query');
+            }
         }
 
         if ($isInsert) {
-            return $this->connector->lastInsertId;
+            return $this->connector->getLastInsertId();
         }
 
         return 0;
@@ -328,10 +388,14 @@ class Query extends Base
         $result = $this->connector->execute($sql);
 
         if ($result === false) {
-            throw new Exception\Sql(sprintf('SQL: %s', $this->connector->getLastError()));
+            if (ENV == 'dev') {
+                throw new Exception\Sql(sprintf('SQL: %s', $this->connector->getLastError()));
+            } else {
+                throw new Exception\Sql('There was an error with your SQL query');
+            }
         }
 
-        return $this->connector->affectedRows;
+        return $this->connector->getAffectedRows();
     }
 
     /**
@@ -364,7 +428,7 @@ class Query extends Base
      * @return \THCFrame\Database\Query
      * @throws Exception\Argument
      */
-    public function join($join, $on, $alias = null, $fields = array())
+    public function join($join, $on, $alias = null, $fields = array('*'))
     {
         if (empty($join)) {
             throw new Exception\Argument('Invalid argument');
@@ -398,7 +462,8 @@ class Query extends Base
             throw new Exception\Argument('Invalid argument');
         }
 
-        $this->_limit = $limit;
+        $this->_limit = $this->_quote($limit);
+        $page = $this->_quote($page);
 
         if ($page - 1 < 0) {
             $this->_offset = 0;
@@ -434,6 +499,10 @@ class Query extends Base
      */
     public function where()
     {
+        if ($this->_wheresql != '') {
+            throw new Exception\Sql('You can use only one of the where methods');
+        }
+
         $arguments = func_get_args();
 
         if (count($arguments) < 1) {
@@ -454,25 +523,16 @@ class Query extends Base
     /**
      * 
      * @return \THCFrame\Database\Query
-     * @throws Exception\Argument
+     * @throws Exception\Sql
      */
-    public function orwhere()
+    public function wheresql($sql)
     {
-        $arguments = func_get_args();
-
-        if (count($arguments) < 1) {
-            throw new Exception\Argument('Invalid argument');
+        if (empty($this->_where)) {
+            $this->_wheresql = $this->_quote($sql);
+            return $this;
+        } else {
+            throw new Exception\Sql('You can use only one of the where methods');
         }
-
-        $arguments[0] = preg_replace('#\?#', '%s', $arguments[0]);
-
-        foreach (array_slice($arguments, 1, null, true) as $i => $parameter) {
-            $arguments[$i] = $this->_quote($arguments[$i]);
-        }
-
-        $this->_orwhere[] = call_user_func_array('sprintf', $arguments);
-
-        return $this;
     }
 
     /**

@@ -320,7 +320,7 @@ class Template extends Base
             $function = $this->_function;
             return $function($data);
         } catch (\Exception $e) {
-            throw new Exception\Parser($e);
+            throw new Exception\Parser($e->getMessage());
         }
     }
 

@@ -46,7 +46,12 @@ class Mysqldump extends Base
         $this->_database->connect();
 
         $this->_settings = $this->_extend($this->_defaultSettings, $settings);
-        $this->_filename = APP_PATH . '/temp/' . $this->_database->getSchema() . '_' . date('Y-m-d') . '.sql';
+        $this->_filename = APP_PATH . '/temp/db/' . $this->_database->getSchema() . '_' . date('Y-m-d') . '.sql';
+    }
+    
+    public function __destruct()
+    {
+        $this->_database->disconnect();
     }
 
     /**
@@ -56,7 +61,6 @@ class Mysqldump extends Base
      */
     private function _getHeader()
     {
-        // Some info about software, source and time
         $header = '-- mysqldump-php SQL Dump' . PHP_EOL .
                 '--' . PHP_EOL .
                 '-- Host: {$this->_database->getHost()}' . PHP_EOL .
@@ -268,6 +272,8 @@ class Mysqldump extends Base
         Events::fire('framework.mysqldump.create.after', array($this->_filename));
 
         $this->_close();
+        
+        return $this;
     }
 
     /**
@@ -281,9 +287,8 @@ class Mysqldump extends Base
         header('Expires: 0');
         header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
         header('Cache-Control: private', false);
-        header('Content-Type: ' . $this->_mime);
+        header("Content-Type: text/html; charset=utf-8");
         header("Content-Disposition: attachment; filename='" . basename($this->_filename) . "'");
-        header('Content-Transfer-Encoding: binary');
         header('Content-Length: ' . filesize($this->_filename));
         ob_clean();
         flush();

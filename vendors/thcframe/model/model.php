@@ -24,6 +24,11 @@ class Model extends Base
     /**
      * @readwrite
      */
+    protected $_alias = '';
+
+    /**
+     * @readwrite
+     */
     protected $_connector;
 
     /**
@@ -72,7 +77,7 @@ class Model extends Base
             'message' => 'The {0} field must contain valid email address'
         ),
         'url' => array(
-            'handler' => '_validateMin',
+            'handler' => '_validateUrl',
             'message' => 'The {0} field must contain valid url'
         ),
         'datetime' => array(
@@ -86,9 +91,17 @@ class Model extends Base
         'time' => array(
             'handler' => '_validateTime',
             'message' => 'The {0} field must contain valid time (hh:mm / hh:mm:ss)'
+        ),
+        'html' => array(
+            'handler' => '_validateHtml',
+            'message' => 'The {0} field can contain these tags only (span,strong,em,s,p,div,a,ol,ul,li,img,table,caption,thead,tbody,tr,td)'
+        ),
+        'path' => array(
+            'handler' => '_validatePath',
+            'message' => 'The {0} field can contain filesystem path'
         )
     );
-   
+
     /**
      * @read
      */
@@ -121,7 +134,7 @@ class Model extends Base
         foreach ($where as $clause => $value) {
             $query->where($clause, $value);
         }
-        
+
         return $query->count();
     }
 
@@ -145,7 +158,7 @@ class Model extends Base
         if ($value == '') {
             return true;
         } else {
-            return StringMethods::match($value, '#^([a-zA-Zá-žÁ-Ž_-\s\?\.,!:()+=\"]*)$#');
+            return StringMethods::match($value, '#^([a-zA-Zá-žÁ-Ž_-\s\?\.,!]*)$#');
         }
     }
 
@@ -173,7 +186,31 @@ class Model extends Base
         if ($value == '') {
             return true;
         } else {
-            return StringMethods::match($value, '#^([a-zA-Zá-žÁ-Ž0-9_-\s\?\.,!:()+=\"]*)$#');
+            return StringMethods::match($value, '#^([a-zA-Zá-žÁ-Ž0-9_-\s\?\.,!:()+=\"&@\*]*)$#');
+        }
+    }
+
+    /**
+     * 
+     * @param type $value
+     * @return type
+     */
+    protected function _validateHtml($value)
+    {
+        if ($value == '') {
+            return true;
+        } else {
+            return StringMethods::match($value, '#(<|&lt;)(strong|em|s|p|div|a|img|table|tr|td|thead|tbody|ol|li|ul|caption|span)(.*)(>|&gt;)'
+                            . '([a-zA-Zá-žÁ-Ž0-9_-\s\?\.,!:()+=\"&@\*]*)</\2>#');
+        }
+    }
+
+    protected function _validatePath($value)
+    {
+        if ($value == '') {
+            return true;
+        } else {
+            return StringMethods::match($value, '#^([a-zA-Z0-9_-\\\/:]*)\.([a-z]{2,4})$#');
         }
     }
 
@@ -206,7 +243,11 @@ class Model extends Base
      */
     protected function _validateEmail($value)
     {
-        return filter_var($value, FILTER_VALIDATE_EMAIL);
+        if ($value == '') {
+            return true;
+        } else {
+            return filter_var($value, FILTER_VALIDATE_EMAIL);
+        }
     }
 
     /**
@@ -308,6 +349,7 @@ class Model extends Base
             $previous = $this->connector
                     ->query()
                     ->from($this->table)
+                    ->setTableAlias($this->alias)
                     ->where("{$name} = ?", $this->$raw)
                     ->first();
 
@@ -336,11 +378,21 @@ class Model extends Base
         $name = $primary['name'];
 
         if (!empty($this->$raw)) {
-            return $this->connector
-                            ->query()
-                            ->from($this->table)
-                            ->where("{$name} = ?", $this->$raw)
-                            ->delete();
+            $this->connector->beginTransaction();
+
+            $state = $this->connector
+                    ->query()
+                    ->from($this->table)
+                    ->where("{$name} = ?", $this->$raw)
+                    ->delete();
+
+            if ($state != -1) {
+                $this->connector->commitTransaction();
+                return $state;
+            } else {
+                $this->connector->rollbackTransaction();
+                return $state;
+            }
         }
     }
 
@@ -361,7 +413,17 @@ class Model extends Base
             $query->where($clause, $value);
         }
 
-        return $query->delete();
+        $instance->connector->beginTransaction();
+
+        $state = $query->delete();
+
+        if ($state != -1) {
+            $instance->connector->commitTransaction();
+            return $state;
+        } else {
+            $instance->connector->rollbackTransaction();
+            return $state;
+        }
     }
 
     /**
@@ -437,7 +499,10 @@ class Model extends Base
             list($module, $type, $name) = explode('_', get_class($this));
 
             if (strtolower($type) == 'model' && !empty($name)) {
-                $this->_table = strtolower("tb_{$name}");
+                $tablePrefix = Registry::get('config')->database->default->tablePrefix;
+                $this->_table = strtolower($tablePrefix . $name);
+            } else {
+                throw new Exception\Implementation('Model is not valid THCFrame\Model\Model');
             }
         }
 
@@ -601,7 +666,8 @@ class Model extends Base
     {
         $query = $this->connector
                 ->query()
-                ->from($this->table, $fields);
+                ->from($this->table, $fields)
+                ->setTableAlias($this->alias);
 
         foreach ($where as $clause => $value) {
             $query->where($clause, $value);
@@ -653,7 +719,8 @@ class Model extends Base
     {
         $query = $this->connector
                 ->query()
-                ->from($this->table, $fields);
+                ->from($this->table, $fields)
+                ->setTableAlias($this->alias);
 
         foreach ($where as $clause => $value) {
             $query->where($clause, $value);
@@ -661,9 +728,9 @@ class Model extends Base
 
         if ($group != null) {
             $query->groupby($group);
-            
-            if(!empty($having)){
-                foreach ($having as $clause => $value){
+
+            if (!empty($having)) {
+                foreach ($having as $clause => $value) {
                     $query->having($clause, $value);
                 }
             }
@@ -705,7 +772,10 @@ class Model extends Base
      */
     protected function _getQuery($fields)
     {
-        return $this->connector->query()->from($this->table, $fields);
+        return $this->connector
+                        ->query()
+                        ->from($this->table, $fields)
+                        ->setTableAlias($this->alias);
     }
 
     /**
@@ -723,7 +793,11 @@ class Model extends Base
             $rows[] = new $class($row);
         }
 
-        return $rows;
+        if (empty($rows)) {
+            return null;
+        } else {
+            return $rows;
+        }
     }
 
     /**

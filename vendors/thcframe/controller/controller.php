@@ -50,12 +50,22 @@ class Controller extends Base
     /**
      * @readwrite
      */
-    protected $_defaultPath = 'modules/%s/views';
+    protected $_defaultPath = 'modules/%s/view';
 
     /**
      * @readwrite
      */
     protected $_defaultLayout = 'layouts/basic';
+
+    /**
+     * @readwrite
+     */
+    protected $_mobileLayout;
+
+    /**
+     * @readwrite
+     */
+    protected $_tabletLayout;
 
     /**
      * @readwrite
@@ -115,22 +125,34 @@ class Controller extends Base
         Events::fire('framework.controller.construct.before', array($this->name));
 
         $configuration = Registry::get('config');
+        $session = Registry::get('session');
+        $router = Registry::get('router');
 
         if (!empty($configuration->view->default)) {
             $this->defaultExtension = $configuration->view->default->extension;
             $this->defaultLayout = $configuration->view->default->layout;
+            $this->mobileLayout = $configuration->view->default->mobilelayout;
+            $this->tabletLayout = $configuration->view->default->tabletlayout;
             $this->defaultPath = $configuration->view->default->path;
         } else {
             throw new \Exception('Error in configuration file');
         }
 
-        $router = Registry::get('router');
         $module = $router->getLastRoute()->getModule();
         $controller = $router->getLastRoute()->getController();
         $action = $router->getLastRoute()->getAction();
 
+        $deviceType = $session->get('devicetype');
+
+        if ($deviceType == 'phone' && $this->mobileLayout != '') {
+            $defaultLayout = $this->mobileLayout;
+        } elseif ($deviceType == 'tablet' && $this->tabletLayout != '') {
+            $defaultLayout = $this->tabletLayout;
+        } else {
+            $defaultLayout = $this->defaultLayout;
+        }
+
         $defaultPath = sprintf($this->defaultPath, $module);
-        $defaultLayout = $this->defaultLayout;
         $defaultExtension = $this->defaultExtension;
 
         if ($this->willRenderLayoutView) {

@@ -22,6 +22,12 @@ class Security extends Base
      * @read
      * @var type 
      */
+    protected $_accessControl;
+
+    /**
+     * @read
+     * @var type 
+     */
     protected $_passwordEncoder;
 
     /**
@@ -29,6 +35,12 @@ class Security extends Base
      * @var type 
      */
     protected $_roleManager;
+
+    /**
+     * @read
+     * @var type
+     */
+    protected $_acl;
 
     /**
      * @read
@@ -41,18 +53,6 @@ class Security extends Base
      * @var type 
      */
     protected $_user = null;
-
-    /**
-     * @read
-     * @var type 
-     */
-    protected $_authenticated = false;
-
-    /**
-     * @read
-     * @var type 
-     */
-    protected $_type;
 
     /**
      * 
@@ -69,30 +69,36 @@ class Security extends Base
      */
     public function initialize()
     {
-        Events::fire('framework.security.initialize.before', array($this->type));
+        Events::fire('framework.security.initialize.before', array($this->accessControll));
 
         $configuration = Registry::get('config');
 
         if (!empty($configuration->security->default)) {
             $rolesOptions = (array) $configuration->security->default->roles;
-            $this->_loginCredentials = (array) $configuration->security->default->loginCredentials;
+            $this->_loginCredentials = $configuration->security->default->loginCredentials;
             $this->_passwordEncoder = $configuration->security->default->encoder;
+            $this->_accessControl = $configuration->security->default->accessControl;
         } else {
             throw new \Exception('Error in configuration file');
         }
 
-        $this->_roleManager = new RoleManager($rolesOptions);
+        if ($this->_accessControl == 'role_based') {
+            $this->_roleManager = new RoleManager($rolesOptions);
+        } elseif ($this->_accessControl == 'acl') {
+            //$this->_acl = new Acl();
+        } else {
+            throw new Exception\Implementation('Access controll is not supported');
+        }
 
         $session = Registry::get('session');
         $user = $session->get('authUser');
 
         if ($user) {
             $this->_user = $user;
-            $this->_authenticated = true;
             Events::fire('framework.security.initialize.user', array($user));
         }
 
-        Events::fire('framework.security.initialize.after', array($this->type));
+        Events::fire('framework.security.initialize.after', array($this->accessControll));
 
         return $this;
     }
@@ -131,7 +137,6 @@ class Security extends Base
                 ->erase('lastActive');
 
         $this->_user = NULL;
-        $this->_authenticated = false;
         @session_regenerate_id();
     }
 
@@ -143,11 +148,13 @@ class Security extends Base
      */
     public function getHash($value)
     {
+        $salt = 'PIqC792XES6mbRoUpD0TFiej5';
+        
         if ($value == '') {
             return '';
         } else {
             if (in_array($this->_passwordEncoder, hash_algos())) {
-                return hash($this->_passwordEncoder, $value);
+                return hash_hmac($this->_passwordEncoder, $value, $salt);
             } else {
                 throw new Exception\HashAlgorithm(sprintf('Hash algorithm %s is not supported', $this->_passwordEncoder));
             }
@@ -165,7 +172,7 @@ class Security extends Base
         if ($this->_user) {
             $userRole = strtolower($this->_user->getRole());
         } else {
-            $userRole = 'role_host';
+            $userRole = 'role_guest';
         }
 
         $requiredRole = strtolower(trim($requiredRole));
@@ -210,16 +217,17 @@ class Security extends Base
      * @throws Exception\UserPassExpired
      * @throws Exception\Implementation
      */
-    public function authenticate($loginCredential, $password, $admin = false)
+    public function authenticate($loginCredential, $password, $adminRequired = false)
     {
         $hash = $this->getHash($password);
 
         $user = \App_Model_User::first(array(
-                    "{$this->_loginCredentials['login']} = ?" => $loginCredential,
-                    "{$this->_loginCredentials['pass']} = ?" => $hash
+                    "{$this->_loginCredentials->login} = ?" => $loginCredential,
+                    "{$this->_loginCredentials->pass} = ?" => $hash
         ));
 
         if (NULL !== $user) {
+            unset($user->_password);
             if ($user instanceof AdvancedUserInterface) {
                 if (!$user->isActive()) {
                     $message = 'User account is not active';
@@ -237,10 +245,9 @@ class Security extends Base
                     $user->setLastLogin();
                     $user->save();
 
-                    $this->_authenticated = true;
                     $this->setUser($user);
 
-                    if ($admin) {
+                    if ($adminRequired) {
                         if ($this->isGranted('role_admin')) {
                             Events::fire('framework.security.authenticate.success', array($user));
                             return true;
@@ -262,10 +269,9 @@ class Security extends Base
                     Events::fire('framework.security.authenticate.failure', array($user, $message));
                     throw new Exception\UserInactive($message);
                 } else {
-                    $this->_authenticated = true;
                     $this->setUser($user);
 
-                    if ($admin) {
+                    if ($adminRequired) {
                         if ($this->isGranted('role_admin')) {
                             Events::fire('framework.security.authenticate.success', array($user));
                             return true;
@@ -286,15 +292,6 @@ class Security extends Base
         } else {
             return false;
         }
-    }
-
-    /**
-     * 
-     * @return boolean
-     */
-    public function isAuthenticated()
-    {
-        return (boolean) $this->_authenticated;
     }
 
 }

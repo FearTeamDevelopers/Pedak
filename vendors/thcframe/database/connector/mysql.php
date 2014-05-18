@@ -56,6 +56,11 @@ class Mysql extends Database\Connector
     protected $_isConnected = false;
 
     /**
+     * @readwrite
+     */
+    protected $_profiler = false;
+
+    /**
      * @read
      */
     protected $_magicQuotesActive;
@@ -109,6 +114,12 @@ class Mysql extends Database\Connector
             }
 
             $this->_service->set_charset('utf8');
+            $this->_service->query("SET NAMES 'utf8' COLLATE 'utf8_general_ci'");
+
+            if ($this->getProfiler()) {
+                $this->_service->query("SET profiling = 1");
+            }
+
             $this->isConnected = true;
             unset($this->_password);
         }
@@ -160,7 +171,11 @@ class Mysql extends Database\Connector
         }
 
         if (!$stmt = $this->_service->prepare($sql)) {
-            throw new Exception\Sql(sprintf('There was an error in the query %s', $this->_service->error));
+            if (ENV == 'dev') {
+                throw new Exception\Sql(sprintf('There was an error in the query %s', $this->_service->error));
+            } else {
+                throw new Exception\Sql('There was an error in the query');
+            }
         }
 
         array_shift($args); //remove sql from args
@@ -300,6 +315,7 @@ class Mysql extends Database\Connector
     public function commitTransaction()
     {
         $this->_service->commit();
+        $this->_service->autocommit(TRUE);
     }
 
     /**
@@ -308,6 +324,7 @@ class Mysql extends Database\Connector
     public function rollbackTransaction()
     {
         $this->_service->rollback();
+        $this->_service->autocommit(TRUE);
     }
 
     /**
@@ -382,14 +399,22 @@ class Mysql extends Database\Connector
 
         $result = $this->execute("DROP TABLE IF EXISTS {$table};");
         if ($result === false) {
-            //$error = $this->lastError;
-            throw new Exception\Sql(sprintf('There was an error in the query'));
+            if (ENV == 'dev') {
+                $error = $this->lastError;
+                throw new Exception\Sql(sprintf('There was an error in the query: %s', $error));
+            } else {
+                throw new Exception\Sql(sprintf('There was an error in the query'));
+            }
         }
 
         $result2 = $this->execute($sql);
         if ($result2 === false) {
-            //$error = $this->lastError;
-            throw new Exception\Sql(sprintf('There was an error in the query'));
+            if (ENV == 'dev') {
+                $error = $this->lastError;
+                throw new Exception\Sql(sprintf('There was an error in the query: %s', $error));
+            } else {
+                throw new Exception\Sql(sprintf('There was an error in the query'));
+            }
         }
 
         return $this;

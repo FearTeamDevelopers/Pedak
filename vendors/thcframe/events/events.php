@@ -4,6 +4,7 @@ namespace THCFrame\Events;
 
 use THCFrame\Registry\Registry;
 
+
 /**
  * Observer
  * 
@@ -27,36 +28,20 @@ class Events
 
     /**
      * 
-     * @return type
      */
-    public static function getInstance()
+    public static function initialize()
     {
-        if (NULL === self::$_instatnce) {
-            self::$_instatnce = new self();
-            return self::$_instatnce;
-        } else {
-            return self::$_instatnce;
-        }
-    }
-
-    /**
-     * 
-     */
-    public function initialize()
-    {
-        Events::fire('framework.events.initialize.before', $this);
-
+        
         $configuration = Registry::get('config');
-
-        if (!empty($configuration->observer->events)) {
-            $events = (array) $configuration->observer->events;
+        
+        if (!empty($configuration->observer->event)) {
+            $events = (array) $configuration->observer->event;
 
             foreach ($events as $event => $callback) {
                 self::add($event, $callback);
+                
             }
         }
-
-        Events::fire('framework.events.initialize.after', $this);
     }
 
     /**
@@ -85,10 +70,16 @@ class Events
                 if (is_callable($callback)) {
                     call_user_func_array($callback, $parameters);
                 } else {
-                    $parts = explode(".", $type);
+                    $parts = explode('.', $type);
                     $moduleObject = \THCFrame\Core\Core::getModule($parts[0]);
                     $observerClass = $moduleObject->getObserverClass();
-                    $observer = new $observerClass;
+                    $observer = Registry::get($observerClass);
+
+                    if ($observer === null) {
+                        $observer = new $observerClass;
+                        Registry::set($observerClass, $observer);
+                    }
+
                     $observer->$callback($parameters);
                 }
             }

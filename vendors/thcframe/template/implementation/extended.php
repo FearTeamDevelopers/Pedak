@@ -19,7 +19,7 @@ class Extended extends Standard
     /**
      * @readwrite
      */
-    protected $_defaultPath = "modules/%s/views";
+    protected $_defaultPath = "modules/%s/view";
 
     /**
      * @readwrite

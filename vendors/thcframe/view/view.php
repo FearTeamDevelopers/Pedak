@@ -69,11 +69,32 @@ class View extends Base
      */
     private function _checkMessage()
     {
-        if (isset($_SESSION['flashMessage'])) {
-            $this->set('flashMessage', $_SESSION['flashMessage']);
-            unset($_SESSION['flashMessage']);
+        if (isset($_SESSION['infoMessage'])) {
+            $this->set('infoMessage', $_SESSION['infoMessage']);
+            unset($_SESSION['infoMessage']);
         } else {
-            $this->set('flashMessage', '');
+            $this->set('infoMessage', '');
+        }
+        
+        if (isset($_SESSION['warningMessage'])) {
+            $this->set('warningMessage', $_SESSION['warningMessage']);
+            unset($_SESSION['warningMessage']);
+        } else {
+            $this->set('warningMessage', '');
+        }
+        
+        if (isset($_SESSION['successMessage'])) {
+            $this->set('successMessage', $_SESSION['successMessage']);
+            unset($_SESSION['successMessage']);
+        } else {
+            $this->set('successMessage', '');
+        }
+        
+        if (isset($_SESSION['errorMessage'])) {
+            $this->set('errorMessage', $_SESSION['errorMessage']);
+            unset($_SESSION['errorMessage']);
+        } else {
+            $this->set('errorMessage', '');
         }
 
         if (isset($_SESSION['longFlashMessage'])) {
@@ -172,12 +193,54 @@ class View extends Base
      * @param text $msg
      * @return text
      */
-    public function flashMessage($msg = '')
+    public function infoMessage($msg = '')
     {
         if (!empty($msg)) {
-            $_SESSION['flashMessage'] = $msg;
+            $_SESSION['infoMessage'] = $msg;
         } else {
-            return $this->get('flashMessage');
+            return $this->get('infoMessage');
+        }
+    }
+    
+    /**
+     * 
+     * @param text $msg
+     * @return text
+     */
+    public function warningMessage($msg = '')
+    {
+        if (!empty($msg)) {
+            $_SESSION['warningMessage'] = $msg;
+        } else {
+            return $this->get('warningMessage');
+        }
+    }
+    
+    /**
+     * 
+     * @param text $msg
+     * @return text
+     */
+    public function successMessage($msg = '')
+    {
+        if (!empty($msg)) {
+            $_SESSION['successMessage'] = $msg;
+        } else {
+            return $this->get('successMessage');
+        }
+    }
+    
+    /**
+     * 
+     * @param text $msg
+     * @return text
+     */
+    public function errorMessage($msg = '')
+    {
+        if (!empty($msg)) {
+            $_SESSION['errorMessage'] = $msg;
+        } else {
+            return $this->get('errorMessage');
         }
     }
 
