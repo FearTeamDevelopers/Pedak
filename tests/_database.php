@@ -251,7 +251,7 @@ THCFrame\Core\Test::add(
         $rows = $database->query()
             ->from("tb_example")
             ->limit(1, 2)
-            ->order("id", "desc")
+            ->orderby("id", "desc")
             ->all();
         
         return (sizeof($rows) == 1 && $rows[0]["id"] == 3);

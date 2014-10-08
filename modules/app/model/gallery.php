@@ -3,12 +3,18 @@
 use THCFrame\Model\Model as Model;
 
 /**
- * Description of GalleryModel
+ * Description of App_Model_Gallery
  *
  * @author Tomy
  */
-class App_Model_Gallery extends Model {
+class App_Model_Gallery extends Model
+{
 
+    /**
+     * @readwrite
+     */
+    protected $_alias = 'gl';
+    
     /**
      * @column
      * @readwrite
@@ -22,6 +28,8 @@ class App_Model_Gallery extends Model {
      * @readwrite
      * @type boolean
      * @index
+     * 
+     * @validate max(3)
      */
     protected $_active;
 
@@ -29,9 +37,20 @@ class App_Model_Gallery extends Model {
      * @column
      * @readwrite
      * @type text
-     * @length 100
+     * @length 200
      * 
-     * @validate required, alphanumeric, max(100)
+     * @validate required, alphanumeric, max(200)
+     * @label url key
+     */
+    protected $_urlKey;
+
+    /**
+     * @column
+     * @readwrite
+     * @type text
+     * @length 150
+     * 
+     * @validate required, alphanumeric, max(150)
      * @label title
      */
     protected $_title;
@@ -42,21 +61,29 @@ class App_Model_Gallery extends Model {
      * @type text
      * @length 256
      * 
-     * @validate alphanumeric, max(1024)
+     * @validate alphanumeric, max(5000)
      * @label description
      */
     protected $_description;
-
+    
     /**
      * @column
      * @readwrite
-     * @type text
-     * @length 100
+     * @type boolean
      * 
-     * @validate max(100)
-     * @label avatar
+     * @validate max(2)
+     * @lable public
      */
-    protected $_avatar;
+    protected $_isPublic;
+    
+    /**
+     * @column
+     * @readwrite
+     * @type integer
+     * 
+     * @validate numeric, max(8)
+     */
+    protected $_avatarPhotoId;
 
     /**
      * @column
@@ -73,9 +100,20 @@ class App_Model_Gallery extends Model {
     protected $_modified;
 
     /**
+     * @readwrite
+     */
+    protected $_photos;
+    
+    /**
+     * @readwrite
+     */
+    protected $_videos;
+    
+    /**
      * 
      */
-    public function preSave() {
+    public function preSave()
+    {
         $primary = $this->getPrimaryColumn();
         $raw = $primary["raw"];
 
@@ -86,4 +124,92 @@ class App_Model_Gallery extends Model {
         $this->setModified(date("Y-m-d H:i:s"));
     }
 
+    /**
+     * 
+     * @param type $id
+     * @return type
+     */
+    public static function fetchGalleryById($id)
+    {
+        $galleryQuery = self::getQuery(array('gl.*'))
+                ->leftjoin('tb_photo', 'ph.id = gl.avatarPhotoId', 'ph', 
+                        array('ph.imgMain', 'ph.imgThumb'))
+                ->where('gl.id = ?', (int) $id);
+        $galleryArr = self::initialize($galleryQuery);
+
+        if (!empty($galleryArr)) {
+            $gallery = array_shift($galleryArr);
+            return $gallery->getGalleryById();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 
+     * @param type $id
+     * @return type
+     */
+    public static function fetchActivePublicGalleryByUrlkey($urlkey)
+    {
+        $galleryQuery = self::getQuery(array('gl.*'))
+                ->leftjoin('tb_photo', 'ph.id = gl.avatarPhotoId', 'ph', 
+                        array('ph.imgMain', 'ph.imgThumb'))
+                ->where('gl.urlKey = ?', $urlkey)
+                ->where('gl.active = ?', true)
+                ->where('gl.isPublic = ?', true);
+        $galleryArr = self::initialize($galleryQuery);
+
+        if (!empty($galleryArr)) {
+            $gallery = array_shift($galleryArr);
+            return $gallery->getGalleryById();
+        } else {
+            return null;
+        }
+    }
+    
+    /**
+     * 
+     * @param type $year
+     */
+    public static function fetchGalleriesByYear($year)
+    {
+        $startDate = date('Y-m-d', mktime(0, 0, 0, 1, 1, $year));
+        $endDate = date('Y-m-d', mktime(0, 0, 0, 1, 1, $year + 1));
+        
+        $galleryQuery = self::getQuery(array('gl.*'))
+                ->leftjoin('tb_photo', 'ph.id = gl.avatarPhotoId', 'ph', 
+                        array('ph.imgMain', 'ph.imgThumb'))
+                ->wheresql('gl.active=1 AND gl.isPublic=1 AND gl.showDate BETWEEN \''.$startDate.'\' AND \''.$endDate.'\'')
+                ->order('gl.showDate', 'DESC');
+
+        $galleries = self::initialize($galleryQuery);
+
+        if (!empty($galleries)) {
+            foreach ($galleries as $i => $gallery) {
+                $galleries[$i] = $gallery->getGalleryById();
+            }
+            
+            return $galleries;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 
+     * @return \App_Model_Gallery
+     */
+    public function getGalleryById()
+    {
+        $photos = App_Model_Photo::all(
+                array('galleryId = ?' => $this->getId()), 
+                array('*'), 
+                array('priority' => 'DESC', 'created' => 'DESC'));
+
+        $this->_photos = $photos;
+
+        return $this;
+    }
+    
 }

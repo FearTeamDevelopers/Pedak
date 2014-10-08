@@ -3,11 +3,17 @@
 use THCFrame\Model\Model as Model;
 
 /**
- * Description of MatchChatModel
+ * Description of App_Model_MatchChat
  *
  * @author Tomy
  */
-class App_Model_MatchChat extends Model {
+class App_Model_MatchChat extends Model
+{
+
+    /**
+     * @readwrite
+     */
+    protected $_alias = 'mc';
 
     /**
      * @column
@@ -31,6 +37,8 @@ class App_Model_MatchChat extends Model {
      * @readwrite
      * @type boolean
      * @index
+     * 
+     * @validate max(3)
      */
     protected $_active;
 
@@ -72,7 +80,7 @@ class App_Model_MatchChat extends Model {
      * @type text
      * @length 256
      * 
-     * @validate required, max(2048)
+     * @validate required, max(5000)
      * @label text
      */
     protected $_body;
@@ -94,7 +102,8 @@ class App_Model_MatchChat extends Model {
     /**
      * 
      */
-    public function preSave() {
+    public function preSave()
+    {
         $primary = $this->getPrimaryColumn();
         $raw = $primary["raw"];
 
@@ -109,7 +118,8 @@ class App_Model_MatchChat extends Model {
      * 
      * @return type
      */
-    public function getReplies() {
+    public function getReplies()
+    {
         return self::all(
                         array(
                     "reply = ?" => $this->getId(),
@@ -122,7 +132,8 @@ class App_Model_MatchChat extends Model {
      * @param type $id
      * @return type
      */
-    public static function fetchReplies($id) {
+    public static function fetchReplies($id)
+    {
         $message = new self(array(
             "id" => $id
         ));

@@ -9,53 +9,14 @@ use THCFrame\Request\RequestMethods as RequestMethods;
  *
  * @author Tomy
  */
-class App_Controller_User extends Controller {
-
-    /**
-     * 
-     * @param type $name
-     * @param type $username
-     * @return string
-     * @throws \Exception
-     */
-    private function _upload($name, $user) {
-
-        if (isset($_FILES[$name]) && !empty($_FILES[$name]['name'])) {
-            $file = $_FILES[$name];
-            $path = '/public/uploads/team/';
-
-            $size = filesize($file['tmp_name']);
-            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-            $filename = $user->getEmail() . '_' . $user->getId() . '.' . $extension;
-
-            if ($size > 5000000) {
-                throw new \Exception('Image size exceeds the maximum size limit');
-            } elseif (!in_array($extension, self::$_imageExtensions)) {
-                throw new \Exception('Images can only be with jpg, jpeg, png or gif extension');
-            } elseif (file_exists('.' . $path . $filename)) {
-                unlink('.' . $path . $filename);
-
-                if (move_uploaded_file($file['tmp_name'], '.' . $path . $filename)) {
-                    return $path . $filename;
-                } else {
-                    throw new \Exception('An error occured while uploading the photo');
-                }
-            } else {
-                if (move_uploaded_file($file['tmp_name'], '.' . $path . $filename)) {
-                    return $path . $filename;
-                } else {
-                    throw new \Exception('An error occured while uploading the photo');
-                }
-            }
-        } else {
-            return '';
-        }
-    }
+class App_Controller_User extends Controller
+{
 
     /**
      * 
      */
-    public function login() {
+    public function login()
+    {
         if (RequestMethods::post('login')) {
             $email = RequestMethods::post('email');
             $password = RequestMethods::post('password');
@@ -93,7 +54,8 @@ class App_Controller_User extends Controller {
     /**
      * 
      */
-    public function logout() {
+    public function logout()
+    {
         $security = Registry::get('security');
         $security->logout();
         self::redirect('/');
@@ -102,7 +64,8 @@ class App_Controller_User extends Controller {
     /**
      * 
      */
-    public function register($key) {
+    public function register($key)
+    {
         if ($key === '8406c6ad864195ed144ab5c87621b6c233b548baeae6956df3463876aed6bc22d4a') {
             $view = $this->getActionView();
             $errors = array();
@@ -119,13 +82,24 @@ class App_Controller_User extends Controller {
                     $errors['password2'] = array('Paswords doesnt match');
                 }
 
-                $email = App_Model_User::first(array('email = ?' => RequestMethods::post('email')), array('email'));
+                $email = App_Model_User::first(
+                                array('email = ?' => RequestMethods::post('email')), 
+                                array('email')
+                );
 
                 if ($email) {
                     $errors['email'] = array('Email is already used');
                 }
 
                 $hash = $security->getHash(RequestMethods::post('password'));
+
+                try {
+                    $im = new ImageManager();
+                    $photoArr = $im->upload('photo', 'team');
+                    $uploaded = ArrayMethods::toObject($photoArr);
+                } catch (Exception $ex) {
+                    $errors['photo'] = $ex->getMessage();
+                }
 
                 $user = new App_Model_User(array(
                     'firstname' => RequestMethods::post('firstname'),
@@ -138,30 +112,20 @@ class App_Controller_User extends Controller {
                     'cfbuPersonalNum' => RequestMethods::post('cfbuPersonalNum'),
                     'team' => RequestMethods::post('team'),
                     'nickname' => RequestMethods::post('nickname'),
-                    'photo' => RequestMethods::post('photo'),
+                    'photo' => trim($uploaded->photo->filename, '.'),
                     'position' => RequestMethods::post('position'),
                     'grip' => RequestMethods::post('grip'),
                     'other' => RequestMethods::post('other')
                 ));
 
                 if (empty($errors) && $user->validate()) {
-                    try {
-                        $path = $this->_upload('photo', $user);
-                        $user->setPhoto($path);
-                    } catch (\Exception $e) {
-                        $errors['photo'] = array($e->getMessage());
-                    }
+                    $user->save();
 
-                    if (empty($errors)) {
-                        $user->save();
-
-                        $view->flashMessage('Registration completed');
-                        self::redirect('/');
-                    } else {
-                        $view->set('errors', $errors + $user->getErrors());
-                    }
+                    $view->flashMessage('Registration completed');
+                    self::redirect('/');
                 } else {
-                    $view->set('errors', $errors + $user->getErrors());
+                    $view->set('errors', $errors + $user->getErrors())
+                            ->set('user', $user);
                 }
             }
         } else {
@@ -172,7 +136,8 @@ class App_Controller_User extends Controller {
     /**
      * @before _secured
      */
-    public function edit() {
+    public function edit()
+    {
         $view = $this->getActionView();
         $userId = $this->getUser()->getId();
         $errors = array();
@@ -194,7 +159,11 @@ class App_Controller_User extends Controller {
             }
 
             if (RequestMethods::post('email') != $user->email) {
-                $email = App_Model_User::first(array('email = ?' => RequestMethods::post('email', $user->email)), array('email'));
+                $email = App_Model_User::first(
+                                array('email = ?' => RequestMethods::post('email', $user->email)), 
+                                array('email')
+                );
+
                 if ($email) {
                     $errors['email'] = array('Email is already used');
                 }
@@ -205,6 +174,16 @@ class App_Controller_User extends Controller {
                 $hash = $user->password;
             } else {
                 $hash = $security->getHash($pass);
+            }
+
+            if (!empty($_FILES['photo']['name'])) {
+                try {
+                    $im = new ImageManager();
+                    $photoArr = $im->upload('photo', 'team');
+                    $uploaded = ArrayMethods::toObject($photoArr);
+                } catch (Exception $ex) {
+                    $errors['photo'] = $ex->getMessage();
+                }
             }
 
             $user->firstname = RequestMethods::post('firstname');
@@ -219,30 +198,17 @@ class App_Controller_User extends Controller {
             $user->position = RequestMethods::post('position');
             $user->grip = RequestMethods::post('grip');
             $user->other = RequestMethods::post('other');
+            $user->photo = trim($uploaded->photo->filename, '.');
 
             if (empty($errors) && $user->validate()) {
-                try {
-                    $path = $this->_upload('photo', $user);
+                $user->save();
+                $security->setUser($user);
 
-                    if ($path != '') {
-                        $user->setPhoto($path);
-                    }
-                } catch (\Exception $e) {
-                    $errors['photo'] = array($e->getMessage());
-                }
-
-                if (empty($errors)) {
-                    $user->save();
-                    $security->setUser($user);
-
-                    $view->flashMessage('All changes were successfully saved');
-                    self::redirect('/');
-                } else {
-                    $view->set('errors', $errors + $user->getErrors());
-                }
+                $view->flashMessage('All changes were successfully saved');
+                self::redirect('/');
+            } else {
+                $view->set('errors', $errors + $user->getErrors());
             }
-
-            $view->set('errors', $errors + $user->getErrors());
         }
 
         $view->set('user', $user);

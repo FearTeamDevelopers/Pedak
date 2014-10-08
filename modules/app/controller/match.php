@@ -5,48 +5,43 @@ use THCFrame\Registry\Registry;
 use THCFrame\Request\RequestMethods;
 
 /**
- * Description of MatchController
+ * Description of App_Controller_Match
  *
  * @author Tomy
  */
-class App_Controller_Match extends Controller {
+class App_Controller_Match extends Controller
+{
 
     /**
      * 
      */
-    public function index() {
+    public function index()
+    {
         $view = $this->getActionView();
-        $security = Registry::get('security');
 
         $matchesA = App_Model_Match::all(
                         array(
                     'team = ?' => 'a',
                     'active = ?' => true
-                        ), 
-                array('id', 'home', 'host', 'hall', 'date', 'scoreHome', 'scoreHost'), 
-                array('date' => 'ASC')
+                        ), array('id', 'home', 'host', 'hall', 'date', 'scoreHome', 'scoreHost'), array('date' => 'ASC')
         );
 
         $matchesB = App_Model_Match::all(
                         array(
                     'team = ?' => 'b',
                     'active = ?' => true
-                        ), 
-                array('id', 'home', 'host', 'hall', 'date', 'scoreHome', 'scoreHost'), 
-                array('date' => 'ASC')
+                        ), array('id', 'home', 'host', 'hall', 'date', 'scoreHome', 'scoreHost'), array('date' => 'ASC')
         );
 
-        $member = $security->isGranted('role_member');
-
         $view->set('matchesA', $matchesA)
-                ->set('matchesB', $matchesB)
-                ->set('member', $member);
+                ->set('matchesB', $matchesB);
     }
 
     /**
      * @before _secured
      */
-    public function detail($id) {
+    public function detail($id)
+    {
         $view = $this->getActionView();
 
         $match = App_Model_Match::first(
@@ -72,7 +67,8 @@ class App_Controller_Match extends Controller {
      * @param number $id    matchid
      * @before _secured
      */
-    public function addMessage($id) {
+    public function addMessage($id)
+    {
 
         if (RequestMethods::post('sendMessage')) {
             $user = $this->getUser();

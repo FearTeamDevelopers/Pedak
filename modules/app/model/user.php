@@ -4,12 +4,18 @@ use THCFrame\Model\Model;
 use THCFrame\Security\UserInterface;
 
 /**
- * Description of UserModel
+ * Description of App_Model_User
  *
  * @author Tomy
  */
-class App_Model_User extends Model implements UserInterface {
+class App_Model_User extends Model implements UserInterface
+{
 
+    /**
+     * @readwrite
+     */
+    protected $_alias = 'us';
+    
     /**
      * @column
      * @readwrite
@@ -35,10 +41,10 @@ class App_Model_User extends Model implements UserInterface {
      * @column
      * @readwrite
      * @type text
-     * @length 130
+     * @length 200
      * @index
      *
-     * @validate required, min(5), max(130)
+     * @validate required, min(5), max(200)
      * @label password
      */
     protected $_password;
@@ -48,6 +54,8 @@ class App_Model_User extends Model implements UserInterface {
      * @readwrite
      * @type boolean
      * @index
+     * 
+     * @validate max(3)
      */
     protected $_active;
 
@@ -61,6 +69,17 @@ class App_Model_User extends Model implements UserInterface {
      * @label user role
      */
     protected $_role;
+
+    /**
+     * @column
+     * @readwrite
+     * @type text
+     * @length 40
+     * @unique
+     *
+     * @validate required, max(40)
+     */
+    protected $_salt;
 
     /**
      * @column
@@ -113,6 +132,7 @@ class App_Model_User extends Model implements UserInterface {
      * @lenght 15
      * 
      * @validate required, numeric, max(15)
+     * @label CFBU player id
      */
     protected $_cfbuPersonalNum;
 
@@ -142,20 +162,31 @@ class App_Model_User extends Model implements UserInterface {
      * @column
      * @readwrite
      * @type text
-     * @length 100
+     * @length 250
      * 
-     * @validate max(100)
+     * @validate path, max(250)
      * @label photo
      */
-    protected $_photo;
+    protected $_photoMain;
 
     /**
      * @column
      * @readwrite
      * @type text
-     * @length 2
+     * @length 250
      * 
-     * @validate required, alpha, max(2)
+     * @validate path, max(250)
+     * @label photo thumb
+     */
+    protected $_photoThumb;
+
+    /**
+     * @column
+     * @readwrite
+     * @type text
+     * @length 20
+     * 
+     * @validate required, alpha, max(20)
      * @label position
      */
     protected $_position;
@@ -177,10 +208,38 @@ class App_Model_User extends Model implements UserInterface {
      * @type text
      * @length 256
      * 
-     * @validate alphanumeric, max(1024)
+     * @validate alphanumeric, max(5000)
      * @label other
      */
     protected $_other;
+
+    /**
+     * @column
+     * @readwrite
+     * @type datetime
+     */
+    protected $_lastLogin;
+
+    /**
+     * @column
+     * @readwrite
+     * @type text
+     * @length 30
+     *
+     * @validate numeric, max(30)
+     * @label account lockdown time
+     */
+    protected $_loginLockdownTime;
+
+    /**
+     * @column
+     * @readwrite
+     * @type tinyint
+     *
+     * @validate numeric, max(2)
+     * @label login attemp counter
+     */
+    protected $_loginAttempCounter;
 
     /**
      * @column
@@ -199,7 +258,8 @@ class App_Model_User extends Model implements UserInterface {
     /**
      * 
      */
-    public function preSave() {
+    public function preSave()
+    {
         $primary = $this->getPrimaryColumn();
         $raw = $primary["raw"];
 
@@ -212,10 +272,20 @@ class App_Model_User extends Model implements UserInterface {
 
     /**
      * 
+     * @param type $datetime
+     */
+    public function setLastLogin($datetime)
+    {
+        $this->_lastLogin = $datetime;
+    }
+    
+    /**
+     * 
      * @param type $value
      * @throws \THCFrame\Security\Exception\Role
      */
-    public function setRole($value) {
+    public function setRole($value)
+    {
         $role = strtolower(substr($value, 0, 5));
         if ($role != 'role_') {
             throw new \THCFrame\Security\Exception\Role(sprintf('Role %s is not valid', $value));
@@ -227,7 +297,8 @@ class App_Model_User extends Model implements UserInterface {
     /**
      * 
      */
-    public function isActive() {
+    public function isActive()
+    {
         return (boolean) $this->_active;
     }
 
@@ -235,7 +306,8 @@ class App_Model_User extends Model implements UserInterface {
      * 
      * @return type
      */
-    public function getWholeName() {
+    public function getWholeName()
+    {
         return $this->_firstname . " " . $this->_lastname;
     }
 
@@ -243,9 +315,48 @@ class App_Model_User extends Model implements UserInterface {
      * 
      * @return type
      */
-    public function __toString() {
+    public function __toString()
+    {
         $str = "Id: {$this->_id} <br/>Email: {$this->_email} <br/> Name: {$this->_firstname} {$this->_lastname}";
         return $str;
     }
 
+    /**
+     * 
+     * @return type
+     */
+    public function getUnlinkPath($type = true)
+    {
+        if ($type) {
+            if (file_exists($this->_photoMain)) {
+                return $this->_photoMain;
+            } elseif (file_exists('.' . $this->_photoMain)) {
+                return '.' . $this->_photoMain;
+            } elseif (file_exists('./' . $this->_photoMain)) {
+                return './' . $this->_photoMain;
+            }
+        } else {
+            return $this->_photoMain;
+        }
+    }
+
+    /**
+     * 
+     * @return type
+     */
+    public function getUnlinkThumbPath($type = true)
+    {
+        if ($type) {
+            if (file_exists($this->_photoThumb)) {
+                return $this->_photoThumb;
+            } elseif (file_exists('.' . $this->_photoThumb)) {
+                return '.' . $this->_photoThumb;
+            } elseif (file_exists('./' . $this->_photoThumb)) {
+                return './' . $this->_photoThumb;
+            }
+        } else {
+            return $this->_photoThumb;
+        }
+    }
+    
 }

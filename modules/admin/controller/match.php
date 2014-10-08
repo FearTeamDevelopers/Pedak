@@ -1,184 +1,242 @@
 <?php
 
-use Admin\Etc\Controller as Controller;
-use THCFrame\Request\RequestMethods as RequestMethods;
+use Admin\Etc\Controller;
 
 /**
- * Description of MatchController
+ * Description of Admin_Controller_Match
  *
  * @author Tomy
  */
-class Admin_Controller_Match extends Controller {
+class Admin_Controller_Match extends Controller
+{
 
     /**
      * @before _secured, _admin
      */
-    public function index() {
+    public function index()
+    {
         $view = $this->getActionView();
-
-        $matchesA = App_Model_Match::all(array("team = ?" => "a"));
-        $matchesB = App_Model_Match::all(array("team = ?" => "b"));
-
-        $view->set("matchesA", $matchesA)
-                ->set("matchesB", $matchesB);
+        $matches = App_Model_Match::all();
+        $view->set('matches', $matches);
     }
 
     /**
      * @before _secured, _admin
      */
-    public function add() {
+    public function add()
+    {
         $view = $this->getActionView();
-
-        if (RequestMethods::post("addMatch")) {
+        
+        $view->set('submstoken', $this->mutliSubmissionProtectionToken());
+        
+        if (RequestMethods::post('submitAddMatch')) {
+            if($this->checkToken() !== true && 
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
+                self::redirect('/admin/match/');
+            }
 
             $match = new App_Model_Match(array(
-                "home" => RequestMethods::post("home"),
-                "host" => RequestMethods::post("host"),
-                "date" => date("Y-m-d", strtotime(RequestMethods::post("date"))),
-                "hall" => RequestMethods::post("hall"),
-                "scoreHome" => RequestMethods::post("scorehome", "-1"),
-                "scoreHost" => RequestMethods::post("scorehost", "-1"),
-                "season" => RequestMethods::post("season"),
-                "team" => RequestMethods::post("team")
+                'home' => RequestMethods::post('home'),
+                'away' => RequestMethods::post('host'),
+                'date' => RequestMethods::post('date'),
+                'hall' => RequestMethods::post('hall'),
+                'scoreHome' => RequestMethods::post('scoreHome', -1),
+                'scoreAway' => RequestMethods::post('scoreHost', -1),
+                'season' => RequestMethods::post('season'),
+                'team' => RequestMethods::post('team'),
+                'report' => RequestMethods::post('report')
             ));
 
             if ($match->validate()) {
-                $match->save();
+                $id = $match->save();
 
-                $view->flashMessage("Match has been successfully created");
-                self::redirect("/admin/match/");
+                Event::fire('admin.log', array('success', 'Match id: ' . $id));
+                $view->successMessage('Match'.self::SUCCESS_MESSAGE_1);
+                self::redirect('/admin/match/');
             } else {
-                print_r($match->getErrors());exit();
-                $view->set("errors", $match->getErrors());
+                Event::fire('admin.log', array('fail'));
+                $view->set('errors', $match->getErrors())
+                        ->set('submstoken', $this->revalidateMutliSubmissionProtectionToken())
+                        ->set('match', $match);
             }
         }
     }
 
     /**
-     * 
      * @before _secured, _admin
-     * @param type $id
      */
-    public function edit($id) {
+    public function edit($id)
+    {
         $view = $this->getActionView();
 
-        $match = App_Model_Match::first(array(
-                    "id = ?" => $id
-        ));
+        $match = App_Model_Match::first(array('id = ?' => (int) $id));
         
         if (NULL === $match) {
-            $view->flashMessage("Match not found");
-            self::redirect("/admin/match/");
+            $view->warningMessage(self::ERROR_MESSAGE_2);
+            self::redirect('/admin/match/');
         }
+        $view->set('match', $match);
 
-        if (RequestMethods::post("editMatch")) {
-            $match->home = RequestMethods::post("home");
-            $match->host = RequestMethods::post("host");
-            $match->date = date("Y-m-d", strtotime(RequestMethods::post("date")));
-            $match->hall = RequestMethods::post("hall");
-            $match->scoreHome = RequestMethods::post("scorehome", "-1");
-            $match->scoreHost = RequestMethods::post("scorehost", "-1");
-            $match->season = RequestMethods::post("season");
-            $match->report = RequestMethods::post("report", "");
-            $match->team = RequestMethods::post("team");
-            $match->active = RequestMethods::post("active");
+        if (RequestMethods::post('submitEditMatch')) {
+            if($this->checkToken() !== true){
+                self::redirect('/admin/match/');
+            }
+            
+            $match->home = RequestMethods::post('home');
+            $match->away = RequestMethods::post('host');
+            $match->date = RequestMethods::post('date');
+            $match->hall = RequestMethods::post('hall');
+            $match->scoreHome = RequestMethods::post('scoreHome');
+            $match->scoreAway = RequestMethods::post('scoreHost');
+            $match->season = RequestMethods::post('season');
+            $match->team = RequestMethods::post('team');
+            $match->report = RequestMethods::post('report');
+            $match->active = RequestMethods::post('active');
 
             if ($match->validate()) {
                 $match->save();
 
-                $view->flashMessage("All changes were successfully saved");
-                self::redirect("/admin/match/");
+                Event::fire('admin.log', array('success', 'Match id: ' . $match->getId()));
+                $view->successMessage(self::SUCCESS_MESSAGE_2);
+                self::redirect('/admin/match/');
+            } else {
+                Event::fire('admin.log', array('fail', 'Match id: ' . $match->getId()));
+                $view->set('errors', $match->getErrors());
             }
-
-            $view->set("errors", $match->getErrors());
         }
-
-        $view->set("match", $match);
     }
 
     /**
-     * 
      * @before _secured, _admin
-     * @param type $id
      */
-    public function delete($id) {
-        $view = $this->getActionView();
+    public function delete($id)
+    {
+        $this->willRenderActionView = false;
+        $this->willRenderLayoutView = false;
 
-        $match = App_Model_Match::first(array(
-                    "id = ?" => $id
-        ));
+        if ($this->checkToken()) {
+            $match = App_Model_Match::first(array('id = ?' => (int)$id));
 
-        if (NULL === $match) {
-            $view->flashMessage("Match not found");
-            self::redirect("/admin/match/");
-        }
-        
-        if (RequestMethods::post("deleteMatch")) {
-            if (NULL !== $match) {
+            if (NULL === $match) {
+                echo self::ERROR_MESSAGE_2;
+            } else {
                 if ($match->delete()) {
-                    $view->flashMessage("Match has been deleted");
-                    self::redirect("/admin/match/");
+                    Event::fire('admin.log', array('success', 'Match id: ' . $id));
+                    echo 'success';
                 } else {
-                    $view->flashMessage("Unknown error eccured");
-                    self::redirect("/admin/match/");
+                    Event::fire('admin.log', array('fail', 'Match id: ' . $id));
+                    echo self::ERROR_MESSAGE_1;
                 }
-            } else {
-                $view->flashMessage("Unknown id provided");
-                self::redirect("/admin/match/");
-            }
-        } elseif (RequestMethods::post("cancel")) {
-            self::redirect("/admin/match/");
-        }
-
-        $view->set("match", $match);
-    }
-
-    /**
-     * 
-     * @before _secured, _admin
-     * @param number $id    matchid
-     */
-    public function showMessages($id) {
-        $view = $this->getActionView();
-
-        $matchMessages = App_MatchChatModel::all(
-                        array(
-                    "matchId = ?" => $id,
-                    "active = ?" => true,
-                    "reply = ?" => 0
-                        ), array("*"), "created", "asc"
-        );
-
-        $view->set("matchMessages", $matchMessages);
-    }
-
-    /**
-     * @before _secured, _admin
-     * @param number $id    message id
-     */
-    public function deleteMessage($id) {
-        $view = $this->getActionView();
-
-        $matchMessage = App_MatchChatModel::all(
-                        array(
-                    "id = ?" => $id
-                        ), array("id", "reply"));
-
-        if (NULL !== $matchMessage) {
-            if ($matchMessage->delete()) {
-                if ($matchMessage->reply == 0) {
-                    App_MatchChatModel::deleteAll(array("reply = ?" => $id));
-                }
-
-                $view->flashMessage("Match has been deleted");
-                self::redirect("/admin/match/");
-            } else {
-                $view->flashMessage("Unknown error eccured");
-                self::redirect("/admin/match/");
             }
         } else {
-            $view->flashMessage("Unknown id provided");
-            self::redirect("/admin/match/");
+            echo self::ERROR_MESSAGE_1;
+        }
+    }
+
+    /**
+     * @before _secured, _admin
+     */
+    public function massAction()
+    {
+        $view = $this->getActionView();
+        $errors = array();
+
+        if (RequestMethods::post('performMatchAction')) {
+            if($this->checkToken() !== true){
+                self::redirect('/admin/match/');
+            }
+            
+            $ids = RequestMethods::post('matchids');
+            $action = RequestMethods::post('action');
+
+            switch ($action) {
+                case 'delete':
+                    $matches = App_Model_Match::all(array(
+                                'id IN ?' => $ids
+                    ));
+                    if (NULL !== $matches) {
+                        foreach ($matches as $match) {
+                            if (!$match->delete()) {
+                                $errors[] = 'An error occured while deleting ' . $match->getTitle();
+                            }
+                        }
+                    }
+
+                    if (empty($errors)) {
+                        Event::fire('admin.log', array('delete success', 'Match ids: ' . join(',', $ids)));
+                        $view->successMessage(self::SUCCESS_MESSAGE_6);
+                    } else {
+                        Event::fire('admin.log', array('delete fail', 'Error count:' . count($errors)));
+                        $message = join(PHP_EOL, $errors);
+                        $view->longFlashMessage($message);
+                    }
+
+                    self::redirect('/admin/match/');
+
+                    break;
+                case 'activate':
+                    $matches = App_Model_Match::all(array(
+                                'id IN ?' => $ids
+                    ));
+                    
+                    if (NULL !== $matches) {
+                        foreach ($matches as $match) {
+                            $match->active = true;
+
+                            if ($match->validate()) {
+                                $match->save();
+                            } else {
+                                $errors[] = "Match id {$match->getId()} - {$match->getTitle()} errors: "
+                                        . join(', ', $match->getErrors());
+                            }
+                        }
+                    }
+
+                    if (empty($errors)) {
+                        Event::fire('admin.log', array('activate success', 'Match ids: ' . join(',', $ids)));
+                        $view->successMessage(self::SUCCESS_MESSAGE_4);
+                    } else {
+                        Event::fire('admin.log', array('activate fail', 'Error count:' . count($errors)));
+                        $message = join(PHP_EOL, $errors);
+                        $view->longFlashMessage($message);
+                    }
+
+                    self::redirect('/admin/match/');
+
+                    break;
+                case 'deactivate':
+                    $matches = App_Model_Match::all(array(
+                                'id IN ?' => $ids
+                    ));
+                    
+                    if (NULL !== $matches) {
+                        foreach ($matches as $match) {
+                            $match->active = false;
+
+                            if ($match->validate()) {
+                                $match->save();
+                            } else {
+                                $errors[] = "Match id {$match->getId()} - {$match->getTitle()} errors: "
+                                        . join(', ', $match->getErrors());
+                            }
+                        }
+                    }
+
+                    if (empty($errors)) {
+                        Event::fire('admin.log', array('deactivate success', 'Match ids: ' . join(',', $ids)));
+                        $view->successMessage(self::SUCCESS_MESSAGE_5);
+                    } else {
+                        Event::fire('admin.log', array('deactivate fail', 'Error count:' . count($errors)));
+                        $message = join(PHP_EOL, $errors);
+                        $view->longFlashMessage($message);
+                    }
+
+                    self::redirect('/admin/match/');
+                    break;
+                default:
+                    self::redirect('/admin/match/');
+                    break;
+            }
         }
     }
 

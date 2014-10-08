@@ -1,0 +1,52 @@
+<ul class="maintabmenu multipletabmenu">
+    <li class="current"><a href="#">Gallery</a></li>
+    <li><a href="/admin/gallery/add/">Add Gallery</a></li>
+</ul><!--maintabmenu-->
+
+<div class="content">
+    <div class="contenttitle radiusbottom0">
+        <h2 class="table"><span>Galleries</span></h2>
+    </div><!--contenttitle-->
+
+    <table class="stdtable">
+        <colgroup>
+            <col class="con0" /> <col class="con1" />
+            <col class="con0" /> <col class="con1" />
+        </colgroup>
+        <thead>
+            <tr>
+                <th class="head0">Title</th>
+                <th class="head1">Type</th>
+                <th class="head0">Created</th>
+                <th class="head1">State</th>
+                <th class="head0">&nbsp;</th>
+            </tr> 
+        </thead>
+
+        <tbody>
+            {if !empty($galleries)}
+                {foreach $gallery in $galleries}
+                    <tr>
+                        <td>{echo $gallery->getTitle()}</td>
+                        <td>
+                            {if $gallery->isPublic == 0}
+                                Private
+                            {/if}{else}
+                                Public
+                            {/else}
+                        </td>
+                        <td>{echo $gallery->getCreated()}</td>
+                        <td>
+                            {if ($gallery->active)}<span class="labelProduct labelProductGreen">Active</span>{/if}
+                        </td>
+                        <td>
+                            <a href="/admin/gallery/detail/{echo $gallery->id}" class="btn btn_image2">
+                                <span>Enter gallery</span>
+                            </a>
+                        </td>
+                    </tr>
+                {/foreach}
+            {/if}
+        </tbody>
+    </table>
+</div>

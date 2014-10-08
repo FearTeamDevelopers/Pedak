@@ -2,11 +2,11 @@
 
 namespace THCFrame\Controller;
 
-use THCFrame\Core\Base as Base;
-use THCFrame\View\View as View;
-use THCFrame\Events\Events as Events;
-use THCFrame\Registry\Registry as Registry;
-use THCFrame\Controller\Exception as Exception;
+use THCFrame\Core\Base;
+use THCFrame\View\View;
+use THCFrame\Events\Events as Event;
+use THCFrame\Registry\Registry;
+use THCFrame\Controller\Exception;
 use THCFrame\View\Exception as ViewException;
 
 /**
@@ -92,13 +92,13 @@ class Controller extends Base
     /**
      * 
      * @param type $method
-     * @return \THCFrame\Controller\Exception\Implementation
+     * @return \THCFrame\Session\Exception\Implementation
      */
     protected function _getImplementationException($method)
     {
         return new Exception\Implementation(sprintf('%s method not implemented', $method));
     }
-
+    
     /**
      * 
      * @param type $url
@@ -122,18 +122,18 @@ class Controller extends Base
     {
         parent::__construct($options);
 
-        Events::fire('framework.controller.construct.before', array($this->name));
+        Event::fire('framework.controller.construct.before', array($this->name));
 
-        $configuration = Registry::get('config');
+        $configuration = Registry::get('configuration');
         $session = Registry::get('session');
         $router = Registry::get('router');
 
-        if (!empty($configuration->view->default)) {
-            $this->defaultExtension = $configuration->view->default->extension;
-            $this->defaultLayout = $configuration->view->default->layout;
-            $this->mobileLayout = $configuration->view->default->mobilelayout;
-            $this->tabletLayout = $configuration->view->default->tabletlayout;
-            $this->defaultPath = $configuration->view->default->path;
+        if (!empty($configuration->view)) {
+            $this->defaultExtension = $configuration->view->extension;
+            $this->defaultLayout = $configuration->view->layout;
+            $this->mobileLayout = $configuration->view->mobilelayout;
+            $this->tabletLayout = $configuration->view->tabletlayout;
+            $this->defaultPath = $configuration->view->path;
         } else {
             throw new \Exception('Error in configuration file');
         }
@@ -171,9 +171,27 @@ class Controller extends Base
             $this->actionView = $view;
         }
 
-        Events::fire('framework.controller.construct.after', array($this->name));
+        Event::fire('framework.controller.construct.after', array($this->name));
     }
 
+    /**
+     * 
+     * @return View
+     */
+    public function getActionView()
+    {
+        return $this->_actionView;
+    }
+    
+    /**
+     * 
+     * @return View
+     */
+    public function getLayoutView()
+    {
+        return $this->_layoutView;
+    }
+    
     /**
      * 
      * @param type $model
@@ -199,12 +217,14 @@ class Controller extends Base
     }
 
     /**
+     * header('X-Frame-Options: deny') is implemented here as protection against
+     * clickjacking.
      * 
      * @throws View\Exception\Renderer
      */
     public function render()
     {
-        Events::fire('framework.controller.render.before', array($this->name));
+        Event::fire('framework.controller.render.before', array($this->name));
 
         $defaultContentType = $this->defaultContentType;
         $results = null;
@@ -226,10 +246,12 @@ class Controller extends Base
             if ($doLayout) {
                 $view = $this->layoutView;
                 $results = $view->render();
-
+                
+                header('X-Frame-Options: deny');
                 header("Content-type: {$defaultContentType}");
                 echo $results;
             } else if ($doAction) {
+                header('X-Frame-Options: deny');
                 header("Content-type: {$defaultContentType}");
                 echo $results;
             }
@@ -240,7 +262,7 @@ class Controller extends Base
             throw new ViewException\Renderer('Invalid layout/template syntax');
         }
 
-        Events::fire('framework.controller.render.after', array($this->name));
+        Event::fire('framework.controller.render.after', array($this->name));
     }
 
     /**
@@ -248,11 +270,11 @@ class Controller extends Base
      */
     public function __destruct()
     {
-        Events::fire('framework.controller.destruct.before', array($this->name));
+        Event::fire('framework.controller.destruct.before', array($this->name));
 
         $this->render();
 
-        Events::fire('framework.controller.destruct.after', array($this->name));
+        Event::fire('framework.controller.destruct.after', array($this->name));
     }
 
 }

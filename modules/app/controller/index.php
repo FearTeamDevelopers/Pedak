@@ -1,9 +1,10 @@
 <?php
 
 use App\Etc\Controller as Controller;
+use THCFrame\Request\RequestMethods;
 
 /**
- * Description of IndexController
+ * Description of App_Controller_Index
  *
  * @author Tomy
  */
@@ -113,4 +114,78 @@ class App_Controller_Index extends Controller
         $view->set('news', $news);
     }
 
+    /**
+     * 
+     */
+    public function team()
+    {
+        $view = $this->getActionView();
+
+        $teamA = App_Model_User::all(
+                        array(
+                    'active = ?' => true,
+                    'team = ?' => 'a'
+                        ), 
+                array('id', 'firstname', 'lastname', 'dob',
+                    'playerNum', 'cfbuPersonalNum', 'team',
+                    'nickname', 'photoMain', 'photoThumb', 'position', 'grip', 'other'), 
+                array('lastname' => 'asc')
+        );
+
+        $view->set('teamA', $teamA);
+
+        $teamB = App_Model_User::all(
+                        array(
+                    'active = ?' => true,
+                    'team = ?' => 'b'
+                        ), 
+                array('id', 'firstname', 'lastname', 'dob',
+                    'playerNum', 'cfbuPersonalNum', 'team',
+                    'nickname', 'photoMain', 'photoThumb', 'position', 'grip', 'other'), 
+                array('lastname' => 'asc')
+        );
+
+        $view->set('teamB', $teamB);
+    }
+    
+    /**
+     * 
+     */
+    public function contact()
+    {
+        
+    }
+    
+    /**
+     * @before _secured
+     */
+    public function chat()
+    {
+        $view = $this->getActionView();
+
+        $messages = App_Model_Chat::all(array(
+                    'active = ?' => true,
+                    'reply = ?' => 0
+                        ), array('*'), array('created' => 'asc'), 10
+        );
+
+        if (RequestMethods::post('sendMessage')) {
+            $user = $this->getUser();
+
+            $chat = new App_Model_Chat(array(
+                'author' => $user->getWholeName(),
+                'title' => RequestMethods::post('title'),
+                'body' => RequestMethods::post('body'),
+                'reply' => RequestMethods::post('reply')
+            ));
+
+            if ($chat->validate()) {
+                $chat->save();
+                self::redirect('/kecarna');
+            }
+            $view->set('errors', $chat->getErrors());
+        }
+
+        $view->set('messages', $messages);
+    }
 }

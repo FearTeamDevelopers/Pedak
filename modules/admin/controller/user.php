@@ -1,90 +1,60 @@
 <?php
 
-use Admin\Etc\Controller as Controller;
-use THCFrame\Registry\Registry as Registry;
-use THCFrame\Request\RequestMethods as RequestMethods;
+use Admin\Etc\Controller;
+use THCFrame\Registry\Registry;
+use THCFrame\Request\RequestMethods;
+use THCFrame\Events\Events as Event;
+use THCFrame\Filesystem\FileManager;
+use THCFrame\Core\ArrayMethods;
 
 /**
- * Description of UserController
+ * Description of Admin_Controller_User
  *
  * @author Tomy
  */
-class Admin_Controller_User extends Controller {
-
-    /**
-     * @before _secured, _admin
-     * @param type $name
-     * @param type $username
-     * @return string
-     * @throws \Exception
-     */
-    private function _upload($name, $user) {
-
-        if (isset($_FILES[$name]) && !empty($_FILES[$name]["name"])) {
-            $file = $_FILES[$name];
-            $path = "/public/uploads/team/";
-
-            $size = filesize($file["tmp_name"]);
-            $extension = pathinfo($file["name"], PATHINFO_EXTENSION);
-            $filename = $user->getEmail() . "_" . $user->getId() . "." . $extension;
-
-            if ($size > 5000000) {
-                throw new \Exception("Image size exceeds the maximum size limit");
-            } elseif (!in_array($extension, self::$_imageExtensions)) {
-                throw new \Exception("Images can only be with jpg, jpeg, png or gif extension");
-            } elseif (file_exists("." . $path . $filename)) {
-                unlink("." . $path . $filename);
-
-                if (move_uploaded_file($file["tmp_name"], "." . $path . $filename)) {
-                    return $path . $filename;
-                } else {
-                    throw new \Exception("An error occured while uploading the photo");
-                }
-            } else {
-                if (move_uploaded_file($file["tmp_name"], "." . $path . $filename)) {
-                    return $path . $filename;
-                } else {
-                    throw new \Exception("An error occured while uploading the photo");
-                }
-            }
-        } else {
-            return "";
-        }
-    }
+class Admin_Controller_User extends Controller
+{
 
     /**
      * 
      */
-    public function login() {
-        if (RequestMethods::post("login")) {
-            $email = RequestMethods::post("email");
-            $password = RequestMethods::post("password");
+    public function login()
+    {
+        $this->willRenderLayoutView = false;
+        $view = $this->getActionView();
 
-            $view = $this->getActionView();
+        if (RequestMethods::post('submitLogin')) {
+
+            $email = RequestMethods::post('email');
+            $password = RequestMethods::post('password');
             $error = false;
 
             if (empty($email)) {
-                $view->set("email_error", "Email not provided");
+                $view->set('email_error', 'Email not provided');
                 $error = true;
             }
 
             if (empty($password)) {
-                $view->set("password_error", "Password not provided");
+                $view->set('password_error', 'Password not provided');
                 $error = true;
             }
 
             if (!$error) {
                 try {
-                    $security = Registry::get("security");
-                    $status = $security->authenticate($email, $password, true);
+                    $security = Registry::get('security');
+                    $status = $security->authenticate($email, $password);
 
-                    if ($status) {
-                        self::redirect("/admin/");
+                    if ($status === true) {
+                        self::redirect('/admin/');
                     } else {
-                        $view->set("account_error", "Email address and/or password are incorrect");
+                        $view->set('account_error', 'Email and/or password is wrong');
                     }
                 } catch (\Exception $e) {
-                    $view->set("account_error", "Login system is down");
+                    if (ENV == 'dev') {
+                        $view->set('account_error', $e->getMessage());
+                    } else {
+                        $view->set('account_error', 'Email and/or password is wrong');
+                    }
                 }
             }
         }
@@ -93,176 +63,335 @@ class Admin_Controller_User extends Controller {
     /**
      * 
      */
-    public function logout() {
-        $security = Registry::get("security");
+    public function logout()
+    {
+        $security = Registry::get('security');
         $security->logout();
-        self::redirect("/admin/");
+        self::redirect('/admin');
     }
 
     /**
      * @before _secured, _admin
      */
-    public function index() {
+    public function index()
+    {
         $view = $this->getActionView();
-        $security = Registry::get("security");
+        $security = Registry::get('security');
 
-        $superAdmin = $security->isGranted("role_superadmin");
+        $superAdmin = $security->isGranted('role_superadmin');
 
-        $users = Admin_Model_User::all(array(), array("id", "firstname", "lastname", "email", "role", "active", "team", "created"), "id", "asc"
+        $users = App_Model_User::all(
+                    array('role <> ?' => 'role_superadmin'), 
+                    array('id', 'firstname', 'lastname', 'email', 'role', 'active', 'created'), 
+                    array('id' => 'asc')
         );
 
-        $view->set("users", $users)
-                ->set("superadmin", $superAdmin);
+        $view->set('users', $users)
+                ->set('superadmin', $superAdmin);
     }
 
     /**
      * @before _secured, _admin
      */
-    public function add() {
-        $security = Registry::get("security");
+    public function add()
+    {
         $view = $this->getActionView();
-
-        $errors = array();
-        $superAdmin = $security->isGranted("role_superadmin");
-
-        if (RequestMethods::post("addUser")) {
-
-
-            $passComparation = $security->comparePasswords(
-                    RequestMethods::post("password"), RequestMethods::post("password2")
-            );
-
-            if (!$passComparation) {
-                $errors["password2"] = array("Paswords doesnt match");
+        
+        $view->set('submstoken', $this->mutliSubmissionProtectionToken());
+        
+        if (RequestMethods::post('submitAddUser')) {
+            if($this->checkToken() !== true && 
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
+                self::redirect('/admin/user/');
             }
-
-            $email = Admin_Model_User::first(array('email = ?' => RequestMethods::post("email")), array('email'));
-
-            if ($email) {
-                $errors["email"] = array("Email is already used");
-            }
-
-            $hash = $security->getHash(RequestMethods::post("password"));
-
-            $user = new Admin_Model_User(array(
-                "firstname" => RequestMethods::post("firstname"),
-                "lastname" => RequestMethods::post("lastname"),
-                "email" => RequestMethods::post("email"),
-                "password" => $hash,
-                "role" => RequestMethods::post("role", "role_member"),
-                "dob" => date("Y-m-d", strtotime(RequestMethods::post("dob"))),
-                "playerNum" => RequestMethods::post("playerNum"),
-                "cfbuPersonalNum" => RequestMethods::post("cfbuPersonalNum"),
-                "team" => RequestMethods::post("team"),
-                "nickname" => RequestMethods::post("nickname"),
-                "photo" => RequestMethods::post("photo"),
-                "position" => RequestMethods::post("position"),
-                "grip" => RequestMethods::post("grip"),
-                "other" => RequestMethods::post("other")
+            $errors = array();
+            $security = Registry::get('security');
+            
+            $fileManager = new FileManager(array(
+                'thumbWidth' => $this->loadConfigFromDb('thumb_width'),
+                'thumbHeight' => $this->loadConfigFromDb('thumb_height'),
+                'thumbResizeBy' => $this->loadConfigFromDb('thumb_resizeby'),
+                'maxImageWidth' => $this->loadConfigFromDb('photo_maxwidth'),
+                'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
             ));
 
             try {
-                $path = $this->_upload("photo", $user);
-                $user->setPhoto($path);
-            } catch (\Exception $e) {
-                $errors["photo"] = array($e->getMessage());
+                $data = $fileManager->upload('photo', 'team', time().'_');
+            } catch (Exception $ex) {
+                $errors['photo'] = array($ex->getMessage());
             }
+            
+            if (empty($data['errors']) && empty($errors['photo'])) {
+                foreach ($data['files'] as $i => $value) {
+                    $uploadedFile = ArrayMethods::toObject($value);
+                }
+            }
+
+            if (RequestMethods::post('password') !== RequestMethods::post('password2')) {
+                $errors['password2'] = array('Paswords doesnt match');
+            }
+
+            $email = App_Model_User::first(array('email = ?' => RequestMethods::post('email')), array('email'));
+
+            if ($email) {
+                $errors['email'] = array('Email is already used');
+            }
+
+            $salt = $security->createSalt();
+            $hash = $security->getSaltedHash(RequestMethods::post('password'), $salt);
+
+            $user = new App_Model_User(array(
+                'firstname' => RequestMethods::post('firstname'),
+                'lastname' => RequestMethods::post('lastname'),
+                'email' => RequestMethods::post('email'),
+                'password' => $hash,
+                'salt' => $salt,
+                'role' => RequestMethods::post('role', 'role_member'),
+                'dob' => RequestMethods::post('dob'),
+                'playerNum' => RequestMethods::post('playerNum'),
+                'cfbuPersonalNum' => RequestMethods::post('cfbuPersonalNum'),
+                'team' => RequestMethods::post('team'),
+                'nickname' => RequestMethods::post('nickname'),
+                'photoMain' => trim($uploadedFile->file->path, '.'),
+                'photoThumb' => trim($uploadedFile->thumb->path, '.'),
+                'position' => RequestMethods::post('position'),
+                'grip' => RequestMethods::post('grip'),
+                'other' => RequestMethods::post('other'),
+            ));
+
+            if (empty($errors) && $user->validate()) {
+                $id = $user->save();
+
+                Event::fire('admin.log', array('success', 'User id: ' . $id));
+                $view->successMessage('User'.self::SUCCESS_MESSAGE_1);
+                self::redirect('/admin/user/');
+            } else {
+                Event::fire('admin.log', array('fail'));
+                $view->set('errors', $errors + $user->getErrors())
+                        ->set('submstoken', $this->revalidateMutliSubmissionProtectionToken())
+                        ->set('user', $user);
+            }
+        }
+    }
+
+    /**
+     * @before _secured, _admin
+     */
+    public function updateProfile()
+    {
+        $view = $this->getActionView();
+        $loggedUser = $this->getUser();
+
+        $user = App_Model_User::first(
+                array('active = ?' => true, 'id = ?' => $loggedUser->getId()));
+
+        if (NULL === $user) {
+            $view->warningMessage(self::ERROR_MESSAGE_2);
+            self::redirect('/admin/user/');
+        }
+        $view->set('user', $user);
+
+        if (RequestMethods::post('submitUpdateProfile')) {
+            if($this->checkToken() !== true){
+                self::redirect('/admin/user/');
+            }
+            $errors = array();
+            $security = Registry::get('security');
+
+            if ($user->photoMain == '') {
+                $fileManager = new FileManager(array(
+                    'thumbWidth' => $this->loadConfigFromDb('thumb_width'),
+                    'thumbHeight' => $this->loadConfigFromDb('thumb_height'),
+                    'thumbResizeBy' => $this->loadConfigFromDb('thumb_resizeby'),
+                    'maxImageWidth' => $this->loadConfigFromDb('photo_maxwidth'),
+                    'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
+                ));
+
+                $fileErrors = $fileManager->upload('photo', 'team', time().'_')->getUploadErrors();
+                $files = $fileManager->getUploadedFiles();
+
+                if (!empty($files)) {
+                    foreach ($files as $i => $file) {
+                        if ($file instanceof \THCFrame\Filesystem\Image) {
+                            $photoMain = trim($file->getFilename(), '.');
+                            $photoThumb = trim($file->getThumbname(), '.');
+                            break;
+                        }
+                    }
+                }else{
+                    $errors['photo'] = $fileErrors;
+                }
+            } else {
+                $photoMain = $user->photoMain;
+                $photoThumb = $user->photoThumb;
+            }
+
+            if (RequestMethods::post('password') !== RequestMethods::post('password2')) {
+                $errors['password2'] = array('Paswords doesnt match');
+            }
+
+            if (RequestMethods::post('email') != $user->email) {
+                $email = App_Model_User::first(
+                                array('email = ?' => RequestMethods::post('email', $user->email)), 
+                                array('email')
+                );
+
+                if ($email) {
+                    $errors['email'] = array('Email is already used');
+                }
+            }
+
+            $pass = RequestMethods::post('password');
+
+            if ($pass === null || $pass == '') {
+                $salt = $user->getSalt();
+                $hash = $user->getPassword();
+            } else {
+                $salt = $security->createSalt();
+                $hash = $security->getSaltedHash($pass, $salt);
+            }
+
+            $user->firstname = RequestMethods::post('firstname');
+            $user->lastname = RequestMethods::post('lastname');
+            $user->email = RequestMethods::post('email');
+            $user->password = $hash;
+            $user->salt = $salt;
+            $user->role = $user->getRole();
+            $user->active = $user->getActive();
+            $user->dob = RequestMethods::post('dob');
+            $user->playerNum = RequestMethods::post('playerNum');
+            $user->cfbuPersonalNum = RequestMethods::post('cfbuPersonalNum');
+            $user->team = RequestMethods::post('team');
+            $user->nickname = RequestMethods::post('nickname');
+            $user->position = RequestMethods::post('position');
+            $user->grip = RequestMethods::post('grip');
+            $user->other = RequestMethods::post('other');
+            $user->photoMain = $photoMain;
+            $user->photoThumb = $photoThumb;
 
             if (empty($errors) && $user->validate()) {
                 $user->save();
 
-                $view->flashMessage("Account has been successfully created");
-                self::redirect("/admin/user/");
+                Event::fire('admin.log', array('success', 'User id: ' . $user->getId()));
+                $view->successMessage(self::SUCCESS_MESSAGE_2);
+                self::redirect('/admin/');
             } else {
-                $view->set("errors", $errors + $user->getErrors());
+                Event::fire('admin.log', array('fail', 'User id: ' . $user->getId()));
+                $view->set('errors', $errors + $user->getErrors());
             }
         }
-
-        $view->set("superadmin", $superAdmin);
     }
 
     /**
      * @before _secured, _admin
      * @param type $id
      */
-    public function edit($id) {
+    public function edit($id)
+    {
         $view = $this->getActionView();
-        $security = Registry::get("security");
+        $security = Registry::get('security');
 
-        $errors = array();
-        $superAdmin = $security->isGranted("role_superadmin");
-
-        $user = Admin_Model_User::first(array(
-                    "id = ?" => $id
-        ));
+        $user = App_Model_User::first(array('id = ?' => (int)$id));
 
         if (NULL === $user) {
-            $view->flashMessage("User not found");
-            self::redirect("/admin/user/");
+            $view->warningMessage(self::ERROR_MESSAGE_2);
+            self::redirect('/admin/user/');
+        } elseif ($user->role == 'role_superadmin' && $this->getUser()->getRole() != 'role_superadmin') {
+            $view->errorMessage(self::ERROR_MESSAGE_4);
+            self::redirect('/admin/user/');
         }
 
-        if (RequestMethods::post("editUser")) {
+        $view->set('user', $user);
 
-
-            $passComparation = $security->comparePasswords(
-                    RequestMethods::post("password"), RequestMethods::post("password2")
-            );
-
-            if (!$passComparation) {
-                $errors["password2"] = array("Paswords doesnt match");
+        if (RequestMethods::post('submitEditUser')) {
+            if($this->checkToken() !== true){
+                self::redirect('/admin/user/');
             }
+            
+            $errors = array();
+         
+            if ($user->photoMain == '') {
+                $fileManager = new FileManager(array(
+                    'thumbWidth' => $this->loadConfigFromDb('thumb_width'),
+                    'thumbHeight' => $this->loadConfigFromDb('thumb_height'),
+                    'thumbResizeBy' => $this->loadConfigFromDb('thumb_resizeby'),
+                    'maxImageWidth' => $this->loadConfigFromDb('photo_maxwidth'),
+                    'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
+                ));
 
-            if (RequestMethods::post("email") != $user->email) {
-                $email = Admin_Model_User::first(array('email = ?' => RequestMethods::post("email", $user->email)), array('email'));
-                if ($email) {
-                    $errors["email"] = array("Email is already used");
+                $fileErrors = $fileManager->upload('photo', 'team', time().'_')->getUploadErrors();
+                $files = $fileManager->getUploadedFiles();
+
+                if (!empty($files)) {
+                    foreach ($files as $i => $file) {
+                        if ($file instanceof \THCFrame\Filesystem\Image) {
+                            $photoMain = trim($file->getFilename(), '.');
+                            $photoThumb = trim($file->getThumbname(), '.');
+                            break;
+                        }
+                    }
+                }else{
+                    $errors['photo'] = $fileErrors;
                 }
-            }
-
-            $pass = RequestMethods::post("password");
-            if ($pass == "") {
-                $hash = $user->password;
             } else {
-                $hash = $security->getHash($pass);
+                $photoMain = $user->photoMain;
+                $photoThumb = $user->photoThumb;
+            }
+            
+            if (RequestMethods::post('password') !== RequestMethods::post('password2')) {
+                $errors['password2'] = array('Paswords doesnt match');
             }
 
-            $user->firstname = RequestMethods::post("firstname");
-            $user->lastname = RequestMethods::post("lastname");
-            $user->email = RequestMethods::post("email");
-            $user->password = $hash;
-            $user->role = RequestMethods::post("role");
-            $user->dob = date("Y-m-d", strtotime(RequestMethods::post("dob")));
-            $user->cfbuPersonalNum = RequestMethods::post("cfbuPersonalNum");
-            $user->playerNum = RequestMethods::post("playerNum");
-            $user->team = RequestMethods::post("team");
-            $user->nickname = RequestMethods::post("nickname");
-            $user->position = RequestMethods::post("position");
-            $user->grip = RequestMethods::post("grip");
-            $user->other = RequestMethods::post("other");
-            $user->active = RequestMethods::post("active");
+            if (RequestMethods::post('email') != $user->email) {
+                $email = App_Model_User::first(
+                                array('email = ?' => RequestMethods::post('email', $user->email)), 
+                                array('email')
+                );
 
-            try {
-                $path = $this->_upload("photo", $user);
-
-                if ($path != "") {
-                    $user->setPhoto($path);
+                if ($email) {
+                    $errors['email'] = array('Email is already used');
                 }
-            } catch (\Exception $e) {
-                $errors["photo"] = array($e->getMessage());
             }
+
+            $pass = RequestMethods::post('password');
+
+            if ($pass === null || $pass == '') {
+                $salt = $user->getSalt();
+                $hash = $user->getPassword();
+            } else {
+                $salt = $security->createSalt();
+                $hash = $security->getSaltedHash($pass, $salt);
+            }
+
+            $user->firstname = RequestMethods::post('firstname');
+            $user->lastname = RequestMethods::post('lastname');
+            $user->email = RequestMethods::post('email');
+            $user->password = $hash;
+            $user->salt = $salt;
+            $user->role = RequestMethods::post('role', $user->getRole());
+            $user->active = RequestMethods::post('active');
+            $user->dob = RequestMethods::post('dob');
+            $user->playerNum = RequestMethods::post('playerNum');
+            $user->cfbuPersonalNum = RequestMethods::post('cfbuPersonalNum');
+            $user->team = RequestMethods::post('team');
+            $user->nickname = RequestMethods::post('nickname');
+            $user->position = RequestMethods::post('position');
+            $user->grip = RequestMethods::post('grip');
+            $user->other = RequestMethods::post('other');
+            $user->photoMain = $photoMain;
+            $user->photoThumb = $photoThumb;
 
             if (empty($errors) && $user->validate()) {
                 $user->save();
 
-                $view->flashMessage("All changes were successfully saved");
-                self::redirect("/admin/user/");
+                Event::fire('admin.log', array('success', 'User id: ' . $id));
+                $view->successMessage(self::SUCCESS_MESSAGE_2);
+                self::redirect('/admin/user/');
+            } else {
+                Event::fire('admin.log', array('fail', 'User id: ' . $id));
+                $view->set('errors', $errors + $user->getErrors());
             }
-
-            $view->set("errors", $errors + $user->getErrors());
         }
-
-        $view->set("user", $user)
-                ->set("superadmin", $superAdmin);
     }
 
     /**
@@ -270,39 +399,63 @@ class Admin_Controller_User extends Controller {
      * @before _secured, _superadmin
      * @param type $id
      */
-    public function delete($id) {
-        $view = $this->getActionView();
+    public function delete($id)
+    {
+        $this->willRenderActionView = false;
+        $this->willRenderLayoutView = false;
 
-        $user = Admin_Model_User::first(array(
-                    "id = ?" => $id
-                        ), array("id", "firstname", "lastname", "email")
-        );
+        if ($this->checkToken()) {
+            $user = App_Model_User::first(array('id = ?' => $id));
 
-        if (NULL === $user) {
-            $view->flashMessage("User not found");
-            self::redirect("/admin/user/");
-        }
-        
-        $view->set("user", $user);
-
-        if (RequestMethods::post("deleteUser")) {
-            if (NULL !== $user) {
-                $message = "User " . $user->getFirstname() . " " . $user->getLastname() . " has been deleted";
-
-                if (unlink("." . $user->getPhoto()) && $user->delete()) {
-                    $view->flashMessage($message);
-                    self::redirect("/admin/user/");
-                } else {
-                    $view->flashMessage("Unknown error eccured");
-                    self::redirect("/admin/user/");
-                }
+            if (NULL === $user) {
+                echo self::ERROR_MESSAGE_2;
             } else {
-                $view->flashMessage("Unknown id provided");
-                self::redirect("/admin/user/");
+                if ($user->delete()) {
+                    Event::fire('admin.log', array('success', 'User id: ' . $id));
+                    echo 'success';
+                } else {
+                    Event::fire('admin.log', array('fail', 'User id: ' . $id));
+                    echo self::ERROR_MESSAGE_1;
+                }
             }
-        } elseif (RequestMethods::post("cancel")) {
-            self::redirect("/admin/user/");
+        } else {
+            echo self::ERROR_MESSAGE_1;
         }
     }
 
+    /**
+     * @before _secured, _admin
+     */
+    public function deleteUserMainPhoto($id)
+    {
+        $this->willRenderActionView = false;
+        $this->willRenderLayoutView = false;
+
+        if ($this->checkToken()) {
+            $user = App_Model_User::first(array('id = ?' => (int) $id));
+
+            if ($user === null) {
+                echo self::ERROR_MESSAGE_2;
+            } else {
+                $unlinkMainImg = $user->getUnlinkPath();
+                $unlinkThumbImg = $user->getUnlinkThumbPath();
+                $user->photoMain = '';
+                $user->photoThumb = '';
+
+                if ($user->validate()) {
+                    $user->save();
+                    @unlink($unlinkMainImg);
+                    @unlink($unlinkThumbImg);
+
+                    Event::fire('admin.log', array('success', 'User id: ' . $user->getId()));
+                    echo 'success';
+                } else {
+                    Event::fire('admin.log', array('fail', 'User id: ' . $user->getId()));
+                    echo self::ERROR_MESSAGE_1;
+                }
+            }
+        } else {
+            echo self::ERROR_MESSAGE_1;
+        }
+    }
 }

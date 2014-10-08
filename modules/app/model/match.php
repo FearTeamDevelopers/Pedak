@@ -3,11 +3,17 @@
 use THCFrame\Model\Model as Model;
 
 /**
- * Description of MatchModel
+ * Description of App_Model_Match
  *
  * @author Tomy
  */
-class App_Model_Match extends Model {
+class App_Model_Match extends Model
+{
+
+    /**
+     * @readwrite
+     */
+    protected $_alias = 'ma';
 
     /**
      * @column
@@ -22,6 +28,8 @@ class App_Model_Match extends Model {
      * @readwrite
      * @type boolean
      * @index
+     * 
+     * @validate max(3)
      */
     protected $_active;
 
@@ -138,7 +146,8 @@ class App_Model_Match extends Model {
     /**
      * 
      */
-    public function preSave() {
+    public function preSave()
+    {
         $primary = $this->getPrimaryColumn();
         $raw = $primary["raw"];
 

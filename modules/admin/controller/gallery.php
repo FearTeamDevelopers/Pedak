@@ -1,468 +1,411 @@
 <?php
 
-use Admin\Etc\Controller as Controller;
-use THCFrame\Request\RequestMethods as RequestMethods;
+use Admin\Etc\Controller;
+use THCFrame\Request\RequestMethods;
+use THCFrame\Events\Events as Event;
+use THCFrame\Filesystem\FileManager;
+use THCFrame\Registry\Registry;
 
 /**
- * Description of GalleryController
- *
- * @author Tomy
+ * 
  */
-class Admin_Controller_Gallery extends Controller {
-
+class Admin_Controller_Gallery extends Controller
+{
+    
     /**
-     *  
-     * @param type $source
-     * @param type $destination
-     * @param type $forcedWidth
-     * @param type $forcedHeight
+     * 
+     * @param type $key
+     * @return boolean
      */
-    private function _createThumbnail($sourceImage, $destination, $forcedWidth, $forcedHeight) {
+    private function _checkUrlKey($key)
+    {
+        $status = App_Model_Gallery::first(array('urlKey = ?' => $key));
 
-        $sourceSize = getimagesize($sourceImage);
-
-        // For a landscape picture or a square
-        if ($sourceSize[0] >= $sourceSize[1]) {
-            $finalWidth = ($forcedHeight / $sourceSize[1]) * $sourceSize[0];
-            $finalHeight = $forcedHeight;
+        if ($status === null) {
+            return true;
+        } else {
+            return false;
         }
-        // For a potrait picture
-        else {
-            $finalWidth = ($forcedHeight / $sourceSize[1]) * $sourceSize[0];
-            $finalHeight = $forcedHeight;
-        }
-
-        $newImage = imagecreatetruecolor($finalWidth, $finalHeight) or die('Canno initialize new GD image stream');
-
-        $ext = pathinfo($sourceImage, PATHINFO_EXTENSION);
-
-        if ($ext == 'jpg' || $ext == 'jpeg') {
-            $image = imagecreatefromjpeg($sourceImage);
-        } elseif ($ext == 'gif') {
-            $image = imagecreatefromgif($sourceImage);
-        } elseif ($ext == 'png') {
-            $image = imagecreatefrompng($sourceImage);
-        }
-
-        imagecopyresampled($newImage, $image, 0, 0, 0, 0, $finalWidth, $finalHeight, $sourceSize[0], $sourceSize[1]);
-
-        if ($ext == 'jpg' || $ext == 'jpeg') {
-            imagejpeg($newImage, $destination);
-        } elseif ($ext == 'gif') {
-            imagegif($newImage, $destination);
-        } elseif ($ext == 'png') {
-            imagepng($newImage, $destination);
-        }
-
-        //imagedestroy($newImage);
     }
 
     /**
+     * Action method returns list of all galleries
+     * 
      * @before _secured, _admin
      */
-    public function index() {
+    public function index()
+    {
         $view = $this->getActionView();
 
         $galleries = App_Model_Gallery::all();
 
-        $view->set("galleries", $galleries);
+        $view->set('galleries', $galleries);
     }
 
     /**
+     * Action method shows and processes form used for new gallery creation
+     * 
      * @before _secured, _admin
      */
-    public function add() {
+    public function add()
+    {
         $view = $this->getActionView();
+        
+        $view->set('submstoken', $this->mutliSubmissionProtectionToken());
 
-        if (RequestMethods::post("addGallery")) {
+        if (RequestMethods::post('submitAddGallery')) {
+            if($this->checkToken() !== true && 
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
+                self::redirect('/admin/gallery/');
+            }
+            
+            $errors = array();
+            $urlKey = $this->_createUrlKey(RequestMethods::post('title'));
+
+            if (!$this->_checkUrlKey($urlKey)) {
+                $errors['title'] = array('Gallery with this title already exists');
+            }
 
             $gallery = new App_Model_Gallery(array(
-                "title" => RequestMethods::post("title"),
-                "description" => RequestMethods::post("description"),
-                "avatar" => ""
+                'title' => RequestMethods::post('title'),
+                'isPublic' => RequestMethods::post('public', 1),
+                'urlKey' => $urlKey,
+                'avatarPhotoId' => 0,
+                'description' => RequestMethods::post('description')
             ));
 
-            if ($gallery->validate()) {
+            if (empty($errors) && $gallery->validate()) {
+                $id = $gallery->save();
+
+                Event::fire('admin.log', array('success', 'Gallery id: ' . $id));
+                $view->successMessage('Gallery'.self::SUCCESS_MESSAGE_1);
+                self::redirect('/admin/gallery/');
+            } else {
+                Event::fire('admin.log', array('fail'));
+                $view->set('gallery', $gallery)
+                        ->set('submstoken', $this->revalidateMutliSubmissionProtectionToken())
+                        ->set('errors', $errors + $gallery->getErrors());
+            }
+        }
+    }
+
+    /**
+     * Method shows detail of specific gallery based on param id. 
+     * From here can user upload photos and videos into gallery.
+     * 
+     * @before _secured, _admin
+     * @param int $id   collection id
+     */
+    public function detail($id)
+    {
+        $view = $this->getActionView();
+
+        $gallery = App_Model_Gallery::fetchGalleryById($id);
+
+        if ($gallery === null) {
+            $view->warningMessage(self::ERROR_MESSAGE_2);
+            self::redirect('/admin/gallery/');
+        }
+
+        $view->set('gallery', $gallery);
+    }
+
+    /**
+     * Action method shows and processes form used for editing specific 
+     * collection based on param id
+     * 
+     * @before _secured, _admin
+     * @param int $id   collection id
+     */
+    public function edit($id)
+    {
+        $view = $this->getActionView();
+
+        $gallery = App_Model_Gallery::fetchGalleryById((int) $id);
+
+        if (NULL === $gallery) {
+            $view->warningMessage(self::ERROR_MESSAGE_2);
+            self::redirect('/admin/gallery/');
+        }
+
+        $view->set('gallery', $gallery);
+
+        if (RequestMethods::post('submitEditGallery')) {
+            if($this->checkToken() !== true){
+                self::redirect('/admin/gallery/');
+            }
+            
+            $errors = array();
+            $urlKey = $this->_createUrlKey(RequestMethods::post('title'));
+
+            if ($gallery->getUrlKey() !== $urlKey && !$this->_checkUrlKey($urlKey)) {
+                $errors['title'] = array('Gallery with this title already exists');
+            }
+
+            $gallery->title = RequestMethods::post('title');
+            $gallery->isPublic = RequestMethods::post('public');
+            $gallery->active = RequestMethods::post('active');
+            $gallery->urlKey = $urlKey;
+            $gallery->description = RequestMethods::post('description');
+            $gallery->avatarPhotoId = RequestMethods::post('avatar');
+
+            if (empty($errors) && $gallery->validate()) {
                 $gallery->save();
 
-                $view->flashMessage("Gallery has been successfully created");
-                self::redirect("/admin/gallery/");
+                Event::fire('admin.log', array('success', 'Gallery id: ' . $id));
+                $view->successMessage(self::SUCCESS_MESSAGE_2);
+                self::redirect('/admin/gallery/');
             } else {
-                $view->set("errors", $gallery->getErrors());
+                Event::fire('admin.log', array('fail', 'Gallery id: ' . $id));
+                $view->set('errors', $gallery->getErrors());
             }
         }
     }
 
     /**
+     * Action method shows and processes form used for deleting specific 
+     * collection based on param id. If is collection delete confirmed, 
+     * there is option used for deleting all photos in collection.
      * 
      * @before _secured, _admin
-     * @param number $id    gallery id
+     * @param int $id   collection id
      */
-    public function edit($id) {
+    public function delete($id)
+    {
         $view = $this->getActionView();
 
-        $gallery = App_Model_Gallery::first(array(
-                    "id = ?" => $id
-        ));
-
-        if (NULL === $gallery) {
-            $view->flashMessage("Gallery not found");
-            self::redirect("/admin/gallery/");
-        }
-
-        if (RequestMethods::post("editGallery")) {
-            $gallery->title = RequestMethods::post("title");
-            $gallery->description = RequestMethods::post("description");
-
-            if ($gallery->validate()) {
-                $gallery->save();
-
-                $view->flashMessage("All changes were successfully saved");
-                self::redirect("/admin/gallery/");
-            }
-
-            $view->set("errors", $gallery->getErrors());
-        }
-
-        $view->set("gallery", $gallery);
-    }
-
-    /**
-     * 
-     * @before _secured, _admin
-     * @param number $id    gallery id
-     */
-    public function delete($id) {
-        $view = $this->getActionView();
-
-        $gallery = App_Model_Gallery::first(array(
-                    "id = ?" => $id
-        ));
-
-        if (NULL === $gallery) {
-            $view->flashMessage("Gallery not found");
-            self::redirect("/admin/gallery/");
-        }
-
-        if (RequestMethods::post("deleteGallery")) {
-            if (NULL !== $gallery) {
-                if ($gallery->delete()) {
-                    $view->flashMessage("Gallery has been deleted");
-                    self::redirect("/admin/gallery/");
-                } else {
-                    $view->flashMessage("Unknown error eccured");
-                    self::redirect("/admin/gallery/");
-                }
-            } else {
-                $view->flashMessage("Unknown id provided");
-                self::redirect("/admin/gallery/");
-            }
-        } elseif (RequestMethods::post("cancel")) {
-            self::redirect("/admin/gallery/");
-        }
-
-        $view->set("gallery", $gallery);
-    }
-
-    /**
-     * 
-     * @before _secured, _admin
-     * @param number $id    gallery id
-     */
-    public function detail($id) {
-        $view = $this->getActionView();
-
-        $gallery = App_Model_Gallery::first(array(
-                    "id = ?" => $id
-        ));
-
-        if (NULL === $gallery) {
-            $view->flashMessage("Gallery not found");
-            self::redirect("/admin/gallery/");
-        }
-
-        $photos = App_Model_Photo::all(array(
-                    "galleryId = ?" => $id
-        ));
-
-        $view->set("gallery", $gallery)
-                ->set("photos", $photos);
-    }
-
-    /**
-     * @before _secured, _admin
-     * @param number $id    gallery id
-     */
-    public function upload($id) {
-        $view = $this->getActionView();
-        $path = "/public/uploads/gallery/{$id}/";
-
-        $gallery = App_Model_Gallery::first(array(
-                    "id = ?" => $id
-                        ), array("id")
+        $gallery = App_Model_Gallery::first(
+                        array('id = ?' => (int)$id), 
+                        array('id', 'title', 'created')
         );
 
         if (NULL === $gallery) {
-            $view->flashMessage("Unknown gallery id provided");
-            self::redirect("/admin/gallery/");
+            $view->warningMessage(self::ERROR_MESSAGE_2);
+            self::redirect('/admin/gallery/');
         }
 
-        if (RequestMethods::post("uploadPhoto")) {
-            if (!is_dir("." . $path)) {
-                mkdir("." . $path);
+        $view->set('gallery', $gallery);
+
+        if (RequestMethods::post('submitDeleteGallery')) {
+            if($this->checkToken() !== true){
+                self::redirect('/admin/gallery/');
             }
 
-            $thumbHeight = 200;
-            $message = "";
-            $errorMessage = "";
+            if (RequestMethods::post('action') == 1) {
+                $fm = new FileManager();
+                $configuration = Registry::get('config');
 
-            foreach ($_FILES['photo']['name'] as $i => $name) {
-                $k = $i + 1;
-                if ($name == "") {
-                    $errorMessage .= "{$k}. Photo source can not be empty. Please click the 'Browse', 
-                                  button, locate an image then click the 'Upload Files'<br/>";
-                    continue;
+                if (!empty($configuration->files)) {
+                    $pathToImages = trim($configuration->files->pathToImages, '/');
+                    $pathToThumbs = trim($configuration->files->pathToThumbs, '/');
                 } else {
-                    $size = filesize($_FILES['photo']['tmp_name'][$i]);
-                    $extension = pathinfo($_FILES['photo']['name'][$i], PATHINFO_EXTENSION);
-                    $filename = stripslashes($_FILES['photo']['name'][$i]);
-                    
-                    list($width, $height, $type, $attr) = getimagesize($_FILES['photo']['tmp_name'][$i]);
+                    $pathToImages = 'public/uploads/images';
+                    $pathToThumbs = 'public/uploads/images';
+                }
 
-                    if ($size > 5000000) {
-                        $errorMessage .= "{$k}. Your file {$filename} size exceeds the maximum size limit<br/>";
-                        continue;
-                    } else {
-                        if (!in_array($extension, self::$_imageExtensions)) {
-                            $errorMessage .= "{$k}. {$filename} - Images can only be with jpg, jpeg, png or gif extension<br/>";
-                            continue;
+                $photos = App_Model_Photo::all(array('galleryId = ?' => (int)$id));
+                
+                $ids = array();
+                foreach ($photos as $colPhoto) {
+                    $ids[] = $colPhoto->getId();
+                }
+
+                App_Model_Photo::deleteAll(array('id IN ?' => $ids));
+
+                $path = APP_PATH . '/' . $pathToImages . '/gallery/' . $gallery->getId();
+                $pathThumbs = APP_PATH . '/' . $pathToThumbs . '/gallery/' . $gallery->getId();
+
+                if ($path == $pathThumbs) {
+                    $fm->remove($path);
+                } else {
+                    $fm->remove($path);
+                    $fm->remove($pathThumbs);
+                }
+            } elseif (RequestMethods::post('action') == 2) {
+                $photos = App_Model_Photo::all(array('galleryId = ?' => $id));
+                $ids = array();
+                foreach ($photos as $colPhoto) {
+                    $ids[] = $colPhoto->getId();
+                }
+
+                App_Model_Photo::deleteAll(array('id IN ?' => $ids));
+            }
+
+            if ($gallery->delete()) {
+                Event::fire('admin.log', array('success', 'Gallery id: ' . $id));
+                $view->successMessage('Galerie'.self::SUCCESS_MESSAGE_3);
+                self::redirect('/admin/gallery/');
+            } else {
+                Event::fire('admin.log', array('fail', 'Gallery id: ' . $id));
+                $view->errorMessage(self::ERROR_MESSAGE_1);
+                self::redirect('/admin/gallery/');
+            }
+        }
+    }
+
+    /**
+     * Action method shows and processes form used for uploading photos into
+     * collection specified by param id
+     * 
+     * @before _secured, _admin
+     * @param int $id   collection id
+     */
+    public function addPhoto($id)
+    {
+        $view = $this->getActionView();
+
+        $gallery = App_Model_Gallery::first(
+                        array(
+                    'id = ?' => (int) $id,
+                    'active = ?' => true
+                        ), array('id', 'title')
+        );
+
+        if ($gallery === null) {
+            $view->warningMessage(self::ERROR_MESSAGE_2);
+            self::redirect('/admin/gallery/');
+        }
+
+        $view->set('gallery', $gallery)
+                ->set('submstoken', $this->mutliSubmissionProtectionToken());
+
+        if (RequestMethods::post('submitAddPhoto')) {
+            if($this->checkToken() !== true && 
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
+                self::redirect('/admin/gallery/');
+            }
+            $errors = array();
+
+            $fileManager = new FileManager(array(
+                'thumbWidth' => $this->loadConfigFromDb('thumb_width'),
+                'thumbHeight' => $this->loadConfigFromDb('thumb_height'),
+                'thumbResizeBy' => $this->loadConfigFromDb('thumb_resizeby'),
+                'maxImageWidth' => $this->loadConfigFromDb('photo_maxwidth'),
+                'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
+            ));
+
+            $fileErrors = $fileManager->upload('secondfile', 'gallery/' . $gallery->getId(), time().'_')->getUploadErrors();
+            $files = $fileManager->getUploadedFiles();
+
+            if (!empty($files)) {
+                foreach ($files as $i => $file) {
+                    if ($file instanceof \THCFrame\Filesystem\Image) {
+                        $info = $file->getOriginalInfo();
+
+                        $photo = new App_Model_Photo(array(
+                            'galleryId' => $gallery->getId(),
+                            'imgMain' => trim($file->getFilename(), '.'),
+                            'imgThumb' => trim($file->getThumbname(), '.'),
+                            'description' => RequestMethods::post('description'),
+                            'priority' => RequestMethods::post('priority'),
+                            'photoName' => pathinfo($file->getFilename(), PATHINFO_FILENAME),
+                            'mime' => $info['mime'],
+                            'format' => $info['format'],
+                            'width' => $file->getWidth(),
+                            'height' => $file->getHeight(),
+                            'size' => $file->getSize()
+                        ));
+
+                        if ($photo->validate()) {
+                            $aid = $photo->save();
+
+                            Event::fire('admin.log', array('success', 'Photo id: ' . $aid . ' in gallery ' . $gallery->getId()));
                         } else {
-                            $getname = explode(".", $filename);
-                            $photoname = $getname[0];
-                            
-                            if(strlen($photoname) > 50){
-                                $photoname = substr($photoname, 0, 50);
-                            }
-                            
-                            $imageName = $photoname . "_large." . $extension;
-                            $thumbName = $photoname . "_small." . $extension;
-
-                            $imageLocName = $path . $imageName;
-                            $thumbLocName = $path . $thumbName;
-
-                            if (file_exists('.' . $imageLocName)) {
-                                $errorMessage .= "{$k}. {$filename} already exists <br/>";
-                                continue;
-                            }
-
-                            $copy = move_uploaded_file($_FILES['photo']['tmp_name'][$i], "." . $imageLocName);
-
-                            if (!$copy) {
-                                $errorMessage .= "{$k}. Error while uploading image {$filename}. Try again.<br/>";
-                                continue;
-                            } else {
-
-                                $this->_createThumbnail("." . $imageLocName, "." . $thumbLocName, $thumbHeight, $thumbHeight);
-
-                                $photo = new App_Model_Photo(array(
-                                    "galleryId" => $id,
-                                    "title" => "",
-                                    "photoName" => $photoname,
-                                    "pathSmall" => $thumbLocName,
-                                    "pathLarge" => $imageLocName,
-                                    "mime" => $extension,
-                                    "size" => $size,
-                                    "width" => $width,
-                                    "height" => $height
-                                ));
-
-                                if ($photo->validate()) {
-                                    $photo->save();
-                                    $message .= "{$k}. Photo " . $photoname . " uploaded<br/>";
-                                } else {
-                                    $errorMessage .= "{$k}. " . $photoname . " errors: " . join(", ", $photo->getErrors()) . "<br/>";
-                                }
-                            }
+                            Event::fire('admin.log', array('fail', 'Photo in gallery ' . $gallery->getId()));
+                            $errors['secondfile'][] = $photo->getErrors();
                         }
                     }
                 }
             }
 
-            if ($errorMessage == "") {
-                $view->longFlashMessage($message);
-                self::redirect("/admin/gallery/detail/" . $id);
+            $errors['secondfile'] = $fileErrors;
+
+            if (empty($errors['secondfile'])) {
+                $view->successMessage(self::SUCCESS_MESSAGE_7);
+                self::redirect('/admin/gallery/detail/' . $gallery->getId());
             } else {
-                $view->set("photoMessage", $errorMessage);
+                $view->set('errors', $errors);
             }
         }
     }
 
     /**
+     * Method is called via ajax and deletes photo specified by param id
      * 
      * @before _secured, _admin
+     * @param int $id   photo id
      */
-    public function photoAction() {
-        $view = $this->getActionView();
+    public function deletePhoto($id)
+    {
+        $this->willRenderActionView = false;
+        $this->willRenderLayoutView = false;
 
-        $message = "";
+        if ($this->checkToken()) {
+            $photo = App_Model_Photo::first(
+                            array('id = ?' => $id), array('id', 'imgMain', 'imgThumb')
+            );
 
-        if (RequestMethods::post("performPhotoAction")) {
-            $photoIds = RequestMethods::post("photos");
-            $action = RequestMethods::post("action");
+            if (null === $photo) {
+                echo self::ERROR_MESSAGE_2;
+            } else {
+                @unlink($photo->getUnlinkPath());
+                @unlink($photo->getUnlinkThumbPath());
 
-            switch ($action) {
-                case "delete":
-                    $photos = App_Model_Photo::all(array(
-                                "id IN ?" => $photoIds
-                    ));
-
-                    foreach ($photos as $photo) {
-                        if (NULL !== $photo) {
-                            if (unlink("." . $photo->pathSmall) && unlink("." . $photo->pathLarge)) {
-                                $galleryId = $photo->galleryId;
-                                $prepMessage = $photo->photoName . " has been deleted<br/>";
-                                if ($photo->delete()) {
-                                    $message .= $prepMessage;
-                                } else {
-                                    $message .= "An error occured while deleting " . $photo->photoName . "<br/>";
-                                }
-                            } else {
-                                $message .= "An error occured while deleting files of " . $photo->photoName . "<br/>";
-                            }
-                        } else {
-                            $message .= "Photo with id {$id} not found<br/>";
-                        }
-                    }
-
-                    $view->longFlashMessage($message);
-                    self::redirect("/admin/gallery/detail/" . $galleryId);
-
-                    break;
-                case "activate":
-                    $photos = App_Model_Photo::all(array(
-                                "id IN ?" => $photoIds
-                    ));
-
-                    foreach ($photos as $photo) {
-                        if (NULL !== $photo) {
-                            $photo->active = true;
-
-                            if ($photo->validate()) {
-                                $photo->save();
-                                $message .= "Photo id " . $photo->photoName . " activated<br/>";
-                            } else {
-                                $message .= "Photo id {$id} - " . $photo->photoName . " errors: " . join(", ", $photo->getErrors()) . "<br/>";
-                            }
-                        } else {
-                            $message .= "Photo with id {$id} not found<br/>";
-                        }
-                    }
-
-                    $view->longFlashMessage($message);
-                    self::redirect("/admin/gallery/detail/" . $photo->galleryId);
-
-                    break;
-                case "inactivate":
-                    $photos = App_Model_Photo::all(array(
-                                "id IN ?" => $photoIds
-                    ));
-
-                    foreach ($photos as $photo) {
-                        if (NULL !== $photo) {
-                            $photo->active = false;
-
-                            if ($photo->validate()) {
-                                $photo->save();
-                                $message .= "Photo id " . $photo->photoName . " inactivated<br/>";
-                            } else {
-                                $message .= "Photo id {$id} - " . $photo->photoName . " errors: " . join(", ", $photo->getErrors()) . "<br/>";
-                            }
-                        } else {
-                            $message .= "Photo with id {$id} not found<br/>";
-                        }
-                    }
-
-                    $view->longFlashMessage($message);
-                    self::redirect("/admin/gallery/detail/" . $photo->galleryId);
-
-                    break;
-
-                case "setavatar":
-                    foreach ($photoIds as $id) {
-                        $photo = App_Model_Photo::first(array(
-                                    "id = ?" => $id
-                        ));
-
-                        if (NULL !== $photo) {
-                            $gallery = App_Model_Gallery::first(array(
-                                        "id = ?" => $photo->galleryId
-                            ));
-
-                            if (NULL !== $gallery) {
-                                $gallery->avatar = $photo->getPathSmall();
-
-                                if ($gallery->validate()) {
-                                    $gallery->save();
-                                    $message .= "Photo id {$photo->photoName} set as gallery avatar<br/>";
-                                    break;
-                                } else {
-                                    $message .= "Gallery id {$photo->galleryId} - errors: " . join(", ", $gallery->getErrors()) . "<br/>";
-                                    break;
-                                }
-                            } else {
-                                $message .= "Gallery with id {$photo->galleryId} not found<br/>";
-                                break;
-                            }
-                        } else {
-                            $message .= "Photo with id {$id} not found<br/>";
-                            break;
-                        }
-                    }
-
-                    $view->longFlashMessage($message);
-                    self::redirect("/admin/gallery/detail/" . $photo->galleryId);
-
-                    break;
-                default:
-                    self::redirect("/admin/gallery/");
-                    break;
+                if ($photo->delete()) {
+                    Event::fire('admin.log', array('success', 'Photo id: ' . $id));
+                    echo 'success';
+                } else {
+                    Event::fire('admin.log', array('fail', 'Photo id: ' . $id));
+                    echo self::ERROR_MESSAGE_1;
+                }
             }
+        } else {
+            echo self::ERROR_MESSAGE_1;
         }
     }
 
     /**
-     * Response for ajax call
+     * Method is called via ajax and activate or deactivate photo specified by
+     * param id
      * 
      * @before _secured, _admin
-     * @param type $id
-     * @return string
+     * @param int $id   photo id
      */
-//    public function loadPhotos($id) {
-//        $this->willRenderLayoutView = false;
-//        $this->willRenderActionView = false;
-//        
-//        $photos = App_PhotoModel::all(array(
-//                    "galleryId = ?" => $id
-//        ));
-//
-//        if (NULL !== $photos) {
-//            $str = "";
-//
-//            foreach ($photos as $photo) {
-//                $str .= "<li>";
-//                if ($photo->active) {
-//                    $str .= "<span class=\"gallery-photolist-photo-active\">";
-//                } else {
-//                    $str .= "<span class=\"gallery-photolist-photo-inactive\">";
-//                }
-//                $str .= "<img src=\"{$photo->pathSmall}\" alt=\"\" width=\"200\"/>";
-//                $str .= "<input type=\"checkbox\" name=\"photos[]\" value=\"{$photo->id}\" /></span></li>";
-//            }
-//
-//            echo $str;
-//        } else {
-//            echo "No photos loaded";
-//        }
-//    }
+    public function changePhotoStatus($id)
+    {
+        $this->willRenderLayoutView = false;
+        $this->willRenderActionView = false;
+
+        if ($this->checkToken()) {
+            $photo = App_Model_Photo::first(array('id = ?' => $id));
+
+            if (null === $photo) {
+                echo self::ERROR_MESSAGE_2;
+            } else {
+                if (!$photo->active) {
+                    $photo->active = true;
+
+                    if ($photo->validate()) {
+                        $photo->save();
+                        Event::fire('admin.log', array('success', 'Photo id: ' . $id));
+                        echo 'active';
+                    } else {
+                        echo join('<br/>', $photo->getErrors());
+                    }
+                } elseif ($photo->active) {
+                    $photo->active = false;
+                    if ($photo->validate()) {
+                        $photo->save();
+                        Event::fire('admin.log', array('success', 'Photo id: ' . $id));
+                        echo 'inactive';
+                    } else {
+                        echo join('<br/>', $photo->getErrors());
+                    }
+                }
+            }
+        } else {
+            echo self::ERROR_MESSAGE_1;
+        }
+    }
 
 }

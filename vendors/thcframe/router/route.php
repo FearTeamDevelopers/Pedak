@@ -2,11 +2,15 @@
 
 namespace THCFrame\Router;
 
-use THCFrame\Core\Base as Base;
-use THCFrame\Router\Exception as Exception;
+use THCFrame\Core\Base;
+use THCFrame\Router\Exception;
 
 /**
  * Description of Route
+ * Router\Route class inherits from the Base class, so we can define all manner of simulated
+ * getters/setters. 
+ * All of the protected properties relate to the variables provided when a 
+ * new Router\Route (or subclass) instance are created, and contain information about the URL requested.
  *
  * @author Tomy
  */
@@ -43,7 +47,7 @@ class Route extends Base
 
     /**
      * 
-     * @param type $method
+     * @param string $method
      * @return \THCFrame\Router\Exception\Implementation
      */
     protected function _getImplementationException($method)

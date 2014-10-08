@@ -3,17 +3,22 @@
 use THCFrame\Module\Module as Module;
 
 /**
- * Description of Module
+ * Class for module specific settings
  *
  * @author Tomy
  */
-class Admin_Etc_Module extends Module{
+class Admin_Etc_Module extends Module
+{
 
     /**
      * @read
      */
-    protected $_moduleName = "Admin";
-    
+    protected $_moduleName = 'Admin';
+
+    /**
+     * @read
+     */
+    protected $_observerClass = 'Admin_Etc_Observer';
     protected $_routes = array(
         array(
             'pattern' => '/admin/login',
@@ -27,6 +32,6 @@ class Admin_Etc_Module extends Module{
             'controller' => 'user',
             'action' => 'logout',
         )
-        
     );
+
 }

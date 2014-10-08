@@ -1,0 +1,61 @@
+<ul class="maintabmenu multipletabmenu">
+    <li><a href="/admin/gallery/">Gallery</a></li>
+    <li><a href="/admin/gallery/add/">Add Gallery</a></li>
+    <li><a href="/admin/gallery/detail/{echo $gallery->id}">Gallery detail</a></li>
+    <li class="current"><a href="#">Upload photo</a></li>
+</ul><!--maintabmenu-->
+<div class="content">
+    <div class="contenttitle radiusbottom0">
+        <h2 class="table"><span>Upload photo</span></h2>
+    </div><!--contenttitle-->
+
+    <form class="stdform stdform2 uploadPhotoForm" method="post" action="#" enctype="multipart/form-data">
+        <input type="hidden" name="MAX_FILE_SIZE" value="10000000"/>
+        <input type="hidden" name="submstoken" id="submstoken" value="{echo $submstoken}" />
+        <input type="hidden" name="galleryid" class="collid" value="{echo $gallery->id}" />
+        <input type="hidden" name="tk" value="{echo $token}" />
+        
+        <p>
+            <label>Description</label>
+            <span class="field">
+                <textarea rows="5" name="description" class="longinput">{echo isset($photo)? $photo->description: ""}</textarea>
+                {if isset($errors["description"])}
+                <label class="error">{echo join("<br/>", $errors["description"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Priority</label>
+            <span class="field">
+                <select name="priority" >
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </span>
+        </p>
+        <p>
+            <label>Photo<small>*.jpg, *.jpeg, *.png, *.gif</small></label>
+            <span class="field">
+                <a href="#" class="btn btn_folder multi_upload"><span>+</span></a>
+                <a href="#" class="btn btn_folder multi_upload_dec"><span>-</span></a>
+            </span>
+            <span class="field file_inputs">
+                <input type="file" name="secondfile[]"/>
+            </span> 
+            {if isset($errors["secondfile"])}
+            <label class="error">
+                {echo join("<br/>", $errors["secondfile"])}
+            </label>
+            {/if}
+        </p>
+
+        <p class="stdformbutton">
+            <input name="submitAddPhoto" type="submit" value="Upload" class="submit radius2" />
+            <input type="reset" class="reset radius2" value="Reset" />
+        </p>
+    </form>
+</div>

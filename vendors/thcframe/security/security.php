@@ -2,27 +2,32 @@
 
 namespace THCFrame\Security;
 
-use THCFrame\Core\Base as Base;
-use THCFrame\Events\Events as Events;
-use THCFrame\Registry\Registry as Registry;
-use THCFrame\Security\Exception as Exception;
+use THCFrame\Core\Base;
+use THCFrame\Events\Events as Event;
+use THCFrame\Registry\Registry;
+use THCFrame\Security\Exception;
 use THCFrame\Security\UserInterface;
-use THCFrame\Security\AdvancedUserInterface;
-use THCFrame\Security\RoleManager;
+use THCFrame\Security\SecurityInterface;
 
 /**
  * Description of Security
  *
  * @author Tomy
  */
-class Security extends Base
+class Security extends Base implements SecurityInterface
 {
 
     /**
      * @read
      * @var type 
      */
-    protected $_accessControl;
+    protected $_authentication;
+
+    /**
+     * @read
+     * @var type 
+     */
+    protected $_authorization;
 
     /**
      * @read
@@ -32,27 +37,27 @@ class Security extends Base
 
     /**
      * @read
-     * @var type 
+     * @var type
      */
-    protected $_roleManager;
+    protected $_userToken;
 
     /**
      * @read
      * @var type
      */
-    protected $_acl;
-
-    /**
-     * @read
-     * @var type 
-     */
-    protected $_loginCredentials = array();
+    protected $_csrfToken;
 
     /**
      * @read
      * @var type 
      */
     protected $_user = null;
+
+    /**
+     * @read
+     * @var type 
+     */
+    protected $_secret;
 
     /**
      * 
@@ -65,42 +70,87 @@ class Security extends Base
     }
 
     /**
-     * 
+     * Method creates token as a protection from cross-site request forgery.
+     * This token has to be placed in hidden field in every form. Value from
+     * form has to be same as value stored in session.
+     */
+    public function createCsrfToken()
+    {
+        $session = Registry::get('session');
+        $token = $session->get('csrftoken');
+
+        if ($token === null) {
+            $this->_csrfToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(15)));
+            $session->set('csrftoken', $this->_csrfToken);
+        } else {
+            $this->_csrfToken = $token;
+        }
+    }
+
+    /**
+     * Method initialize security context. Check session for user token and creates
+     * role structure or acl object.
      */
     public function initialize()
     {
-        Events::fire('framework.security.initialize.before', array($this->accessControll));
+        Event::fire('framework.security.initialize.before', array($this->accessControll));
 
-        $configuration = Registry::get('config');
+        $configuration = Registry::get('configuration');
 
-        if (!empty($configuration->security->default)) {
-            $rolesOptions = (array) $configuration->security->default->roles;
-            $this->_loginCredentials = $configuration->security->default->loginCredentials;
-            $this->_passwordEncoder = $configuration->security->default->encoder;
-            $this->_accessControl = $configuration->security->default->accessControl;
+        if (!empty($configuration->security)) {
+            $this->_passwordEncoder = $configuration->security->encoder;
+            $this->_secret = $configuration->security->secret;
         } else {
             throw new \Exception('Error in configuration file');
-        }
-
-        if ($this->_accessControl == 'role_based') {
-            $this->_roleManager = new RoleManager($rolesOptions);
-        } elseif ($this->_accessControl == 'acl') {
-            //$this->_acl = new Acl();
-        } else {
-            throw new Exception\Implementation('Access controll is not supported');
         }
 
         $session = Registry::get('session');
         $user = $session->get('authUser');
 
-        if ($user) {
+        $this->createCsrfToken();
+
+        $authentication = new Authentication\Authentication();
+        $this->_authentication = $authentication->initialize($this);
+
+        $authorization = new Authorization\Authorization();
+        $this->_authorization = $authorization->initialize();
+
+        if ($user instanceof UserInterface) {
             $this->_user = $user;
-            Events::fire('framework.security.initialize.user', array($user));
+            Event::fire('framework.security.initialize.user', array($user));
         }
 
-        Events::fire('framework.security.initialize.after', array($this->accessControll));
+        if ($this->_authorization->type == 'resourcebase') {
+            Event::add('framework.router.findroute.after', function($path) {
+                $role = $this->getAuthorization()->checkForResource($path);
+
+                if ($role !== null) {
+                    if ($this->isGranted($role) !== true) {
+                        throw new \THCFrame\Security\Exception\Unauthorized();
+                    }
+                }
+            });
+        }
+
+        Event::fire('framework.security.initialize.after', array($this->accessControll));
 
         return $this;
+    }
+
+    /**
+     * 
+     * @param type $postToken
+     */
+    public function checkCsrfToken($postToken)
+    {
+        $session = Registry::get('session');
+        $originalToken = $session->get('csrftoken');
+
+        if (base64_decode($postToken) === base64_decode($originalToken)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -116,11 +166,12 @@ class Security extends Base
                 ->set('lastActive', time());
 
         $this->_user = $user;
+        return;
     }
 
     /**
      * 
-     * @return \THCFrame\Security\UserInterface
+     * @return type
      */
     public function getUser()
     {
@@ -128,169 +179,161 @@ class Security extends Base
     }
 
     /**
-     * 
+     * Method erases all authentication tokens for logged user and regenerates
+     * session
      */
     public function logout()
     {
         $session = Registry::get('session');
-        $session->erase('authUser')
-                ->erase('lastActive');
+        $session->clear();
 
         $this->_user = NULL;
         @session_regenerate_id();
     }
 
     /**
+     * Method generates 40-chars lenght salt for salting passwords
+     * 
+     * @return string
+     */
+    public function createSalt()
+    {
+        $newSalt = substr(rtrim(base64_encode(md5(microtime())), "="), 3, 40);
+
+        $user = \App_Model_User::first(array(
+                    "salt = ?" => $newSalt
+        ));
+
+        if ($user === null) {
+            return $newSalt;
+        } else {
+            for ($i = 0; $i < 100; $i++) {
+                $newSalt = substr(rtrim(base64_encode(md5(microtime())), "="), 3, 40);
+
+                $user = \App_Model_User::first(array(
+                            "salt = ?" => $newSalt
+                ));
+
+                if ($i == 99) {
+                    throw new Exception('Salt could not be created');
+                }
+
+                if ($user === null) {
+                    return $newSalt;
+                } else {
+                    continue;
+                }
+            }
+        }
+    }
+
+    /**
+     * Method returns salted hash of param value. Specific salt can be set as second
+     * parameter, if its not secret from configuration file is used
      * 
      * @param type $value
-     * @return type
+     * @param type $salt
+     * @return string
      * @throws Exception\HashAlgorithm
      */
-    public function getHash($value)
+    public function getSaltedHash($value, $salt = null)
     {
-        $salt = 'PIqC792XES6mbRoUpD0TFiej5';
-        
+        if ($salt === null) {
+            $salt = $this->getSecret();
+        } else {
+            $salt = $this->getSecret() . $salt;
+        }
+
         if ($value == '') {
             return '';
         } else {
-            if (in_array($this->_passwordEncoder, hash_algos())) {
-                return hash_hmac($this->_passwordEncoder, $value, $salt);
+            if (in_array($this->passwordEncoder, hash_algos())) {
+                return hash_hmac($this->passwordEncoder, $value, $salt);
             } else {
-                throw new Exception\HashAlgorithm(sprintf('Hash algorithm %s is not supported', $this->_passwordEncoder));
+                throw new Exception\HashAlgorithm(sprintf('Hash algorithm %s is not supported', $this->passwordEncoder));
             }
+        }
+    }
+
+    /**
+     * 
+     * @param type $name
+     * @param type $pass
+     * @return type
+     */
+    public function authenticate($name, $pass)
+    {
+        try {
+            return $this->_authentication->authenticate($name, $pass);
+        } catch (Exception $ex) {
+            return $ex->getMessage();
         }
     }
 
     /**
      * 
      * @param type $requiredRole
-     * @return boolean
-     * @throws Exception\Role
+     * @return type
      */
     public function isGranted($requiredRole)
     {
-        if ($this->_user) {
-            $userRole = strtolower($this->_user->getRole());
-        } else {
-            $userRole = 'role_guest';
-        }
-
-        $requiredRole = strtolower(trim($requiredRole));
-
-        if (substr($requiredRole, 0, 5) != 'role_') {
-            throw new Exception\Role(sprintf('Role %s is not valid', $requiredRole));
-        } elseif (!$this->_roleManager->roleExist($requiredRole)) {
-            throw new Exception\Role(sprintf('Role %s is not deffined', $requiredRole));
-        } else {
-            $userRoles = $this->_roleManager->getRole($userRole);
-
-            if (NULL !== $userRoles) {
-                if (in_array($requiredRole, $userRoles)) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                throw new Exception\Role(sprintf('User role %s is not valid role', $userRole));
-            }
+        try {
+            return $this->_authorization->isGranted($this->getUser(), $requiredRole);
+        } catch (Exception $ex) {
+            return $ex->getMessage();
         }
     }
 
     /**
      * 
-     * @param type $pass
-     * @param type $pass2
+     * @param type $text
      * @return type
      */
-    public function comparePasswords($pass, $pass2)
+    public function encrypt($text)
     {
-        return $this->getHash($pass) === $this->getHash($pass2);
+        $key = pack('H*', '0df9cf7ce4fbde15dc3e9303da18208e485ea44797a2795b239dda8e546845d4');
+        $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_CBC);
+        $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+
+        $ciphertext = mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $key, $text, MCRYPT_MODE_CBC, $iv);
+        $ciphertext = $iv . $ciphertext;
+        $ciphertext_base64 = base64_encode($ciphertext);
+
+        return $ciphertext_base64;
     }
 
     /**
      * 
-     * @param type $email
-     * @param type $password
-     * @return boolean
-     * @throws Exception\UserInactive
-     * @throws Exception\UserExpired
-     * @throws Exception\UserPassExpired
-     * @throws Exception\Implementation
+     * @param type $encryptedText
      */
-    public function authenticate($loginCredential, $password, $adminRequired = false)
+    public function decrypt($encryptedText)
     {
-        $hash = $this->getHash($password);
+        $key = pack('H*', '0df9cf7ce4fbde15dc3e9303da18208e485ea44797a2795b239dda8e546845d4');
+        $ciphertext_dec = base64_decode($encryptedText);
+        $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_CBC);
+        $iv_dec = substr($ciphertext_dec, 0, $iv_size);
 
-        $user = \App_Model_User::first(array(
-                    "{$this->_loginCredentials->login} = ?" => $loginCredential,
-                    "{$this->_loginCredentials->pass} = ?" => $hash
-        ));
+        $ciphertext_dec = substr($ciphertext_dec, $iv_size);
+        $plaintext_dec = mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $key, $ciphertext_dec, MCRYPT_MODE_CBC, $iv_dec);
 
-        if (NULL !== $user) {
-            unset($user->_password);
-            if ($user instanceof AdvancedUserInterface) {
-                if (!$user->isActive()) {
-                    $message = 'User account is not active';
-                    Events::fire('framework.security.authenticate.failure', array($user, $message));
-                    throw new Exception\UserInactive($message);
-                } elseif ($user->isExpired()) {
-                    $message = 'User account has expired';
-                    Events::fire('framework.security.authenticate.failure', array($user, $message));
-                    throw new Exception\UserExpired($message);
-                } elseif ($user->isPassExpired()) {
-                    $message = 'User password has expired';
-                    Events::fire('framework.security.authenticate.failure', array($user, $message));
-                    throw new Exception\UserPassExpired($message);
-                } else {
-                    $user->setLastLogin();
-                    $user->save();
+        echo $plaintext_dec . "\n";
+    }
 
-                    $this->setUser($user);
-
-                    if ($adminRequired) {
-                        if ($this->isGranted('role_admin')) {
-                            Events::fire('framework.security.authenticate.success', array($user));
-                            return true;
-                        } else {
-                            $message = 'You dont have permission to access required content';
-                            Events::fire('framework.security.authenticate.failure', array($user, $message));
-                            $this->logout();
-                            throw new Exception\Unauthorized($message);
-                        }
-                    } else {
-                        Events::fire('framework.security.authenticate.success', array($user));
-                        return true;
-                    }
-                }
-            } elseif ($user instanceof UserInterface) {
-
-                if (!$user->isActive()) {
-                    $message = 'User account is not active';
-                    Events::fire('framework.security.authenticate.failure', array($user, $message));
-                    throw new Exception\UserInactive($message);
-                } else {
-                    $this->setUser($user);
-
-                    if ($adminRequired) {
-                        if ($this->isGranted('role_admin')) {
-                            Events::fire('framework.security.authenticate.success', array($user));
-                            return true;
-                        } else {
-                            $message = 'You dont have permission to access required content';
-                            Events::fire('framework.security.authenticate.failure', array($user, $message));
-                            $this->logout();
-                            throw new Exception\Unauthorized($message);
-                        }
-                    } else {
-                        Events::fire('framework.security.authenticate.success', array($user));
-                        return true;
-                    }
-                }
-            } else {
-                throw new Exception\Implementation(sprintf('%s is not implementing UserInterface', get_class($user)));
-            }
+    /**
+     * Method creates new salt and salted password and 
+     * returns new hash with salt as string.
+     * Method can be used only in development environment
+     * 
+     * @param string $string
+     * @return string|null
+     */
+    public function devGetPasswordHash($string)
+    {
+        if (ENV == 'dev') {
+            $salt = $this->createSalt();
+            return $this->getSaltedHash($string, $salt) . '/' . $salt;
         } else {
-            return false;
+            return null;
         }
     }
 

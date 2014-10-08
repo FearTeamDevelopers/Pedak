@@ -1,0 +1,37 @@
+<ul class="maintabmenu multipletabmenu">
+    <li class="current"><a href="/admin/system/">System</a></li>
+    <li><a href="/admin/system/settings/">Settings</a></li>
+    {if $isSuperAdmin}<li><a href="/admin/system/showadminlog/">Admin log</a></li>{/if}
+</ul><!--maintabmenu-->
+
+<div class="content">
+
+    <div class="one_fourth">
+        <div class="contenttitle"><h2 class="form"><span>Clear cache</span></h2></div>
+        <form class="stdform stdform2" method="post" action="/admin/system/clearcache/">
+            <input type="hidden" name="tk" id="tk" value="{echo $token}" />
+            <p class="stdformbutton">
+                <input name="clearCache" type="submit" value="Clear cache" class="submit radius2" />
+            </p>
+        </form>
+    </div>
+    <div class="one_fourth">
+        <div class="contenttitle"><h2 class="form"><span>Database backup</span></h2></div>
+        <form class="stdform stdform2" method="post" action="/admin/system/createdatabasebackup/">
+            <input type="hidden" name="tk" id="tk" value="{echo $token}" />
+            <p class="stdformbutton">
+                <input name="createBackup" type="submit" value="Create backup" class="submit radius2" />
+            </p>
+        </form>
+    </div>
+    <div class="one_fourth">
+        <div class="contenttitle"><h2 class="form"><span>Generate sitemap.xml</span></h2></div>
+        <form class="stdform stdform2" method="post" action="/admin/system/generatesitemap/">
+            <input type="hidden" name="tk" id="tk" value="{echo $token}" />
+            <p class="stdformbutton">
+                <input name="generateSitemap" type="submit" value="Ganerate sitemap.xml" class="submit radius2" />
+            </p>
+        </form>
+    </div>
+</div><!--widgetcontent-->
+<br class="clear-all" />

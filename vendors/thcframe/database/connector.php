@@ -2,11 +2,13 @@
 
 namespace THCFrame\Database;
 
-use THCFrame\Core\Base as Base;
-use THCFrame\Database\Exception as Exception;
+use THCFrame\Core\Base;
+use THCFrame\Database\Exception;
 
 /**
  * Description of Connector
+ * Factory allows many different kinds of configuration driver classes to be used, 
+ * we need a way to share code across all driver classes.
  *
  * @author Tomy
  */
@@ -21,32 +23,32 @@ abstract class Connector extends Base
     {
         return $this;
     }
-
+    
     /**
      * 
      * @param type $method
-     * @return \THCFrame\Database\Exception\Implementation
+     * @return \THCFrame\Session\Exception\Implementation
      */
     protected function _getImplementationException($method)
     {
         return new Exception\Implementation(sprintf('%s method not implemented', $method));
     }
 
-    abstract function connect();
+    public abstract function connect();
 
-    abstract function disconnect();
+    public abstract function disconnect();
 
-    abstract function query();
+    public abstract function query();
 
-    abstract function execute($sql);
+    public abstract function execute($sql);
 
-    abstract function escape($value);
+    public abstract function escape($value);
 
-    abstract function getLastInsertId();
+    public abstract function getLastInsertId();
 
-    abstract function getAffectedRows();
+    public abstract function getAffectedRows();
 
-    abstract function getLastError();
+    public abstract function getLastError();
 
-    abstract function sync(\THCFrame\Model\Model $model);
+    public abstract function sync(\THCFrame\Model\Model $model);
 }

@@ -2,22 +2,117 @@
 
 namespace THCFrame\Filesystem;
 
-use THCFrame\Core\Base as Base;
-use THCFrame\Filesystem\Exception as Exception;
+use THCFrame\Core\Base;
+use THCFrame\Filesystem\Exception;
+use THCFrame\Registry\Registry;
+use THCFrame\Filesystem\Image;
+use THCFrame\Filesystem\File;
+use THCFrame\Core\StringMethods;
 
+/**
+ * 
+ */
 class FileManager extends Base
 {
 
     /**
      * @readwrite
      */
-    protected $_path;
-    
-    protected static $filesExtensions = array('rtf', 'txt', 'doc', 'docx', 'xls', 'xlsx', 'pdf', 'ppt', 'pptx', 'zip', 'rar');
+    protected $_pathToDocs;
 
+    /**
+     * @read
+     */
+    protected $_pathToImages;
+
+    /**
+     * @read
+     */
+    protected $_pathToThumbs;
+
+    /**
+     * @readwrite
+     */
+    protected $_maxImageHeight = 1080;
+
+    /**
+     * @readwrite
+     */
+    protected $_maxImageWidth = 1920;
+
+    /**
+     * @readwrite
+     */
+    protected $_thumbWidth;
+
+    /**
+     * @readwrite
+     */
+    protected $_thumbHeight;
+
+    /**
+     * @readwrite
+     */
+    protected $_thumbResizeBy;
+
+    /**
+     * @readwrite
+     */
+    protected $_uploadedFiles = array();
+
+    /**
+     * @readwrite
+     */
+    protected $_uploadErrors = array();
+
+    /**
+     * @read
+     */
+    protected $_imageExtensions = array('gif', 'jpg', 'png', 'jpeg');
+
+    /**
+     * @read
+     */
+    protected $_fileExtensions = array('rtf', 'txt', 'doc', 'docx', 'xls', 'xlsx', 'pdf', 'ppt', 'pptx', 'zip', 'rar');
+
+    /**
+     * 
+     * @param type $options
+     * @throws \Exception
+     */
     public function __construct($options = array())
     {
         parent::__construct($options);
+
+        $configuration = Registry::get('configuration');
+
+        if (!empty($configuration->files)) {
+            $this->_pathToDocs = trim($configuration->files->pathToDocuments, '/');
+            $this->_pathToImages = trim($configuration->files->pathToImages, '/');
+            $this->_pathToThumbs = trim($configuration->files->pathToThumbs, '/');
+
+            $this->checkDirectories();
+        } else {
+            throw new \Exception('Error in configuration file');
+        }
+    }
+
+    /**
+     * 
+     */
+    private function checkDirectories()
+    {
+        if (!is_dir(APP_PATH . '/' . $this->_pathToDocs)) {
+            mkdir(APP_PATH . '/' . $this->_pathToDocs, 0755, true);
+        }
+
+        if (!is_dir(APP_PATH . '/' . $this->_pathToImages)) {
+            mkdir(APP_PATH . '/' . $this->_pathToImages, 0755, true);
+        }
+
+        if (!is_dir(APP_PATH . '/' . $this->_pathToThumbs)) {
+            mkdir(APP_PATH . '/' . $this->_pathToThumbs, 0755, true);
+        }
     }
 
     /**
@@ -32,6 +127,25 @@ class FileManager extends Base
         }
 
         return $files;
+    }
+
+    /**
+     * 
+     * @param type $file
+     * @return type
+     */
+    private function backup($file)
+    {
+        $ext = $this->getExtension($file);
+        $filename = $this->getFileName($file);
+        $newFile = dirname($file) . '/' . $filename . '_' . time() . '.' . $ext;
+
+        if (strlen($filename) > 50) {
+            $newFile = dirname($file) . '/' . substr($filename, 0, 50) . '_' . time() . '.' . $ext;
+        }
+
+        $this->rename($file, $newFile);
+        return;
     }
 
     /**
@@ -67,6 +181,8 @@ class FileManager extends Base
                 throw new Exception\IO(sprintf('Failed to copy %s to %s', $originFile, $targetFile));
             }
         }
+
+        return true;
     }
 
     /**
@@ -101,6 +217,8 @@ class FileManager extends Base
                 }
             }
         }
+
+        return true;
     }
 
     /**
@@ -119,6 +237,8 @@ class FileManager extends Base
         if (true !== @rename($origin, $target)) {
             throw new Exception\IO(sprintf('Cannot rename "%s" to "%s".', $origin, $target));
         }
+
+        return true;
     }
 
     /**
@@ -138,6 +258,7 @@ class FileManager extends Base
                 throw new Exception\IO(sprintf('Failed to create %s', $dir));
             }
         }
+        return true;
     }
 
     /**
@@ -154,10 +275,13 @@ class FileManager extends Base
             if ($recursive && is_dir($file) && !is_link($file)) {
                 $this->chmod(new \FilesystemIterator($file), $mode, $umask, true);
             }
+
             if (true !== @chmod($file, $mode & ~$umask)) {
                 throw new Exception\IO(sprintf('Failed to chmod file %s', $file));
             }
         }
+
+        return true;
     }
 
     /**
@@ -168,8 +292,7 @@ class FileManager extends Base
     public function getExtension($path)
     {
         if ($path != '') {
-            $ext = pathinfo($path, PATHINFO_EXTENSION);
-            return $ext;
+            return strtolower(pathinfo($path, PATHINFO_EXTENSION));
         } else {
             return null;
         }
@@ -183,8 +306,7 @@ class FileManager extends Base
     public function getFileSize($path)
     {
         if ($path != '') {
-            $size = filesize($path);
-            return $size;
+            return filesize($path);
         } else {
             return null;
         }
@@ -198,8 +320,24 @@ class FileManager extends Base
     public function getFileName($path)
     {
         if ($path != '') {
+            return pathinfo($path, PATHINFO_FILENAME);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 
+     * @param type $path
+     * @return null
+     */
+    public function getNormalizedFileName($path)
+    {
+        if ($path != '') {
             $name = pathinfo($path, PATHINFO_FILENAME);
-            return $name;
+            return StringMethods::removeDiacriticalMarks(
+                            str_replace('.', '_', str_replace(' ', '_', $name))
+            );
         } else {
             return null;
         }
@@ -232,4 +370,409 @@ class FileManager extends Base
         $this->chmod($filename, $mode);
     }
 
+    /**
+     * 
+     * @return type
+     */
+    public function getPathToImages()
+    {
+        if (is_dir('/' . $this->_pathToImages)) {
+            return '/' . $this->_pathToImages;
+        } elseif (is_dir('./' . $this->_pathToImages)) {
+            return './' . $this->_pathToImages;
+        } elseif (is_dir(APP_PATH . '/' . $this->_pathToImages)) {
+            return APP_PATH . '/' . $this->_pathToImages;
+        }
+    }
+
+    /**
+     * 
+     * @return type
+     */
+    public function getPathToThumbs()
+    {
+        if (is_dir('/' . $this->_pathToThumbs)) {
+            return '/' . $this->_pathToThumbs;
+        } elseif (is_dir('./' . $this->_pathToThumbs)) {
+            return './' . $this->_pathToThumbs;
+        } elseif (is_dir(APP_PATH . '/' . $this->_pathToThumbs)) {
+            return APP_PATH . '/' . $this->_pathToThumbs;
+        }
+    }
+
+    /**
+     * 
+     * @return type
+     */
+    public function getPathToDocuments()
+    {
+        if (is_dir('/' . $this->_pathToDocs)) {
+            return '/' . $this->_pathToDocs;
+        } elseif (is_dir('./' . $this->_pathToDocs)) {
+            return './' . $this->_pathToDocs;
+        } elseif (is_dir(APP_PATH . '/' . $this->_pathToDocs)) {
+            return APP_PATH . '/' . $this->_pathToDocs;
+        }
+    }
+
+    /**
+     * 
+     * @param type $postField
+     * @param type $namePrefix
+     */
+    public function upload($postField, $uploadto, $namePrefix = '', $createThumb = true)
+    {
+        $pathToImages = $this->getPathToImages() . '/' . $uploadto . '/';
+        $pathToThumbs = $this->getPathToThumbs() . '/' . $uploadto . '/';
+        $pathToDocs = $this->getPathToDocuments() . '/' . $uploadto . '/';
+
+        if (!is_dir($pathToImages)) {
+            $this->mkdir($pathToImages, 0755);
+        }
+
+        if (!is_dir($pathToThumbs)) {
+            $this->mkdir($pathToThumbs, 0755);
+        }
+
+        if (!is_dir($pathToDocs)) {
+            $this->mkdir($pathToDocs, 0755);
+        }
+
+        if (is_array($_FILES[$postField]['tmp_name'])) {
+            foreach ($_FILES[$postField]['name'] as $i => $name) {
+                if (!empty($_FILES[$postField]['error'][$i])) {
+                    $error = $_FILES[$postField]['error'][$i];
+                    $name = $_FILES[$postField]['name'][$i];
+
+                    switch ($error) {
+                        case UPLOAD_ERR_INI_SIZE:
+                            $this->_uploadErrors[] = sprintf('The uploaded file %s exceeds the upload_max_filesize directive in php.ini', $name);
+                            break;
+                        case UPLOAD_ERR_FORM_SIZE:
+                            $this->_uploadErrors[] = sprintf('The uploaded file %s exceeds the MAX_FILE_SIZE directive that was specified in the HTML form', $name);
+                            break;
+                        case UPLOAD_ERR_PARTIAL:
+                            $this->_uploadErrors[] = sprintf('The uploaded file %s was only partially uploaded', $name);
+                            break;
+                        case UPLOAD_ERR_NO_FILE:
+                            $this->_uploadErrors[] = "No file was uploaded";
+                            break;
+                        case UPLOAD_ERR_NO_TMP_DIR:
+                            $this->_uploadErrors[] = "Missing a temporary folder";
+                            break;
+                        case UPLOAD_ERR_CANT_WRITE:
+                            $this->_uploadErrors[] = sprintf('Failed to write file %s to disk', $name);
+                            break;
+                        case UPLOAD_ERR_EXTENSION:
+                            $this->_uploadErrors[] = "File upload stopped by extension";
+                            break;
+
+                        default:
+                            $this->_uploadErrors[] = sprintf('Unknown upload error occured while uploading file %s', $name);
+                            break;
+                    }
+                    continue;
+                }
+
+                if (is_uploaded_file($_FILES[$postField]['tmp_name'][$i])) {
+                    $size = $_FILES[$postField]['size'][$i];
+                    $extension = $this->getExtension($_FILES[$postField]['name'][$i]);
+                    $filename = $this->getNormalizedFileName($_FILES[$postField]['name'][$i]);
+
+                    if (strlen($filename) > 50) {
+                        $filename = substr($filename, 0, 50);
+                    }
+
+                    if ($size > 5000000) {
+                        $this->_uploadErrors[] = sprintf('Your file %s size exceeds the maximum size limit', $filename);
+                        continue;
+                    } else {
+                        if (in_array($extension, $this->_imageExtensions)) {
+                            $imageName = $filename . '.' . $extension;
+                            $thumbName = $filename . '_thumb.' . $extension;
+                            $imageLocName = $pathToImages . $namePrefix . $imageName;
+                            $thumbLocName = $pathToThumbs . $namePrefix . $thumbName;
+
+                            if (file_exists($imageLocName)) {
+                                $this->backup($imageLocName);
+                            }
+
+                            if (file_exists($thumbLocName)) {
+                                $this->backup($thumbLocName);
+                            }
+
+                            $copy = move_uploaded_file($_FILES[$postField]['tmp_name'][$i], $imageLocName);
+
+                            if (!$copy) {
+                                $this->_uploadErrors[] = sprintf('Error while uploading image %s. Try again.', $filename);
+                                continue;
+                            } else {
+                                $img = new Image($imageLocName);
+                                $img->setSize($size);
+
+                                if ($img->getWidth() > $this->getMaxImageWidth() || $img->getHeight() > $this->getMaxImageHeight()) {
+                                    $img->bestFit($this->getMaxImageWidth(), $this->getMaxImageHeight())->save();
+                                }
+
+                                if ($createThumb) {
+                                    $img->setThumbname($thumbLocName);
+                                    $this->_uploadedFiles[] = $img;
+
+                                    $thumb = clone $img;
+
+                                    switch ($this->thumbResizeBy) {
+                                        case 'height':
+                                            $thumb->resizeToHeight($this->thumbHeight)->save($thumbLocName);
+                                            break;
+                                        case 'width':
+                                            $thumb->resizeToWidth($this->thumbWidth)->save($thumbLocName);
+                                            break;
+                                        default:
+                                            $thumb->thumbnail($this->thumbWidth, $this->thumbHeight)->save($thumbLocName);
+                                            break;
+                                    }
+
+                                    unset($img);
+                                    unset($thumb);
+                                    continue;
+                                } else {
+                                    $this->_uploadedFiles[] = $img;
+                                    continue;
+                                }
+                            }
+                        } elseif (in_array($extension, $this->_fileExtensions)) {
+                            $fileNameExt = $filename . '.' . $extension;
+                            $fileLocName = $pathToDocs . $namePrefix . $fileNameExt;
+
+                            if (file_exists($fileLocName)) {
+                                $this->backup($fileLocName);
+                            }
+
+                            $copy = move_uploaded_file($_FILES[$postField]['tmp_name'][$i], $fileLocName);
+
+                            if (!$copy) {
+                                $this->_uploadErrors[] = sprintf('Error while uploading image %s. Try again.', $filename);
+                                continue;
+                            } else {
+                                $file = new File($fileLocName);
+
+                                $this->_uploadedFiles[] = $file;
+                                unset($file);
+                                continue;
+                            }
+                        } else {
+                            $this->_uploadErrors[] = sprintf('File has unsupported extension. Images: %s | Files: %s', join(', ', $this->_imageExtensions), join(', ', $this->_fileExtensions));
+                            continue;
+                        }
+                    }
+                } else {
+                    $this->_uploadErrors[] = sprintf("Source %s cannot be empty", $i);
+                    continue;
+                }
+            }
+        } else {
+            if (!empty($_FILES[$postField]['error'])) {
+                $error = $_FILES[$postField]['error'];
+                $name = $_FILES[$postField]['name'];
+
+                switch ($error) {
+                    case UPLOAD_ERR_INI_SIZE:
+                        $this->_uploadErrors[] = sprintf('The uploaded file %s exceeds the upload_max_filesize directive in php.ini', $name);
+                        break;
+                    case UPLOAD_ERR_FORM_SIZE:
+                        $this->_uploadErrors[] = sprintf('The uploaded file %s exceeds the MAX_FILE_SIZE directive that was specified in the HTML form', $name);
+                        break;
+                    case UPLOAD_ERR_PARTIAL:
+                        $this->_uploadErrors[] = sprintf('The uploaded file %s was only partially uploaded', $name);
+                        break;
+                    case UPLOAD_ERR_NO_FILE:
+                        $this->_uploadErrors[] = "No file was uploaded";
+                        break;
+                    case UPLOAD_ERR_NO_TMP_DIR:
+                        $this->_uploadErrors[] = "Missing a temporary folder";
+                        break;
+                    case UPLOAD_ERR_CANT_WRITE:
+                        $this->_uploadErrors[] = sprintf('Failed to write file %s to disk', $name);
+                        break;
+                    case UPLOAD_ERR_EXTENSION:
+                        $this->_uploadErrors[] = "File upload stopped by extension";
+                        break;
+
+                    default:
+                        $this->_uploadErrors[] = sprintf('Unknown upload error occured while uploading file %s', $name);
+                        break;
+                }
+            }
+
+            if (is_uploaded_file($_FILES[$postField]['tmp_name'])) {
+                $size = $_FILES[$postField]['size'];
+                $extension = $this->getExtension($_FILES[$postField]['name']);
+                $filename = $this->getNormalizedFileName($_FILES[$postField]['name']);
+
+                if ($size > 5000000) {
+                    $this->_uploadErrors[] = sprintf('Your file %s size exceeds the maximum size limit', $filename);
+                } else {
+                    if (in_array($extension, $this->_imageExtensions)) {
+                        $imageName = $filename . '.' . $extension;
+                        $thumbName = $filename . '_thumb.' . $extension;
+                        $imageLocName = $pathToImages . $namePrefix . $imageName;
+                        $thumbLocName = $pathToThumbs . $namePrefix . $thumbName;
+
+                        if (file_exists($imageLocName)) {
+                            $this->backup($imageLocName);
+                        }
+
+                        if (file_exists($thumbLocName)) {
+                            $this->backup($thumbLocName);
+                        }
+
+                        $copy = move_uploaded_file($_FILES[$postField]['tmp_name'], $imageLocName);
+
+                        if (!$copy) {
+                            $this->_uploadErrors[] = sprintf('Error while uploading image %s. Try again.', $filename);
+                        } else {
+                            $img = new Image($imageLocName);
+                            $img->setSize($size);
+
+                            if ($img->getWidth() > $this->getMaxImageWidth() || $img->getHeight() > $this->getMaxImageHeight()) {
+                                $img->bestFit($this->getMaxImageWidth(), $this->getMaxImageHeight())->save();
+                            }
+
+                            if ($createThumb) {
+                                $img->setThumbname($thumbLocName);
+                                $this->_uploadedFiles[] = $img;
+
+                                $thumb = clone $img;
+
+                                switch ($this->thumbResizeBy) {
+                                    case 'height':
+                                        $thumb->resizeToHeight($this->thumbHeight)->save($thumbLocName);
+                                        break;
+                                    case 'width':
+                                        $thumb->resizeToWidth($this->thumbWidth)->save($thumbLocName);
+                                        break;
+                                    default:
+                                        $thumb->thumbnail($this->thumbWidth, $this->thumbHeight)->save($thumbLocName);
+                                        break;
+                                }
+
+                                unset($img);
+                                unset($thumb);
+                            } else {
+                                $this->_uploadedFiles[] = $img;
+                            }
+                        }
+                    } elseif (in_array($extension, $this->_fileExtensions)) {
+                        $fileNameExt = $filename . '.' . $extension;
+                        $fileLocName = $pathToDocs . $namePrefix . $fileNameExt;
+
+                        if (file_exists($fileLocName)) {
+                            $this->backup($fileLocName);
+                        }
+
+                        $copy = move_uploaded_file($_FILES[$postField]['tmp_name'], $fileLocName);
+
+                        if (!$copy) {
+                            $this->_uploadErrors[] = sprintf('Error while uploading image %s. Try again.', $filename);
+                        } else {
+                            $file = new File($fileLocName);
+
+                            $this->_uploadedFiles[] = $file;
+                            unset($file);
+                        }
+                    } else {
+                        $this->_uploadErrors[] = sprintf('File has unsupported extension. Images: %s | Files: %s', join(', ', $this->_imageExtensions), join(', ', $this->_fileExtensions));
+                    }
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * 
+     * @param type $base64string
+     * @param type $filename
+     * @param type $uploadTo
+     * @param type $namePrefix
+     * @param type $createThumb
+     * @return \THCFrame\Filesystem\FileManager
+     */
+    public function uploadBase64Image($base64string, $filename, $uploadTo, $namePrefix = '', $createThumb = true)
+    {
+        $img = new Image(null, $base64string);
+
+        $pathToImages = $this->getPathToImages() . '/' . $uploadTo . '/';
+        $pathToThumbs = $this->getPathToThumbs() . '/' . $uploadTo . '/';
+
+        if (!is_dir($pathToImages)) {
+            $this->mkdir($pathToImages, 0755);
+        }
+
+        if (!is_dir($pathToThumbs)) {
+            $this->mkdir($pathToThumbs, 0755);
+        }
+
+        $fileinfo = $img->getOriginalInfo();
+        $extension = $fileinfo['format'];
+
+        if (in_array($extension, $this->_imageExtensions)) {
+            $imageName = $filename . '.' . $extension;
+            $thumbName = $filename . '_thumb.' . $extension;
+            $imageLocName = $pathToImages . $namePrefix . $imageName;
+            $thumbLocName = $pathToThumbs . $namePrefix . $thumbName;
+
+            if (file_exists($imageLocName)) {
+                $this->backup($imageLocName);
+            }
+
+            if (file_exists($thumbLocName)) {
+                $this->backup($thumbLocName);
+            }
+
+            if ($img->getWidth() > $this->getMaxImageWidth() || $img->getHeight() > $this->getMaxImageHeight()) {
+                $img->bestFit($this->getMaxImageWidth(), $this->getMaxImageHeight())->save();
+            }
+
+            $img->save($imageLocName);
+
+            if ($createThumb) {
+                $img->setThumbname($thumbLocName);
+                $this->_uploadedFiles[] = $img;
+
+                $thumb = clone $img;
+
+                switch ($this->thumbResizeBy) {
+                    case 'height':
+                        $thumb->resizeToHeight($this->thumbHeight)->save($thumbLocName);
+                        break;
+                    case 'width':
+                        $thumb->resizeToWidth($this->thumbWidth)->save($thumbLocName);
+                        break;
+                    default:
+                        $thumb->thumbnail($this->thumbWidth, $this->thumbHeight)->save($thumbLocName);
+                        break;
+                }
+            } else {
+                $this->_uploadedFiles[] = $img;
+            }
+        } else {
+            $this->_uploadErrors[] = sprintf('File has unsupported extension. Images: %s | Files: %s', join(', ', $this->_imageExtensions), join(', ', $this->_fileExtensions));
+        }
+
+        return $this;
+    }
+
+    /**
+     * 
+     * @return \THCFrame\Filesystem\FileManager
+     */
+    public function newUpload()
+    {
+        $this->_uploadedFiles = array();
+        $this->_uploadErrors = array();
+        
+        return $this;
+    }
 }

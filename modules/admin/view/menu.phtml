@@ -1,0 +1,14 @@
+<ul>
+    <li class="current"><a href="/admin/" class="dashboard"><span>Dashboard</span></a></li>
+    <li><a href="/admin/news/" class="editor"><span>News</span></a></li>
+    <li><a href="/admin/match/" class="tables"><span>Match</span></a></li>
+    <li><a href="/admin/training/" class="tables"><span>Training</span></a></li>
+    <li><a href="/admin/sponsor/" class="media"><span>Sponsor</span></a></li>
+    <li><a href="/admin/gallery/" class="media"><span>Gallery</span></a></li>
+    <li><a href="/admin/video/" class="media"><span>Videos</span></a></li>
+    {if $isAdmin || $isSuperAdmin}
+    <li><a href="/admin/analytics/" class="charts"><span>Analytics</span></a></li>
+    <li><a href="/admin/user/" class="users"><span>Users</span></a></li>
+    <li><a href="/admin/system/" class="error"><span>System</span></a></li>
+    {/if}
+</ul>

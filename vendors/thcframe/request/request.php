@@ -2,14 +2,16 @@
 
 namespace THCFrame\Request;
 
-use THCFrame\Core\Base as Base;
-use THCFrame\Events\Events as Events;
-use THCFrame\Core\StringMethods as StringMethods;
-use THCFrame\Request\RequestMethods as RequestMethods;
-use THCFrame\Request\Exception as Exception;
+use THCFrame\Core\Base;
+use THCFrame\Events\Events as Event;
+use THCFrame\Core\StringMethods;
+use THCFrame\Request\RequestMethods;
+use THCFrame\Request\Exception;
 
 /**
- * Description of Request
+ * Class represents the different types of request methods, but ultimately they all call the
+ * same request() method. Other things to note are that the constructor sets the user agent, and the 
+ * get method turns a provided parameter array into a valid querystring.
  *
  * @author Tomy
  */
@@ -81,6 +83,9 @@ class Request extends Base
     }
 
     /**
+     * Method sets Curl parameters relating to each of the different request methods.
+     * Some request methods need additional parameters set (such as GET and POST), 
+     * while others need things excluded from the response (such as HEAD)
      * 
      * @param type $method
      * @return \THCFrame\Request\Request
@@ -106,6 +111,9 @@ class Request extends Base
     }
 
     /**
+     * Method iterates through all the request-specific parameters that need to be set.
+     * This includes the URL, the user agent, whether the request should follow redirects, and so on. 
+     * It even adds any options specified by the use of the setOptions() setter method (or construction option)
      * 
      * @param type $url
      * @param type $parameters
@@ -142,6 +150,8 @@ class Request extends Base
     }
 
     /**
+     * Method iterates through the headers specified by the setHeaders()
+     * setter method (or construction options) to add any custom headers to the request
      * 
      * @return \THCFrame\Request\Request
      */
@@ -227,6 +237,11 @@ class Request extends Base
     }
 
     /**
+     * The request() method use Curl to make the HTTP requests.
+     * The method begins by creating a new curl resource instance and continues by setting some parameters of the
+     * instance. It then makes the request, and if the request is successful, it will be returned in the form of a
+     * Request\Response class instance. If the request fails, an exception will be raised.
+     * Finally, the curl resource is destroyed and the response is returned.
      * 
      * @param type $method
      * @param type $url
@@ -238,7 +253,7 @@ class Request extends Base
     {
         session_write_close();
 
-        Events::fire('framework.request.request.before', array($method, $url, $parameters));
+        Event::fire('framework.request.request.before', array($method, $url, $parameters));
 
         $request = $this->_request = curl_init();
 
@@ -264,7 +279,7 @@ class Request extends Base
             throw new Exception\Response(ucfirst(curl_error($request)));
         }
 
-        Events::fire('framework.request.request.after', array($method, $url, $parameters, $response));
+        Event::fire('framework.request.request.after', array($method, $url, $parameters, $response));
 
         curl_close($request);
         return $response;

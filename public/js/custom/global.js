@@ -1,12 +1,14 @@
-$(document).ready(function() {
+jQuery.noConflict();
 
-    $(window).load(function() {
-        $("#loader, .loader").hide();
+jQuery(document).ready(function() {
+
+    jQuery(window).load(function() {
+        jQuery("#loader, .loader").hide();
     });
 
     /* GLOBAL SCRIPTS */
 
-    $("#slides").slidesjs({
+    jQuery("#slides").slidesjs({
         width: 1100,
         height: 250,
         play: {
@@ -16,14 +18,14 @@ $(document).ready(function() {
         }
     });
 
-    $(".datepicker").datepicker({
+    jQuery(".datepicker").datepicker({
         changeMonth: true,
         changeYear: true,
         dateFormat: "yy-mm-dd",
         firstDay: 1
     });
 
-    $(".datepicker-registration").datepicker({
+    jQuery(".datepicker-registration").datepicker({
         changeMonth: true,
         changeYear: true,
         yearRange: "1960:2000",
@@ -31,40 +33,40 @@ $(document).ready(function() {
         firstDay: 1
     });
 
-    $("#report-bug").click(function() {
-        $("#dialog").load('/setting/reportBug').dialog({
+    jQuery("#report-bug").click(function() {
+        jQuery("#dialog").load('/setting/reportBug').dialog({
             title: "Report Bug",
             width: "550px",
             modal: true,
             position: {my: "center", at: "top", of: window},
             buttons: {
                 Cancel: function() {
-                    $(this).dialog("close");
+                    jQuery(this).dialog("close");
                 }
             }
         });
     });
 
-    $("button.ajax-button").click(function() {
-        var href = $(this).attr("href");
-        var val = $(this).val();
-        $("#dialog").load(href).dialog({
+    jQuery("button.ajax-button").click(function() {
+        var href = jQuery(this).attr("href");
+        var val = jQuery(this).val();
+        jQuery("#dialog").load(href).dialog({
             title: val,
             width: "550px",
             modal: true,
             position: {my: "center", at: "top", of: window},
             buttons: {
                 Cancel: function() {
-                    $(this).dialog("close");
+                    jQuery(this).dialog("close");
                 }
             }
         });
     });
 
-    $("a.showReplyForm").click(function(e) {
+    jQuery("a.showReplyForm").click(function(e) {
         e.preventDefault();
-        $(this).siblings(".replyForm").toggle(500);
-        $(".replyForm:visible textarea.mediuminput").focus();
+        jQuery(this).siblings(".replyForm").toggle(500);
+        jQuery(".replyForm:visible textarea.mediuminput").focus();
     });
 
 });

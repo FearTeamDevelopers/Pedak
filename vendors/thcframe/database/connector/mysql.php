@@ -4,10 +4,15 @@ namespace THCFrame\Database\Connector;
 
 use THCFrame\Database as Database;
 use THCFrame\Database\Exception as Exception;
+use THCFrame\Profiler\Profiler;
 
 /**
  * Description of Mysql
- *
+ * The Database\Connector\Mysql class defines a handful of adaptable 
+ * properties and methods used to perform MySQLi class-specific functions, 
+ * and return MySQLi class-specific properties. We want to isolate these from 
+ * the outside so that our system is essentially plug-and-play
+ * 
  * @author Tomy
  */
 class Mysql extends Database\Connector
@@ -56,11 +61,6 @@ class Mysql extends Database\Connector
     protected $_isConnected = false;
 
     /**
-     * @readwrite
-     */
-    protected $_profiler = false;
-
-    /**
      * @read
      */
     protected $_magicQuotesActive;
@@ -71,8 +71,9 @@ class Mysql extends Database\Connector
     protected $_realEscapeStringExists;
 
     /**
+     * Class constructor
      * 
-     * @param type $options
+     * @param array $options
      */
     public function __construct($options = array())
     {
@@ -83,6 +84,8 @@ class Mysql extends Database\Connector
     }
 
     /**
+     * Method is used to ensure that the value of the
+     * $_service is a valid MySQLi instance
      * 
      * @return boolean
      */
@@ -98,6 +101,7 @@ class Mysql extends Database\Connector
     }
 
     /**
+     * Method attempts to connect to the MySQLi server at the specified host/port
      * 
      * @return \THCFrame\Database\Connector\Mysql
      * @throws Exception\Service
@@ -116,10 +120,6 @@ class Mysql extends Database\Connector
             $this->_service->set_charset('utf8');
             $this->_service->query("SET NAMES 'utf8' COLLATE 'utf8_general_ci'");
 
-            if ($this->getProfiler()) {
-                $this->_service->query("SET profiling = 1");
-            }
-
             $this->isConnected = true;
             unset($this->_password);
         }
@@ -128,6 +128,7 @@ class Mysql extends Database\Connector
     }
 
     /**
+     * Method attempts to disconnect the $_service instance from the MySQLi service
      * 
      * @return \THCFrame\Database\Connector\Mysql
      */
@@ -153,9 +154,10 @@ class Mysql extends Database\Connector
     }
 
     /**
+     * Method execute sql query by using prepared statements
      * 
-     * @param type $sql
-     * @return type
+     * @param string $sql
+     * @return mixed
      * @throws Exception\Service
      */
     public function execute($sql)
@@ -164,10 +166,14 @@ class Mysql extends Database\Connector
             throw new Exception\Service('Not connected to a valid database service');
         }
 
+        $profiler = Profiler::getProfiler();
+        $profiler->dbQueryStart($sql);
         $args = func_get_args();
 
         if (count($args) == 1) {
-            return $this->_service->query($sql);
+            $result = $this->_service->query($sql);
+            $profiler->dbQueryEnd($this->getAffectedRows());
+            return $result;
         }
 
         if (!$stmt = $this->_service->prepare($sql)) {
@@ -193,6 +199,7 @@ class Mysql extends Database\Connector
         $bindParamsMethod->invokeArgs($stmt, $bindParamsReferences);
 
         $stmt->execute();
+        $profiler->dbQueryEnd($stmt->affected_rows);
         $meta = $stmt->result_metadata();
 
         if ($meta) {
@@ -224,9 +231,10 @@ class Mysql extends Database\Connector
     }
 
     /**
+     * Escapes values
      * 
-     * @param type $value
-     * @return type
+     * @param mixed $value
+     * @return mixed
      * @throws Exception\Service
      */
     public function escape($value)
@@ -250,8 +258,9 @@ class Mysql extends Database\Connector
     }
 
     /**
+     * Returns last inserted id
      * 
-     * @return type
+     * @return number
      * @throws Exception\Service
      */
     public function getLastInsertId()
@@ -264,6 +273,7 @@ class Mysql extends Database\Connector
     }
 
     /**
+     * Returns count of affected rows by last query
      * 
      * @return type
      * @throws Exception\Service
@@ -278,8 +288,9 @@ class Mysql extends Database\Connector
     }
 
     /**
+     * Return last error
      * 
-     * @return type
+     * @return string
      * @throws Exception\Service
      */
     public function getLastError()
@@ -293,8 +304,8 @@ class Mysql extends Database\Connector
 
     /**
      * 
-     * @param type $result
-     * @return type
+     * @param Result $result
+     * @return array
      */
     public function fetchField($result)
     {
@@ -328,8 +339,14 @@ class Mysql extends Database\Connector
     }
 
     /**
+     * method converts the class/properties into a valid SQL query, and 
+     * ultimately into a physical database table. It does this by first 
+     * getting a list of the columns, by calling the model’s getColumns() method. 
+     * Looping over the columns, it creates arrays of indices and field strings.
+     * After all the field strings have been created, they are joined (along with the indices), 
+     * and applied to the CREATE TABLE $template string.
      * 
-     * @param type $model
+     * @param Model $model
      * @return \THCFrame\Database\Connector\Mysql
      * @throws Exception\Sql
      */

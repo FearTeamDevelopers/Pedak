@@ -1,0 +1,35 @@
+<ul class="maintabmenu multipletabmenu">
+    <li><a href="/admin/training/">Training</a></li>
+    <li><a href="/admin/training/add/">Add Training</a></li>
+    <li class="current"><a href="#">Training Attendance</a></li>
+</ul><!--maintabmenu-->
+
+<div class="content">
+    <div class="contenttitle radiusbottom0">
+        <h2 class="table"><span>Training Detail</span></h2>
+    </div><!--contenttitle-->
+
+    <table class="stdtable">
+        <colgroup>
+            <col class="con0" /> <col class="con1" />
+        </colgroup>
+        <thead>
+            <tr>
+                <th class="head0">User</th>
+                <th class="head1">Percentage</th>
+            </tr> 
+        </thead>
+
+        <tbody>
+            
+            {if !empty($attendance)}
+                {foreach $att in $attendance}
+                    <tr>
+                        <td>{echo $att_i}</td>
+                        <td>{echo $att}</td>
+                    </tr>
+                {/foreach}
+            {/if}
+        </tbody>
+    </table>
+</div>

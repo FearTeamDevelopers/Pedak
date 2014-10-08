@@ -26,6 +26,11 @@ class Image extends Base
      * @readwrite
      */
     protected $_filename;
+    
+    /**
+     * @readwrite
+     */
+    protected $_thumbname = '';
 
     /**
      * @readwrite
@@ -41,7 +46,17 @@ class Image extends Base
      * @readwrite
      */
     protected $_height;
-
+    
+    /**
+     * @readwrite
+     */
+    protected $_size;
+    
+    /**
+     * @readwrite
+     */
+    protected $_format;
+    
     /**
      * @readwrite
      */
@@ -59,12 +74,14 @@ class Image extends Base
      *
      * @return Image
      */
-    public function __construct($filename = null, $width = null, $height = null, $color = null)
+    public function __construct($filename = null, $base64 = null, $width = null, $height = null, $color = null)
     {
         parent::__construct();
 
         if ($filename) {
             $this->load($filename);
+        }elseif ($base64){
+            $this->loadBase64($base64);
         } elseif ($width) {
             $this->create($width, $height, $color);
         }
@@ -98,22 +115,6 @@ class Image extends Base
         }
 
         return 'square';
-    }
-
-    /**
-     * 
-     * @return type
-     */
-    public function getDataForDb()
-    {
-        return array(
-            'filename' => $this->filename,
-            'name' => pathinfo($this->filename, PATHINFO_FILENAME),
-            'size' => filesize($this->filename),
-            'width' => $this->getWidth(),
-            'height' => $this->getHeight(),
-            'mime' =>$this->_originalInfo['mime']
-        );
     }
 
     /**
@@ -209,7 +210,7 @@ class Image extends Base
      */
     public function brightness($level)
     {
-        imagefilter($this->image, IMG_FILTER_BRIGHTNESS, $this->inRange($level, -255, 255));
+        imagefilter($this->image, IMG_FILTER_BRIGHTNESS, $this->_inRange($level, -255, 255));
         return $this;
     }
 
@@ -221,7 +222,7 @@ class Image extends Base
      */
     public function contrast($level)
     {
-        imagefilter($this->image, IMG_FILTER_CONTRAST, $this->inRange($level, -100, 100));
+        imagefilter($this->image, IMG_FILTER_CONTRAST, $this->_inRange($level, -100, 100));
         return $this;
     }
 
@@ -235,9 +236,9 @@ class Image extends Base
      */
     public function colorize($color, $opacity)
     {
-        $rgba = $this->normalizeColor($color);
-        $alpha = $this->inRange(127 - (127 * $opacity), 0, 127);
-        imagefilter($this->image, IMG_FILTER_COLORIZE, $this->inRange($rgba['r'], 0, 255), $this->inRange($rgba['g'], 0, 255), $this->inRange($rgba['b'], 0, 255), $alpha);
+        $rgba = $this->_normalizeColor($color);
+        $alpha = $this->_inRange(127 - (127 * $opacity), 0, 127);
+        imagefilter($this->image, IMG_FILTER_COLORIZE, $this->_inRange($rgba['r'], 0, 255), $this->_inRange($rgba['g'], 0, 255), $this->_inRange($rgba['b'], 0, 255), $alpha);
         return $this;
     }
 
@@ -351,7 +352,7 @@ class Image extends Base
      */
     public function smooth($level)
     {
-        imagefilter($this->image, IMG_FILTER_SMOOTH, $this->inRange($level, -10, 10));
+        imagefilter($this->image, IMG_FILTER_SMOOTH, $this->_inRange($level, -10, 10));
         return $this;
     }
 
@@ -377,7 +378,7 @@ class Image extends Base
      */
     public function fill($color = '#000000')
     {
-        $rgba = $this->normalizeColor($color);
+        $rgba = $this->_normalizeColor($color);
         $fill_color = imagecolorallocatealpha($this->image, $rgba['r'], $rgba['g'], $rgba['b'], $rgba['a']);
         imagealphablending($this->image, false);
         imagesavealpha($this->image, true);
@@ -450,7 +451,7 @@ class Image extends Base
     public function opacity($opacity)
     {
         // Determine opacity
-        $opacity = $this->inRange($opacity, 0, 1) * 100;
+        $opacity = $this->_inRange($opacity, 0, 1) * 100;
 
         // Make a copy of the image
         $copy = imagecreatetruecolor($this->width, $this->height);
@@ -462,7 +463,7 @@ class Image extends Base
         $this->create($this->width, $this->height, array(0, 0, 0, 127));
 
         // Merge with specified opacity
-        $this->imagecopymergealpha($this->image, $copy, 0, 0, 0, 0, $this->width, $this->height, $opacity);
+        $this->_imagecopymergealpha($this->image, $copy, 0, 0, 0, 0, $this->width, $this->height, $opacity);
         imagedestroy($copy);
 
         return $this;
@@ -520,9 +521,9 @@ class Image extends Base
     public function rotate($angle, $bg_color = '#000000')
     {
         // Perform the rotation
-        $rgba = $this->normalizeColor($bg_color);
+        $rgba = $this->_normalizeColor($bg_color);
         $bg_color = imagecolorallocatealpha($this->image, $rgba['r'], $rgba['g'], $rgba['b'], $rgba['a']);
-        $new = imagerotate($this->image, -($this->inRange($angle, -360, 360)), $bg_color);
+        $new = imagerotate($this->image, -($this->_inRange($angle, -360, 360)), $bg_color);
         imagesavealpha($new, true);
         imagealphablending($new, true);
 
@@ -616,7 +617,7 @@ class Image extends Base
         }
 
         $this->filename = $filename;
-        return $this->getMetaData();
+        return $this->_getMetaData();
     }
 
     /**
@@ -633,9 +634,9 @@ class Image extends Base
         }
 
         //remove data URI scheme and spaces from base64 string then decode it
-        $this->imagestring = base64_decode(str_replace(' ', '+', preg_replace('#^data:image/[^;]+;base64,#', '', $base64string)));
-        $this->image = imagecreatefromstring($this->imagestring);
-        return $this->getMetaData();
+        $this->_imagestring = base64_decode(str_replace(' ', '+', preg_replace('#^data:image/[^;]+;base64,#', '', $base64string)));
+        $this->image = imagecreatefromstring($this->_imagestring);
+        return $this->_getMetaData();
     }
 
     /**
@@ -664,7 +665,7 @@ class Image extends Base
                 $mimetype = 'image/png';
                 break;
             default:
-                $info = (empty($this->imagestring)) ? getimagesize($this->filename) : getimagesizefromstring($this->imagestring);
+                $info = (empty($this->_imagestring)) ? getimagesize($this->filename) : getimagesizefromstring($this->_imagestring);
                 $mimetype = $info['mime'];
                 unset($info);
                 break;
@@ -761,7 +762,7 @@ class Image extends Base
         $quality = $quality ? : $this->quality;
         $filename = $filename ? StringMethods::removeDiacriticalMarks(str_replace(' ', '_', $filename)) : $this->filename;
         $info = $this->getOriginalInfo();
-        $format = $this->fileExt($filename) ? : $info['format'];
+        $format = $this->_fileExt($filename) ? : $info['format'];
 
         // Create the image
         switch (strtolower($format)) {
@@ -798,7 +799,6 @@ class Image extends Base
      * @param int		$y_offset	Vertical offset in pixels
      *
      * @return Image
-     *
      */
     public function overlay($overlay, $position = 'center', $opacity = 1, $x_offset = 0, $y_offset = 0)
     {
@@ -852,7 +852,7 @@ class Image extends Base
         }
 
         // Perform the overlay
-        $this->imagecopymergealpha($this->image, $overlay->image, $x, $y, 0, 0, $overlay->width, $overlay->height, $opacity);
+        $this->_imagecopymergealpha($this->image, $overlay->image, $x, $y, 0, 0, $overlay->width, $overlay->height, $opacity);
 
         return $this;
     }
@@ -875,7 +875,7 @@ class Image extends Base
         $angle = 0;
 
         // Determine text color
-        $rgba = $this->normalizeColor($color);
+        $rgba = $this->_normalizeColor($color);
         $color = imagecolorallocatealpha($this->image, $rgba['r'], $rgba['g'], $rgba['b'], $rgba['a']);
 
         // Determine textbox size
@@ -968,11 +968,9 @@ class Image extends Base
      * Returns the file extension of the specified file
      *
      * @param string	$filename
-     *
      * @return string
-     *
      */
-    protected function fileExt($filename)
+    protected function _fileExt($filename)
     {
         return pathinfo($filename, PATHINFO_EXTENSION);
     }
@@ -983,12 +981,11 @@ class Image extends Base
      * @param string|null	$imagestring	If omitted treat as a normal image
      * @return Image
      * @throws Exception
-     * 
      */
-    protected function getMetaData()
+    protected function _getMetaData()
     {
         //gather meta data
-        if (empty($this->imagestring)) {
+        if (empty($this->_imagestring)) {
             $info = getimagesize($this->filename);
 
             switch ($info['mime']) {
@@ -1006,7 +1003,7 @@ class Image extends Base
                     break;
             }
         } elseif (function_exists('getimagesizefromstring')) {
-            $info = getimagesizefromstring($this->imagestring);
+            $info = getimagesizefromstring($this->_imagestring);
         } else {
             throw new Exception\Version('PHP 5.4 is required to use method getimagesizefromstring');
         }
@@ -1015,13 +1012,14 @@ class Image extends Base
             'width' => $info[0],
             'height' => $info[1],
             'orientation' => $this->getOrientation(),
-            'exif' => function_exists('exif_read_data') && $info['mime'] === 'image/jpeg' && $this->imagestring === null ? $this->exif = @exif_read_data($this->filename) : null,
+            'exif' => function_exists('exif_read_data') && $info['mime'] === 'image/jpeg' && $this->_imagestring === null ? $this->exif = @exif_read_data($this->filename) : null,
             'format' => preg_replace('/^image\//', '', $info['mime']),
             'mime' => $info['mime']
         );
 
         $this->width = $info[0];
         $this->height = $info[1];
+        $this->format = $this->_originalInfo['format'];
 
         imagesavealpha($this->image, true);
         imagealphablending($this->image, true);
@@ -1041,9 +1039,8 @@ class Image extends Base
      * @param $src_w
      * @param $src_h
      * @param $pct
-     *
      */
-    protected function imagecopymergealpha($dst_im, $src_im, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h, $pct)
+    protected function _imagecopymergealpha($dst_im, $src_im, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h, $pct)
     {
         // Get image width and height and percentage
         $pct /= 100;
@@ -1101,9 +1098,8 @@ class Image extends Base
      * @param int|float		$min
      * @param int|float		$max
      * @return int|float
-     *
      */
-    protected function inRange($value, $min, $max)
+    protected function _inRange($value, $min, $max)
     {
 
         if ($value < $min) {
@@ -1124,7 +1120,7 @@ class Image extends Base
      *                                  	Where red, green, blue - integers 0-255, alpha - integer 0-127
      * @return array|bool
      */
-    protected function normalizeColor($color)
+    protected function _normalizeColor($color)
     {
         if (is_string($color)) {
 
@@ -1155,17 +1151,17 @@ class Image extends Base
 
             if (isset($color['r'], $color['g'], $color['b'])) {
                 return array(
-                    'r' => $this->inRange($color['r'], 0, 255),
-                    'g' => $this->inRange($color['g'], 0, 255),
-                    'b' => $this->inRange($color['b'], 0, 255),
-                    'a' => $this->inRange(isset($color['a']) ? $color['a'] : 0, 0, 127)
+                    'r' => $this->_inRange($color['r'], 0, 255),
+                    'g' => $this->_inRange($color['g'], 0, 255),
+                    'b' => $this->_inRange($color['b'], 0, 255),
+                    'a' => $this->_inRange(isset($color['a']) ? $color['a'] : 0, 0, 127)
                 );
             } elseif (isset($color[0], $color[1], $color[2])) {
                 return array(
-                    'r' => $this->inRange($color[0], 0, 255),
-                    'g' => $this->inRange($color[1], 0, 255),
-                    'b' => $this->inRange($color[2], 0, 255),
-                    'a' => $this->inRange(isset($color[3]) ? $color[3] : 0, 0, 127)
+                    'r' => $this->_inRange($color[0], 0, 255),
+                    'g' => $this->_inRange($color[1], 0, 255),
+                    'b' => $this->_inRange($color[2], 0, 255),
+                    'a' => $this->_inRange(isset($color[3]) ? $color[3] : 0, 0, 127)
                 );
             }
         }

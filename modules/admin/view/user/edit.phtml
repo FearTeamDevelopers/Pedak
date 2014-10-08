@@ -1,0 +1,250 @@
+<ul class="maintabmenu multipletabmenu">
+    <li><a href="/admin/user/">Users</a></li>
+    <li><a href="/admin/user/add/">Add user</a></li>
+    <li class="current"><a href="#">Edit user</a></li>
+</ul>
+
+<div class="content">
+    <div class="contenttitle radiusbottom0">
+        <h2 class="form"><span>User</span></h2>
+    </div>
+
+    <form class="stdform stdform2" method="post" action="#" enctype="multipart/form-data">
+        <input type="hidden" name="MAX_FILE_SIZE" value="5000000"/>
+        <input type="hidden" name="tk" id="tk" value="{echo $token}" />
+        <p>
+            <label>Firstname*</label>
+            <span class="field">
+                <input required type="text" name="firstname" class="longinput" value="{echo $user->firstname}" />
+                {if isset($errors["firstname"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["firstname"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Lastname*</label>
+            <span class="field">
+                <input required type="text" name="lastname" class="longinput" value="{echo $user->lastname}" />
+                {if isset($errors["lastname"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["lastname"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Email*</label>
+            <span class="field">
+                <input required type="email" name="email" class="longinput" value="{echo $user->email}" />
+                {if isset($errors["email"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["email"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Password</label>
+            <span class="field">
+                <input type="password" name="password" class="longinput" value=""/>
+                {if isset($errors["password"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["password"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Confirm password</label>
+            <span class="field">
+                <input type="password" name="password2" class="longinput" value=""/>
+                {if isset($errors["password2"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["password2"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        {if $isSuperAdmin}
+        <p>
+            <label>Role</label>
+            <span class="field">
+                <select name="role" class="longinput">
+                    {if $user->role == "role_superadmin"}
+                    <option value="role_member">Member</option>
+                    <option value="role_admin">Admin</option>
+                    <option value="role_superadmin" selected>Super Admin</option>
+                    {/if}
+                    {elseif $user->role == "role_admin"}
+                    <option value="role_member">Member</option>
+                    <option value="role_admin" selected>Admin</option>
+                    <option value="role_superadmin">Super Admin</option>
+                    {/elseif}
+                    {else}
+                    <option value="role_member" selected>Member</option>
+                    <option value="role_admin">Admin</option>
+                    <option value="role_superadmin">Super Admin</option>
+                    {/else}
+                </select>
+                {if isset($errors["role"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["role"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        {/if}
+
+        <p>
+            <label>Date of Birth*</label>
+            <span class="field">
+                <input required type="text" name="dob" class="longinput datepicker" value="{echo $user->dob}" />
+                {if isset($errors["dob"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["dob"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Player num.*</label>
+            <span class="field">
+                <input required type="text" name="playerNum" class="longinput" value="{echo $user->playerNum}" />
+                {if isset($errors["playerNum"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["playerNum"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>CFBU personal Id*</label>
+            <span class="field">
+                <input required type="text" name="cfbuPersonalNum" class="longinput" value="{echo $user->cfbuPersonalNum}" />
+                {if isset($errors["cfbuPersonalNum"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["cfbuPersonalNum"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Team*</label>
+            <span class="field">
+                <select name="team" class="longinput">
+                    {if $user->grip == "a"}
+                    <option value="a" selected>A</option>
+                    <option value="b">B</option>
+                    {/if}{else}
+                    <option value="a">A</option>
+                    <option value="b" selected>B</option>
+                    {/else}
+                </select>
+                {if isset($errors["team"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["team"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Nickname</label>
+            <span class="field">
+                <input type="text" name="nickname" class="longinput" value="{echo $user->nickname}" />
+                {if isset($errors["nickname"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["nickname"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Photo*</label>
+            {if $user->photoMain != ""}
+            <span class="field" id="currentLogo">
+                <img src="{echo $user->photoThumb}" alt="" height="100px" />
+                <a href="/admin/sponsor/deleteusermainphoto/{echo $user->id}" id="delImg" class="btn btn3 btn_trash" title="Delete logo"></a>
+            </span> 
+
+            <span class="field nodisplay" id="uploadLogo" >
+                <input type="file" name="photo" />
+                {if isset($errors["photo"])}
+                <label class="error">{echo join("<br/>", $errors["photo"])}</label>
+                {/if}
+            </span>
+            {/if}{else}
+            <span class="field" id="uploadLogo">
+                <input type="file" name="photo" />
+                {if isset($errors["photo"])}
+                <label class="error">{echo join("<br/>", $errors["photo"])}</label>
+                {/if}
+            </span> 
+            {/else}
+        </p>
+        <p>
+            <label>Position*</label>
+            <span class="field">
+                <select name="position" class="longinput">
+                    {if $user->position == "u"}
+                    <option value="u" selected>Offense</option>
+                    <option value="o">Defense</option>
+                    <option value="b">Goalkeeper</option>
+                    {/if}{elseif $user->position == "o"}
+                    <option value="u">Offense</option>
+                    <option value="o" selected>Defense</option>
+                    <option value="b">Goalkeeper</option>
+                    {/elseif}{else}
+                    <option value="u">Offense</option>
+                    <option value="o">Defense</option>
+                    <option value="b" selected>Goalkeeper</option>
+                    {/else}
+                </select>
+            </span>
+        </p>
+        <p>
+            <label>Grip*</label>
+            <span class="field">
+                <select name="grip" class="longinput">
+                    {if $user->grip == "r"}
+                    <option value="r" selected>Right</option>
+                    <option value="l">Left</option>
+                    {/if}{else}
+                    <option value="r">Right</option>
+                    <option value="l" selected>Left</option>
+                    {/else}
+                </select>
+            </span>
+        </p>
+        <p>
+            <label>Other</label>
+            <span class="field">
+                <textarea rows="4" name="other" class="longinput">{echo $user->other}</textarea>
+                {if isset($errors["other"])}
+                <label class="error">
+                    {echo join("<br/>", $errors["other"])}
+                </label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Active</label>
+            <span class="field">
+                <select name="active" class="longinput">
+                    {if $user->active == 1}
+                    <option value="0">Inactive</option>
+                    <option value="1" selected>Active</option>
+                    {/if}{else}
+                    <option value="0" selected>Inactive</option>
+                    <option value="1">Active</option>
+                    {/else}
+                </select>
+            </span>
+        </p>
+
+        <p class="stdformbutton">
+            <input type="submit" name="submitEditUser" value="Save" />
+        </p>
+    </form>
+</div>

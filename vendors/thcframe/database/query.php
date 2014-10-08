@@ -2,10 +2,11 @@
 
 namespace THCFrame\Database;
 
-use THCFrame\Core\Base as Base;
-use THCFrame\Core\ArrayMethods as ArrayMethods;
-use THCFrame\Core\StringMethods as StringMethods;
+use THCFrame\Core\Base;
+use THCFrame\Core\ArrayMethods;
+use THCFrame\Core\StringMethods;
 use THCFrame\Database\Exception as Exception;
+use THCFrame\Core\Core;
 
 /**
  * Description of Query
@@ -183,7 +184,7 @@ class Query extends Base
             $_offset = $this->offset;
 
             if ($_offset) {
-                $limit = "LIMIT {$_limit}, {$_offset}";
+                $limit = "LIMIT {$_offset}, {$_limit}";
             } else {
                 $limit = "LIMIT {$_limit}";
             }
@@ -364,8 +365,10 @@ class Query extends Base
 
         if ($result === false) {
             if (ENV == 'dev') {
+                Core::getLogger()->logError($sql);
                 throw new Exception\Sql(sprintf('SQL: %s', $this->connector->getLastError()));
             } else {
+                Core::getLogger()->logError($sql);
                 throw new Exception\Sql('There was an error with your SQL query');
             }
         }
@@ -389,8 +392,33 @@ class Query extends Base
 
         if ($result === false) {
             if (ENV == 'dev') {
+                Core::getLogger()->logError($sql);
                 throw new Exception\Sql(sprintf('SQL: %s', $this->connector->getLastError()));
             } else {
+                Core::getLogger()->logError($sql);
+                throw new Exception\Sql('There was an error with your SQL query');
+            }
+        }
+
+        return $this->connector->getAffectedRows();
+    }
+    
+    /**
+     * 
+     * @return type
+     * @throws Exception\Sql
+     */
+    public function update($data)
+    {
+        $sql = $this->_buildUpdate($data);
+        $result = $this->connector->execute($sql);
+
+        if ($result === false) {
+            if (ENV == 'dev') {
+                Core::getLogger()->logError($sql);
+                throw new Exception\Sql(sprintf('SQL: %s', $this->connector->getLastError()));
+            } else {
+                Core::getLogger()->logError($sql);
                 throw new Exception\Sql('There was an error with your SQL query');
             }
         }
@@ -430,11 +458,7 @@ class Query extends Base
      */
     public function join($join, $on, $alias = null, $fields = array('*'))
     {
-        if (empty($join)) {
-            throw new Exception\Argument('Invalid argument');
-        }
-
-        if (empty($on)) {
+        if (empty($join) || empty($on)) {
             throw new Exception\Argument('Invalid argument');
         }
 
@@ -451,6 +475,56 @@ class Query extends Base
 
     /**
      * 
+     * @param type $join
+     * @param type $on
+     * @param type $fields
+     * @return \THCFrame\Database\Query
+     * @throws Exception\Argument
+     */
+    public function leftjoin($join, $on, $alias = null, $fields = array('*'))
+    {
+        if (empty($join) || empty($on)) {
+            throw new Exception\Argument('Invalid argument');
+        }
+
+        if (NULL !== $alias) {
+            $this->_fields += array($alias => $fields);
+            $this->_join[] = "LEFT JOIN {$join} {$alias} ON {$on}";
+        } else {
+            $this->_fields += array($join => $fields);
+            $this->_join[] = "LEFT JOIN {$join} ON {$on}";
+        }
+
+        return $this;
+    }
+
+    /**
+     * 
+     * @param type $join
+     * @param type $on
+     * @param type $fields
+     * @return \THCFrame\Database\Query
+     * @throws Exception\Argument
+     */
+    public function rightjoin($join, $on, $alias = null, $fields = array('*'))
+    {
+        if (empty($join) || empty($on)) {
+            throw new Exception\Argument('Invalid argument');
+        }
+
+        if (NULL !== $alias) {
+            $this->_fields += array($alias => $fields);
+            $this->_join[] = "RIGHT JOIN {$join} {$alias} ON {$on}";
+        } else {
+            $this->_fields += array($join => $fields);
+            $this->_join[] = "RIGHT JOIN {$join} ON {$on}";
+        }
+
+        return $this;
+    }
+    
+    /**
+     * 
      * @param type $limit
      * @param type $page
      * @return \THCFrame\Database\Query
@@ -461,11 +535,11 @@ class Query extends Base
         if (empty($limit)) {
             throw new Exception\Argument('Invalid argument');
         }
-
+        
         $this->_limit = $this->_quote($limit);
-        $page = $this->_quote($page);
+        $page = (int)$this->_quote($page);
 
-        if ($page - 1 < 0) {
+        if ($page - 1 <= 0) {
             $this->_offset = 0;
         } else {
             $this->_offset = $limit * ($page - 1);
@@ -525,14 +599,28 @@ class Query extends Base
      * @return \THCFrame\Database\Query
      * @throws Exception\Sql
      */
-    public function wheresql($sql)
+    public function wheresql()
     {
-        if (empty($this->_where)) {
-            $this->_wheresql = $this->_quote($sql);
-            return $this;
-        } else {
+        if (!empty($this->_where)) {
             throw new Exception\Sql('You can use only one of the where methods');
         }
+        
+        $arguments = func_get_args();
+
+        if (count($arguments) < 1) {
+            throw new Exception\Argument('Invalid argument');
+        }
+
+        $connector = $this->getConnector();
+        $arguments[0] = preg_replace('#\?#', '%s', $arguments[0]);
+
+        foreach (array_slice($arguments, 1, null, true) as $i => $parameter) {
+            $arguments[$i] = $connector->escape($arguments[$i]);
+        }
+
+        $this->_wheresql = call_user_func_array('sprintf', $arguments);
+
+        return $this;
     }
 
     /**

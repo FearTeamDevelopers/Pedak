@@ -3,7 +3,7 @@
 use App\Etc\Controller as Controller;
 
 /**
- * Description of GalleryController
+ * Description of App_Controller_Gallery
  *
  * @author Tomy
  */
@@ -19,8 +19,8 @@ class App_Controller_Gallery extends Controller
 
         $galleries = App_Model_Gallery::all(
                         array('active = ?' => true), 
-                array('*'), 
-                array('created' => 'ASC')
+                        array('*'), 
+                        array('created' => 'ASC')
         );
 
         $view->set('galleries', $galleries);
@@ -33,9 +33,7 @@ class App_Controller_Gallery extends Controller
     {
         $view = $this->getActionView();
 
-        $gallery = App_Model_Gallery::first(array(
-                    'id = ?' => $id
-        ));
+        $gallery = App_Model_Gallery::first(array('id = ?' => $id));
 
         if (NULL === $gallery) {
             $view->flashMessage('Gallery not found');

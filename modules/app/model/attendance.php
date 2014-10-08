@@ -3,11 +3,17 @@
 use THCFrame\Model\Model as Model;
 
 /**
- * Description of AttendanceModel
+ * Description of App_Model_Attendance
  *
  * @author Tomy
  */
-class App_Model_Attendance extends Model {
+class App_Model_Attendance extends Model
+{
+
+    /**
+     * @readwrite
+     */
+    protected $_alias = 'at';
 
     /**
      * @column
@@ -42,14 +48,6 @@ class App_Model_Attendance extends Model {
     /**
      * @column
      * @readwrite
-     * @type boolean
-     * @index
-     */
-    protected $_active;
-
-    /**
-     * @column
-     * @readwrite
      * @type tinyint
      * 
      * @validate required, numeric, max(2)
@@ -74,13 +72,13 @@ class App_Model_Attendance extends Model {
     /**
      * 
      */
-    public function preSave() {
+    public function preSave()
+    {
         $primary = $this->getPrimaryColumn();
         $raw = $primary["raw"];
 
         if (empty($this->$raw)) {
             $this->setCreated(date("Y-m-d H:i:s"));
-            $this->setActive(true);
         }
         $this->setModified(date("Y-m-d H:i:s"));
     }

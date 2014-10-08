@@ -3,7 +3,7 @@
 namespace THCFrame\View;
 
 use THCFrame\Core\Base as Base;
-use THCFrame\Events\Events as Events;
+use THCFrame\Events\Events as Event;
 use THCFrame\Template as Template;
 use THCFrame\View\Exception as Exception;
 
@@ -43,15 +43,15 @@ class View extends Base
     {
         parent::__construct($options);
 
-        Events::fire('framework.view.construct.before', array($this->file));
+        Event::fire('framework.view.construct.before', array($this->file));
 
         $this->_template = new Template\Template(array(
             'implementation' => new Template\Implementation\Extended()
         ));
 
         $this->_checkMessage();
-        
-        Events::fire('framework.view.construct.after', array($this->file, $this->template));
+
+        Event::fire('framework.view.construct.after', array($this->file, $this->template));
     }
 
     /**
@@ -75,21 +75,21 @@ class View extends Base
         } else {
             $this->set('infoMessage', '');
         }
-        
+
         if (isset($_SESSION['warningMessage'])) {
             $this->set('warningMessage', $_SESSION['warningMessage']);
             unset($_SESSION['warningMessage']);
         } else {
             $this->set('warningMessage', '');
         }
-        
+
         if (isset($_SESSION['successMessage'])) {
             $this->set('successMessage', $_SESSION['successMessage']);
             unset($_SESSION['successMessage']);
         } else {
             $this->set('successMessage', '');
         }
-        
+
         if (isset($_SESSION['errorMessage'])) {
             $this->set('errorMessage', $_SESSION['errorMessage']);
             unset($_SESSION['errorMessage']);
@@ -111,7 +111,7 @@ class View extends Base
      */
     public function render()
     {
-        Events::fire('framework.view.render.before', array($this->file));
+        Event::fire('framework.view.render.before', array($this->file));
 
         if (!file_exists($this->file)) {
             return '';
@@ -120,6 +120,19 @@ class View extends Base
         return $this->template
                         ->parse(file_get_contents($this->file))
                         ->process($this->data);
+    }
+
+    /**
+     * 
+     * @return null
+     */
+    public function getHttpReferer()
+    {
+        if (empty($_SERVER['HTTP_REFERER'])) {
+            return null;
+        } else {
+            return $_SERVER['HTTP_REFERER'];
+        }
     }
 
     /**
@@ -201,7 +214,7 @@ class View extends Base
             return $this->get('infoMessage');
         }
     }
-    
+
     /**
      * 
      * @param text $msg
@@ -215,7 +228,7 @@ class View extends Base
             return $this->get('warningMessage');
         }
     }
-    
+
     /**
      * 
      * @param text $msg
@@ -229,7 +242,7 @@ class View extends Base
             return $this->get('successMessage');
         }
     }
-    
+
     /**
      * 
      * @param text $msg
@@ -257,5 +270,4 @@ class View extends Base
             return $this->get('longFlashMessage');
         }
     }
-
 }

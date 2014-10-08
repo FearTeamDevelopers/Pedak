@@ -14,6 +14,11 @@ class App_Etc_Module extends Module{
      */
     protected $_moduleName = "App";
     
+    /**
+     * @read 
+     */
+    protected $_observerClass = '';
+    
     protected $_routes = array(
         array(
             'pattern' => '/login',
@@ -37,8 +42,8 @@ class App_Etc_Module extends Module{
         array(
             'pattern' => '/team',
             'module' => 'app',
-            'controller' => 'team',
-            'action' => 'index',
+            'controller' => 'index',
+            'action' => 'team',
         ),
         array(
             'pattern' => '/profil',
@@ -49,8 +54,8 @@ class App_Etc_Module extends Module{
         array(
             'pattern' => '/kecarna',
             'module' => 'app',
-            'controller' => 'chat',
-            'action' => 'index',
+            'controller' => 'index',
+            'action' => 'chat',
         ),
         array(
             'pattern' => '/treninky',
@@ -67,15 +72,15 @@ class App_Etc_Module extends Module{
         array(
             'pattern' => '/kontakt',
             'module' => 'app',
-            'controller' => 'contact',
-            'action' => 'index',
+            'controller' => 'index',
+            'action' => 'contact',
         ),
         array(
-            'pattern' => '/novinky/:id',
+            'pattern' => '/novinky/:urlkey',
             'module' => 'app',
-            'controller' => 'index',
-            'action' => 'newsDetail',
-            'args' => ':id'
+            'controller' => 'news',
+            'action' => 'detail',
+            'args' => ':urlkey'
         ),
         array(
             'pattern' => '/zapasy/detail/:id',
@@ -89,8 +94,7 @@ class App_Etc_Module extends Module{
             'module' => 'app',
             'controller' => 'training',
             'action' => 'attend',
-            'args' => ':id',
-            'args2' => ':status'
+            'args' => array(':id',':status')
         )
         
     );

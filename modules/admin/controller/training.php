@@ -1,212 +1,309 @@
 <?php
 
-use Admin\Etc\Controller as Controller;
-use THCFrame\Request\RequestMethods as RequestMethods;
+use Admin\Etc\Controller;
+use THCFrame\Request\RequestMethods;
+use THCFrame\Events\Events as Event;
 
 /**
- * Description of TrainingController
+ * Description of Admin_Controller_Training
  *
  * @author Tomy
  */
-class Admin_Controller_Training extends Controller {
+class Admin_Controller_Training extends Controller
+{
 
     /**
-     * @param type $id
+     * @before _secured, _admin
      */
-    private function _getAttendace($id) {
-        $attendanceModel = new App_Model_Attendance();
-        $connector = $attendanceModel->getConnector();
-        $id = $connector->escape($id);
-
-        $sql = "SELECT u.firstname, u.lastname, ta.* ";
-        $sql .= "FROM tb_attendance ta ";
-        $sql .= "JOIN tb_user u ON ta.userId = u.id ";
-        $sql .= "WHERE ta.active = true AND trainingId = '{$id}'";
-
-        $result = $connector->execute($sql);
-
-        $rows = array();
-
-        for ($i = 0; $i < $result->num_rows; $i++) {
-            $rows[] = $result->fetch_array(MYSQLI_ASSOC);
-        }
-
-        return $rows;
-    }
-
-    /**
-     * 
-     * @return type
-     */
-    private function _checkAttendance() {
-        $attendanceModel = new App_Model_Attendance();
-        $connector = $attendanceModel->getConnector();
-
-        $sql = "SELECT u.firstname, u.lastname, count(ta.id) as cnt
-                FROM tb_attendance ta
-                JOIN tb_user u ON ta.userId = u.id
-                JOIN tb_training tr ON ta.trainingId = tr.id
-                WHERE ta.status = 1 AND tr.date <= now()
-                GROUP BY ta.userId";
-
-        $result = $connector->execute($sql);
-
-        $rows = array();
-
-        for ($i = 0; $i < $result->num_rows; $i++) {
-            $rows[] = $result->fetch_array(MYSQLI_ASSOC);
-        }
-
-        return $rows;
+    public function index()
+    {
+        $view = $this->getActionView();
+        $trainings = App_Model_Training::all();
+        $view->set('trainings', $trainings);
     }
 
     /**
      * @before _secured, _admin
      */
-    public function index() {
+    public function add()
+    {
         $view = $this->getActionView();
 
-        $trainings = App_TrainingModel::all();
+        $view->set('submstoken', $this->mutliSubmissionProtectionToken());
 
-        $view->set("trainings", $trainings);
-    }
-
-    /**
-     * @before _secured, _admin
-     */
-    public function add() {
-        $view = $this->getActionView();
-
-        if (RequestMethods::post("addTraining")) {
-
-            $training = new App_TrainingModel(array(
-                "title" => RequestMethods::post("title"),
-                "date" => date("Y-m-d", strtotime(RequestMethods::post("date")))
-            ));
-
-            if ($training->validate()) {
-                $training->save();
-
-                $view->flashMessage("Training has been successfully created");
-                self::redirect("/admin/training/");
-            } else {
-                $view->set("errors", $training->getErrors());
-            }
-        }
-    }
-
-    /**
-     * 
-     * @before _secured, _admin
-     * @param type $id
-     */
-    public function edit($id) {
-        $view = $this->getActionView();
-
-        $training = App_TrainingModel::first(array(
-                    "id = ?" => $id
-        ));
-        
-        if (NULL === $training) {
-            $view->flashMessage("Training not found");
-            self::redirect("/admin/training/");
-        }
-
-        if (RequestMethods::post("editTraining")) {
-            $training->title = RequestMethods::post("title");
-            $training->date = date("Y-m-d", strtotime(RequestMethods::post("date")));
-            $training->active = RequestMethods::post("active");
-
-            if ($training->validate()) {
-                $training->save();
-
-                $view->flashMessage("All changes were successfully saved");
-                self::redirect("/admin/training/");
+        if (RequestMethods::post('submitAddTraining')) {
+            if ($this->checkToken() !== true &&
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true) {
+                self::redirect('/admin/training/');
             }
 
-            $view->set("errors", $training->getErrors());
-        }
+            $errors = array();
+            $trainingCount = RequestMethods::post('generateNext', 0);
 
-        $view->set("training", $training);
-    }
+            if ($trainingCount == 0) {
+                $training = new App_Model_Training(array(
+                    'title' => RequestMethods::post('title'),
+                    'location' => RequestMethods::post('location'),
+                    'startDate' => RequestMethods::post('date'),
+                    'startTime' => RequestMethods::post('time')
+                ));
+                if ($training->validate()) {
+                    $id = $training->save();
 
-    /**
-     * 
-     * @before _secured, _admin
-     * @param type $id
-     */
-    public function delete($id) {
-        $view = $this->getActionView();
-
-        $training = App_TrainingModel::first(array(
-                    "id = ?" => $id
-        ));
-
-        if (NULL === $training) {
-            $view->flashMessage("Training not found");
-            self::redirect("/admin/training/");
-        }
-        
-        if (RequestMethods::post("deleteTraining")) {
-            if (NULL !== $training) {
-                if ($training->delete()) {
-                    $view->flashMessage("Training has been deleted");
-                    self::redirect("/admin/training/");
+                    Event::fire('admin.log', array('success', 'Training id: ' . $id));
                 } else {
-                    $view->flashMessage("Unknown error eccured");
-                    self::redirect("/admin/training/");
+                    Event::fire('admin.log', array('fail'));
+                    $errors = $errors + $training->getErrors();
                 }
             } else {
-                $view->flashMessage("Unknown id provided");
-                self::redirect("/admin/training/");
+                $training = new App_Model_Training(array(
+                    'title' => RequestMethods::post('title'),
+                    'location' => RequestMethods::post('location'),
+                    'startDate' => RequestMethods::post('date'),
+                    'startTime' => RequestMethods::post('time')
+                ));
+
+                if ($training->validate()) {
+                    $id = $training->save();
+
+                    Event::fire('admin.log', array('success', 'Training id: ' . $id));
+                } else {
+                    Event::fire('admin.log', array('fail'));
+                    $errors = $errors + $training->getErrors();
+                }
+
+                for ($i = 1; $i <= $trainingCount; $i++) {
+                    $date = DateTime::createFromFormat('Y-m-d', RequestMethods::post('date'));
+                    $date->modify('+' . $i . ' week');
+
+                    $training = new App_Model_Training(array(
+                        'title' => RequestMethods::post('title'),
+                        'location' => RequestMethods::post('location'),
+                        'startDate' => $date->format('Y-m-d'),
+                        'startTime' => RequestMethods::post('time')
+                    ));
+
+                    if ($training->validate()) {
+                        $id = $training->save();
+
+                        Event::fire('admin.log', array('success', 'Training id: ' . $id));
+                    } else {
+                        Event::fire('admin.log', array('fail'));
+                        $errors = $errors + $training->getErrors();
+                    }
+                }
             }
-        } elseif (RequestMethods::post("cancel")) {
-            self::redirect("/admin/training/");
-        }
 
-        $view->set("training", $training);
+            if (empty($errors)) {
+                $view->successMessage('Trainings' . self::SUCCESS_MESSAGE_1);
+                self::redirect('/admin/training/');
+            } else {
+                $view->set('errors', $training->getErrors())
+                        ->set('submstoken', $this->revalidateMutliSubmissionProtectionToken())
+                        ->set('training', $training);
+            }
+        }
     }
 
     /**
      * @before _secured, _admin
      */
-    public function attendance() {
+    public function edit($id)
+    {
         $view = $this->getActionView();
 
-        $trainingCount = App_TrainingModel::count(array(
-            "date <= ?" => date("Y-m-d")
-        ));
-
-        $attd = $this->_checkAttendance();
-        
-        foreach ($attd as $key => $value) {
-            $attd[$key]["proc"] = round(($value["cnt"] / $trainingCount) * 100, 2);
-        }
-
-        $view->set("attd", $attd)
-                ->set("trcount", $trainingCount);
-    }
-
-    /**
-     * 
-     * @before _secured, _admin
-     * @param type $id
-     */
-    public function showAttendance($id) {
-        $view = $this->getActionView();
-
-        $training = App_TrainingModel::first(array(
-                    "id = ?" => $id
-        ));
+        $training = App_Model_Training::first(array('id = ?' => (int) $id));
         
         if (NULL === $training) {
-            $view->flashMessage("Training not found");
-            self::redirect("/admin/training/");
+            $view->warningMessage(self::ERROR_MESSAGE_2);
+            self::redirect('/admin/training/');
         }
+        $view->set('training', $training);
 
-        $training->attendance = $this->_getAttendace($id);
+        if (RequestMethods::post('submitEditTraining')) {
+            if($this->checkToken() !== true){
+                self::redirect('/admin/training/');
+            }
 
-        $view->set("training", $training);
+            $training->title = RequestMethods::post('title');
+            $training->location = RequestMethods::post('location');
+            $training->startDate = RequestMethods::post('date');
+            $training->startTime = RequestMethods::post('time');
+            $training->active = RequestMethods::post('active');
+
+            if ($training->validate()) {
+                $training->save();
+
+                Event::fire('admin.log', array('success', 'Training id: ' . $training->getId()));
+                $view->successMessage(self::SUCCESS_MESSAGE_2);
+                self::redirect('/admin/training/');
+            } else {
+                Event::fire('admin.log', array('fail', 'Training id: ' . $training->getId()));
+                $view->set('errors', $training->getErrors());
+            }
+        }
+    }
+
+    /**
+     * @before _secured, _admin
+     */
+    public function detail($id)
+    {
+        $view = $this->getActionView();
+
+        $training = App_Model_Training::first(array('id = ?' => (int) $id));
+        
+        if (NULL === $training) {
+            $view->warningMessage(self::ERROR_MESSAGE_2);
+            self::redirect('/admin/training/');
+        }
+        
+        $training->attendance = App_Model_Training::fetchAttendanceByTraining($training->getId());
+        
+        $view->set('training', $training);
+    }
+
+    /**
+     * @before _secured, _admin
+     */
+    public function delete($id)
+    {
+        $this->willRenderActionView = false;
+        $this->willRenderLayoutView = false;
+
+        if ($this->checkToken()) {
+            $training = App_Model_Training::first(array('id = ?' => (int)$id));
+
+            if (NULL === $training) {
+                echo self::ERROR_MESSAGE_2;
+            } else {
+                if ($training->delete()) {
+                    Event::fire('admin.log', array('success', 'Training id: ' . $id));
+                    echo 'success';
+                } else {
+                    Event::fire('admin.log', array('fail', 'Training id: ' . $id));
+                    echo self::ERROR_MESSAGE_1;
+                }
+            }
+        } else {
+            echo self::ERROR_MESSAGE_1;
+        }
+    }
+    
+    /**
+     * @before _secured, _admin
+     */
+    public function attendance()
+    {
+        $view = $this->getActionView();
+        
+        $attend = App_Model_Training::fetchPercentAttendance();
+        $view->set('attendance', $attend);
+    }
+
+    /**
+     * @before _secured, _admin
+     */
+    public function massAction()
+    {
+        $view = $this->getActionView();
+        $errors = array();
+
+        if (RequestMethods::post('performTrainingAction')) {
+            if($this->checkToken() !== true){
+                self::redirect('/admin/training/');
+            }
+            
+            $ids = RequestMethods::post('trainingids');
+            $action = RequestMethods::post('action');
+
+            switch ($action) {
+                case 'delete':
+                    $trainings = App_Model_Training::all(array(
+                                'id IN ?' => $ids
+                    ));
+                    if (NULL !== $trainings) {
+                        foreach ($trainings as $training) {
+                            if (!$training->delete()) {
+                                $errors[] = 'An error occured while deleting ' . $training->getTitle();
+                            }
+                        }
+                    }
+
+                    if (empty($errors)) {
+                        Event::fire('admin.log', array('delete success', 'Training ids: ' . join(',', $ids)));
+                        $view->successMessage(self::SUCCESS_MESSAGE_6);
+                    } else {
+                        Event::fire('admin.log', array('delete fail', 'Error count:' . count($errors)));
+                        $message = join(PHP_EOL, $errors);
+                        $view->longFlashMessage($message);
+                    }
+
+                    self::redirect('/admin/training/');
+
+                    break;
+                case 'activate':
+                    $trainings = App_Model_Training::all(array(
+                                'id IN ?' => $ids
+                    ));
+                    if (NULL !== $trainings) {
+                        foreach ($trainings as $training) {
+                            $training->active = true;
+
+                            if ($training->validate()) {
+                                $training->save();
+                            } else {
+                                $errors[] = "Training id {$training->getId()} - {$training->getTitle()} errors: "
+                                        . join(', ', $training->getErrors());
+                            }
+                        }
+                    }
+
+                    if (empty($errors)) {
+                        Event::fire('admin.log', array('activate success', 'Training ids: ' . join(',', $ids)));
+                        $view->successMessage(self::SUCCESS_MESSAGE_4);
+                    } else {
+                        Event::fire('admin.log', array('activate fail', 'Error count:' . count($errors)));
+                        $message = join(PHP_EOL, $errors);
+                        $view->longFlashMessage($message);
+                    }
+
+                    self::redirect('/admin/training/');
+
+                    break;
+                case 'deactivate':
+                    $trainings = App_Model_Training::all(array(
+                                'id IN ?' => $ids
+                    ));
+                    if (NULL !== $trainings) {
+                        foreach ($trainings as $training) {
+                            $training->active = false;
+
+                            if ($training->validate()) {
+                                $training->save();
+                            } else {
+                                $errors[] = "Training id {$training->getId()} - {$training->getTitle()} errors: "
+                                        . join(', ', $training->getErrors());
+                            }
+                        }
+                    }
+
+                    if (empty($errors)) {
+                        Event::fire('admin.log', array('deactivate success', 'Training ids: ' . join(',', $ids)));
+                        $view->successMessage(self::SUCCESS_MESSAGE_5);
+                    } else {
+                        Event::fire('admin.log', array('deactivate fail', 'Error count:' . count($errors)));
+                        $message = join(PHP_EOL, $errors);
+                        $view->longFlashMessage($message);
+                    }
+
+                    self::redirect('/admin/training/');
+                    break;
+                default:
+                    self::redirect('/admin/training/');
+                    break;
+            }
+        }
     }
 
 }

@@ -1,0 +1,66 @@
+<ul class="maintabmenu multipletabmenu">
+    <li><a href="/admin/training/">Training</a></li>
+    <li class="current"><a href="#">Add Training</a></li>
+</ul><!--maintabmenu-->
+
+<div class="content">
+    <div class="contenttitle radiusbottom0">
+        <h2 class="table"><span>New training</span></h2>
+    </div><!--contenttitle-->
+
+    <form class="stdform stdform2" method="post" action="#" >
+        <input type="hidden" name="tk" id="tk" value="{echo $token}" />
+        <input type="hidden" name="submstoken" id="submstoken" value="{echo $submstoken}" />
+        <p>
+            <label>Title*</label>
+            <span class="field">
+                <input required type="text" name="title" class="longinput" 
+                       value="{echo isset($training)? $training->title: ""}" />
+                {if isset($errors["title"])}
+                <label class="error">{echo join("<br/>", $errors["title"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Location*</label>
+            <span class="field">
+                <input required type="text" name="location" class="longinput" 
+                       value="{echo isset($training)? $training->location: ""}" />
+                {if isset($errors["location"])}
+                <label class="error">{echo join("<br/>", $errors["location"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Date*</label>
+            <span class="field">
+                <input required type="text" name="date" class="longinput datepicker" 
+                       value="{echo isset($training)? $training->startDate: ""}" />
+                {if isset($errors["startDate"])}
+                <label class="error">{echo join("<br/>", $errors["startDate"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Time*</label>
+            <span class="field">
+                <input required type="time" name="time" class="longinput" 
+                       value="{echo isset($training)? $training->startTime: ""}" />
+                {if isset($errors["startTime"])}
+                <label class="error">{echo join("<br/>", $errors["startTime"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Generate next<small>X trainings</small></label>
+            <span class="field">
+                <input type="number" name="generateNext" class="longinput" value="0" />
+            </span>
+        </p>
+        
+        <p class="stdformbutton">
+            <input name="submitAddTraining" type="submit" value="Save" class="submit radius2" />
+            <input type="reset" class="reset radius2" value="Reset" />
+        </p>
+    </form>
+</div>

@@ -1,0 +1,130 @@
+<ul class="maintabmenu multipletabmenu">
+    <li><a href="/admin/match/">Match</a></li>
+    <li><a href="/admin/match/add/">Add match</a></li>
+    <li class="current"><a href="#">Edit match</a></li>
+</ul><!--maintabmenu-->
+
+<div class="content">
+    <div class="contenttitle radiusbottom0">
+        <h2 class="table"><span>Edit match</span></h2>
+    </div><!--contenttitle-->
+
+    <form class="stdform stdform2" method="post" action="#" >
+        <input type="hidden" name="tk" id="tk" value="{echo $token}" />
+
+        <p>
+            <label>Home*</label>
+            <span class="field">
+                <input required type="text" name="title" class="longinput" 
+                       value="{echo $match->home}" />
+                {if isset($errors["home"])}
+                <label class="error">{echo join("<br/>", $errors["home"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Away*</label>
+            <span class="field">
+                <input required type="text" name="host" class="longinput" 
+                       value="{echo $match->away}" />
+                {if isset($errors["away"])}
+                <label class="error">{echo join("<br/>", $errors["away"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Date*</label>
+            <span class="field">
+                <input required type="text" name="date" class="longinput datepicker" 
+                       value="{echo $match->date}" />
+                {if isset($errors["date"])}
+                <label class="error">{echo join("<br/>", $errors["date"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Hall*</label>
+            <span class="field">
+                <input required type="text" name="hall" class="longinput" 
+                       value="{echo $match->hall}" />
+                {if isset($errors["hall"])}
+                <label class="error">{echo join("<br/>", $errors["hall"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Score Home</label>
+            <span class="field">
+                <input type="number" name="scoreHome" class="longinput" 
+                       value="{echo $match->scoreHome}" />
+                {if isset($errors["scoreHome"])}
+                <label class="error">{echo join("<br/>", $errors["scoreHome"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Score Away</label>
+            <span class="field">
+                <input type="number" name="scoreHost" class="longinput" 
+                       value="{echo $match->scoreAway}" />
+                {if isset($errors["scoreAway"])}
+                <label class="error">{echo join("<br/>", $errors["scoreAway"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Season</label>
+            <span class="field">
+                <input type="text" name="season" class="longinput" 
+                       value="{echo $match->season}" />
+                {if isset($errors["season"])}
+                <label class="error">{echo join("<br/>", $errors["season"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Team</label>
+            <span class="field">
+                <select class="longinput" name="team">
+                    {if $match->team == "a"}
+                        <option value="a" selected>A</option>
+                        <option value="b">B</option>
+                    {/if}{else}
+                        <option value="a">A</option>
+                        <option value="b" selected>B</option>
+                    {/else}
+                </select>
+            </span>
+        </p>
+        <p>
+            <label>Report<small>Max. 30 000 chars</small></label>
+            <span class="field">
+                <textarea class="longinput" name="report" id="ckeditor">{echo $match->report}</textarea>
+                {if isset($errors["report"])}
+                <label class="error">{echo join("<br/>", $errors["report"])}</label>
+                {/if}
+            </span>
+        </p>
+        
+        <p>
+            <label>Active</label>
+            <span class="field">
+                <select name="active" class="longinput">
+                    {if $match->active}
+                        <option value="0">Inactive</option>
+                        <option value="1" selected>Active</option>
+                    {/if}
+                    {else}
+                        <option value="0" selected>Inactive</option>
+                        <option value="1">Active</option>
+                    {/else}
+                </select>
+            </span>
+        </p>
+                
+        <p class="stdformbutton">
+            <input name="submitEditMatch" type="submit" value="Save" class="submit radius2" />
+            <input type="reset" class="reset radius2" value="Reset" />
+        </p>
+    </form>
+</div>

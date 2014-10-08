@@ -7,41 +7,17 @@ use App\Etc\Controller as Controller;
  *
  * @author Tomy
  */
-class App_Controller_Training extends Controller {
-
-    /**
-     * @protected
-     * @before _secured
-     * @param type $id
-     */
-    protected function _getAttendace($id) {
-        
-        $query = App_Model_Training::getQuery(array('tb_training.*'));
-        
-        $query->join('tb_attendance', 'tb_training.id = ta.trainingId', 'ta', array('*'));
-        $query->join('tb_user', 'ta.userId = u.id', 'u', array('u.firstname' => 'firstname', 'u.lastname' => 'lastname'));
-        $query->where('tb_training.active', true);
-        $query->where('ta.active', $id);
-        $trainings = App_Model_Training::initialize($query);
-        
-        return $trainings;
-    }
+class App_Controller_Training extends Controller
+{
 
     /**
      * @before _secured
      */
-    public function index() {
+    public function index()
+    {
         $view = $this->getActionView();
 
-        $query = App_Model_Training::getQuery(array('tb_training.*'));
-        
-        $query->join('tb_attendance', 'tb_training.id = ta.trainingId', 'ta', array('*'));
-        $query->join('tb_user', 'ta.userId = u.id', 'u', array('u.firstname' => 'firstname', 'u.lastname' => 'lastname'));
-        $query->where('tb_training.active', true);
-        $query->where('ta.active', $id);
-        $trainings = App_Model_Training::initialize($query);
-        
-        $view->set('trainings', $trainings);
+
     }
 
     /**
@@ -49,7 +25,8 @@ class App_Controller_Training extends Controller {
      * @param type $id
      * @param type $status
      */
-    public function attend($id, $status) {
+    public function attend($id, $status)
+    {
         $view = $this->getActionView();
         $userId = $this->getUser()->getId();
 

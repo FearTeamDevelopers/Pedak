@@ -1,0 +1,55 @@
+<ul class="maintabmenu multipletabmenu">
+    <li><a href="/admin/gallery/">Gallery</a></li>
+    <li><a href="/admin/gallery/add/">Add Gallery</a></li>
+    <li class="current"><a href="#">Gallery detail</a></li>
+    <li><a href="/admin/gallery/edit/{echo $gallery->id}">Edit Gallery</a></li>
+    {if $isAdmin}<li><a href="/admin/gallery/delete/{echo $gallery->id}">Delete Gallery</a></li>{/if}
+</ul><!--maintabmenu-->
+
+<div class="content">
+    <div class="contenttitle radiusbottom0">
+        <h2 class="table"><span>{echo $gallery->title}</span></h2>
+    </div><!--contenttitle-->
+    <input type="hidden" name="tk" id="tk" value="{echo $token}" />
+
+    <div class="collectiondetail">
+        <p>
+            Created: {echo $gallery->created}<br/>
+            Description:
+        </p>
+        <div class="collectiondetail_description">
+            {echo $gallery->description}
+        </div>
+        <br/>
+        <p>
+            <a href="/admin/gallery/addphoto/{echo $gallery->id}" class="btn btn_image"><span>Upload photos</span></a> 
+        </p>
+    </div>
+    <hr/>
+    
+    <div id="tabs-1">
+        {script $photos = $gallery->getPhotos()}
+        {if !empty($photos)}
+        <div style="overflow:hidden;">
+            <ul class="imagelist">
+                {foreach $photo in $photos}
+                {if $photo->active}
+                <li class="photoactive">
+                    {/if}{else}
+                <li class="photoinactive">
+                    {/else}
+                    <img src="{echo $photo->imgThumb}" alt="" height="120px" />
+                    <span>
+                        <a href="{echo $photo->imgMain}" class="view"></a>
+                        <a href="/admin/gallery/changephotostatus/{echo $photo->id}" class="activate" value="Change status"></a>
+                        <a href="/admin/gallery/deletephoto/{echo $photo->id}" class="delete" value="Delete"></a>
+                    </span>
+                </li>
+                {/foreach}
+            </ul>
+        </div>
+        {/if}{else}
+        <div class="notification msginfo"><a class="close"></a><p>No photos in gallery</p></div>
+        {/else}
+    </div>
+</div><!--#tabs-->

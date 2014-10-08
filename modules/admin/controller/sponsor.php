@@ -1,178 +1,217 @@
 <?php
 
-use Admin\Etc\Controller as Controller;
-use THCFrame\Request\RequestMethods as RequestMethods;
+use Admin\Etc\Controller;
+use THCFrame\Request\RequestMethods;
+use THCFrame\Events\Events as Event;
+use THCFrame\Core\ArrayMethods;
+use THCFrame\Filesystem\FileManager;
 
 /**
- * Description of SponsorController
+ * Description of Admin_Controller_Sponsor
  *
  * @author Tomy
  */
-class Admin_Controller_Sponsor extends Controller {
+class Admin_Controller_Sponsor extends Controller
+{
 
     /**
      * @before _secured, _admin
-     * @param type $name
-     * @param type $username
-     * @return string
-     * @throws \Exception
      */
-    private function _upload($name, $sponsor) {
+    public function index()
+    {
+        $view = $this->getActionView();
+        $sponsors = App_Model_Sponsor::all();
+        $view->set('sponsors', $sponsors);
+    }
 
-        if (isset($_FILES[$name]) && !empty($_FILES[$name]["name"])) {
-            $file = $_FILES[$name];
-            $path = "/public/uploads/sponsors/";
+    /**
+     * @before _secured, _admin
+     */
+    public function add()
+    {
+        $view = $this->getActionView();
+        
+        $view->set('submstoken', $this->mutliSubmissionProtectionToken());
+        
+        if (RequestMethods::post('submitAddSponsor')) {
+            if($this->checkToken() !== true && 
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
+                self::redirect('/admin/sponsor/');
+            }
+            $errors = array();
 
-            $size = filesize($file["tmp_name"]);
-            $extension = pathinfo($file["name"], PATHINFO_EXTENSION);
-            $filename = "{$sponsor->getTitle()}_{$sponsor->getId()}.{$extension}";
+            $fileManager = new FileManager(array(
+                'thumbWidth' => $this->loadConfigFromDb('thumb_width'),
+                'thumbHeight' => $this->loadConfigFromDb('thumb_height'),
+                'thumbResizeBy' => $this->loadConfigFromDb('thumb_resizeby'),
+                'maxImageWidth' => $this->loadConfigFromDb('photo_maxwidth'),
+                'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
+            ));
 
-            if ($size > 5000000) {
-                throw new \Exception("Image size exceeds the maximum size limit");
-            } elseif (!in_array($extension, self::$_imageExtensions)) {
-                throw new \Exception("Images can only be with jpg, jpeg, png or gif extension");
-            } elseif (file_exists("." . $path . $filename)) {
-                unlink("." . $path . $filename);
+            $fileErrors = $fileManager->upload('logo', 'sponsors', time().'_', false)->getUploadErrors();
+            $files = $fileManager->getUploadedFiles();
 
-                if (move_uploaded_file($file["tmp_name"], "." . $path . $filename)) {
-                    return $path . $filename;
-                } else {
-                    throw new \Exception("An error occured while uploading the photo");
+            if (!empty($files)) {
+                foreach ($files as $i => $file) {
+                    if ($file instanceof \THCFrame\Filesystem\Image) {
+                        $partner = new App_Model_Sponsor(array(
+                            'title' => RequestMethods::post('title'),
+                            'web' => RequestMethods::post('web'),
+                            'logo' => trim($file->getFilename(), '.')
+                        ));
+
+                        if ($partner->validate()) {
+                            $id = $partner->save();
+
+                            Event::fire('admin.log', array('success', 'Partner id: ' . $id));
+                            $view->successMessage('Partner' . self::SUCCESS_MESSAGE_1);
+                            self::redirect('/admin/partner/');
+                        } else {
+                            Event::fire('admin.log', array('fail'));
+                            $view->set('errors', $partner->getErrors())
+                                    ->set('submstoken', $this->revalidateMutliSubmissionProtectionToken())
+                                    ->set('partner', $partner);
+                        }
+
+                        break;
+                    }
                 }
             } else {
-                if (move_uploaded_file($file["tmp_name"], "." . $path . $filename)) {
-                    return $path . $filename;
+                $errors['logo'] = $fileErrors;
+                Event::fire('admin.log', array('fail'));
+                $view->set('errors', $errors)
+                        ->set('submstoken', $this->revalidateMutliSubmissionProtectionToken());
+            }
+        }
+    }
+
+    /**
+     * @before _secured, _admin
+     */
+    public function edit($id)
+    {
+        $view = $this->getActionView();
+
+        $sponsor = App_Model_Sponsor::first(array('id = ?' => (int) $id));
+        
+        if (NULL === $sponsor) {
+            $view->warningMessage(self::ERROR_MESSAGE_2);
+            self::redirect('/admin/sponsor/');
+        }
+        $view->set('sponsor', $sponsor);
+
+        if (RequestMethods::post('submitEditSponsor')) {
+            if($this->checkToken() !== true){
+                self::redirect('/admin/sponsor/');
+            }
+            $errors = array();
+
+            if ($sponsor->logo == '') {
+                $fileManager = new FileManager(array(
+                    'thumbWidth' => $this->loadConfigFromDb('thumb_width'),
+                    'thumbHeight' => $this->loadConfigFromDb('thumb_height'),
+                    'thumbResizeBy' => $this->loadConfigFromDb('thumb_resizeby'),
+                    'maxImageWidth' => $this->loadConfigFromDb('photo_maxwidth'),
+                    'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
+                ));
+
+                $fileErrors = $fileManager->upload('logo', 'sponsors', time().'_', false)->getUploadErrors();
+                $files = $fileManager->getUploadedFiles();
+
+                if (!empty($files)) {
+                    foreach ($files as $i => $filemain) {
+                        if ($filemain instanceof \THCFrame\Filesystem\Image) {
+                            $file = $filemain;
+                            break;
+                        }
+                    }
+
+                    $logo = trim($file->getFilename(), '.');
+                }else{
+                    $errors['logo'] = $fileErrors;
+                }
+            } else {
+                $logo = $sponsor->logo;
+            }
+
+            $sponsor->title = RequestMethods::post('title');
+            $sponsor->logo = $logo;
+            $sponsor->web = RequestMethods::post('web');
+
+            if (empty($errors) && $sponsor->validate()) {
+                $sponsor->save();
+
+                Event::fire('admin.log', array('success', 'Sponsor id: ' . $sponsor->getId()));
+                $view->successMessage(self::SUCCESS_MESSAGE_2);
+                self::redirect('/admin/sponsor/');
+            } else {
+                Event::fire('admin.log', array('fail', 'Sponsor id: ' . $sponsor->getId()));
+                $view->set('errors', $errors + $sponsor->getErrors());
+            }
+        }
+    }
+
+    /**
+     * @before _secured, _admin
+     */
+    public function delete($id)
+    {
+        $this->willRenderActionView = false;
+        $this->willRenderLayoutView = false;
+
+        if ($this->checkToken()) {
+            $sponsor = App_Model_Sponsor::first(array('id = ?' => (int)$id));
+
+            if (NULL === $sponsor) {
+                echo self::ERROR_MESSAGE_2;
+            } else {
+                $path = $sponsor->getUnlinkLogoPath();
+                
+                if ($sponsor->delete()) {
+                    @unlink($path);
+                    Event::fire('admin.log', array('success', 'Sponsor id: ' . $id));
+                    echo 'success';
                 } else {
-                    throw new \Exception("An error occured while uploading the photo");
+                    Event::fire('admin.log', array('fail', 'Sponsor id: ' . $id));
+                    echo self::ERROR_MESSAGE_1;
                 }
             }
         } else {
-            throw new \Exception("Logo cannot be empty");
+            echo self::ERROR_MESSAGE_1;
         }
     }
 
     /**
      * @before _secured, _admin
+     * @param type $id
      */
-    public function index() {
-        $view = $this->getActionView();
+    public function deleteLogo($id)
+    {
+        $this->willRenderActionView = false;
+        $this->willRenderLayoutView = false;
 
-        $sponsors = App_Model_Sponsor::all();
+        if ($this->checkToken()) {
+            $sponsor = App_Model_Sponsor::first(array('id = ?' => (int) $id));
 
-        $view->set("sponsors", $sponsors);
-    }
-
-    /**
-     * @before _secured, _admin
-     */
-    public function add() {
-        $view = $this->getActionView();
-        $errors = array();
-        $view->set("errors", $errors);
-
-        if (RequestMethods::post("addSponsor")) {
-
-            $sponsor = new App_Model_Sponsor(array(
-                "title" => RequestMethods::post("title"),
-                "url" => RequestMethods::post("url")
-            ));
-
-            try {
-                $path = $this->_upload("logo", $sponsor);
-                $sponsor->setLogo($path);
-            } catch (\Exception $e) {
-                $errors["logo"] = array($e->getMessage());
-            }
-
-            if (empty($errors) && $sponsor->validate()) {
-                $sponsor->save();
-
-                $view->flashMessage("Sponsor has been successfully created");
-                self::redirect("/admin/sponsor/");
+            if (NULL === $sponsor) {
+                echo self::ERROR_MESSAGE_2;
             } else {
-                $view->set("errors", $errors + $sponsor->getErrors());
-            }
-        }
-    }
+                $path = $sponsor->getUnlinkLogoPath();
+                $sponsor->logo = '';
 
-    /**
-     * 
-     * @before _secured, _admin
-     * @param type $id
-     */
-    public function edit($id) {
-        $view = $this->getActionView();
-        $errors = array();
+                if ($sponsor->validate()) {
+                    @unlink($path);
+                    $sponsor->save();
 
-        $sponsor = App_Model_Sponsor::first(array(
-                    "id = ?" => $id
-        ));
-        
-        if (NULL === $sponsor) {
-            $view->flashMessage("Sponsor not found");
-            self::redirect("/admin/sponsor/");
-        }
-
-        if (RequestMethods::post("editSponsor")) {
-            $sponsor->title = RequestMethods::post("title");
-            $sponsor->url = RequestMethods::post("url");
-            $sponsor->active = RequestMethods::post("active");
-
-            try {
-                $path = $this->_upload("logo", $sponsor);
-                $sponsor->setLogo($path);
-            } catch (\Exception $e) {
-                $errors["logo"] = array($e->getMessage());
-            }
-
-            if (empty($errors) && $sponsor->validate()) {
-                $sponsor->save();
-
-                $view->flashMessage("All changes were successfully saved");
-                self::redirect("/admin/sponsor/");
-            }
-
-            $view->set("errors", $errors + $sponsor->getErrors());
-        }
-
-        $view->set("sponsor", $sponsor);
-    }
-
-    /**
-     * 
-     * @before _secured, _admin
-     * @param type $id
-     */
-    public function delete($id) {
-        $view = $this->getActionView();
-
-        $sponsor = App_Model_Sponsor::first(array(
-                    "id = ?" => $id
-        ));
-        
-        if (NULL === $sponsor) {
-            $view->flashMessage("Sponsor not found");
-            self::redirect("/admin/sponsor/");
-        }
-
-        if (RequestMethods::post("deleteSponsor")) {
-            if (NULL !== $sponsor) {
-                if ($sponsor->delete()) {
-                    $view->flashMessage("Sponsor has been deleted");
-                    self::redirect("/admin/sponsor/");
+                    Event::fire('admin.log', array('success', 'Sponsor Id: ' . $id));
+                    echo 'success';
                 } else {
-                    $view->flashMessage("Unknown error eccured");
-                    self::redirect("/admin/sponsor/");
+                    Event::fire('admin.log', array('fail', 'Sponsor Id: ' . $id));
+                    echo self::ERROR_MESSAGE_1;
                 }
-            } else {
-                $view->flashMessage("Unknown id provided");
-                self::redirect("/admin/sponsor/");
             }
-        } elseif (RequestMethods::post("cancel")) {
-            self::redirect("/admin/sponsor/");
+        } else {
+            echo self::ERROR_MESSAGE_1;
         }
-
-        $view->set("sponsor", $sponsor);
     }
-
 }

@@ -3,11 +3,17 @@
 use THCFrame\Model\Model as Model;
 
 /**
- * Description of PhotoModel
+ * Description of App_Model_Photo
  *
  * @author Tomy
  */
-class App_Model_Photo extends Model {
+class App_Model_Photo extends Model
+{
+
+    /**
+     * @readwrite
+     */
+    protected $_alias = 'ph';
 
     /**
      * @column
@@ -31,6 +37,8 @@ class App_Model_Photo extends Model {
      * @readwrite
      * @type boolean
      * @index
+     * 
+     * @validate max(3)
      */
     protected $_active;
 
@@ -38,20 +46,9 @@ class App_Model_Photo extends Model {
      * @column
      * @readwrite
      * @type text
-     * @length 100
+     * @length 60
      * 
-     * @validate alphanumeric, max(100)
-     * @label title
-     */
-    protected $_title;
-
-    /**
-     * @column
-     * @readwrite
-     * @type text
-     * @length 100
-     * 
-     * @validate alphanumeric, max(50)
+     * @validate alphanumeric, max(60)
      * @label photo name
      */
     protected $_photoName;
@@ -60,23 +57,34 @@ class App_Model_Photo extends Model {
      * @column
      * @readwrite
      * @type text
-     * @length 150
+     * @length 250
      * 
-     * @validate required, max(150)
+     * @validate required, path, max(250)
      * @label thum path
      */
-    protected $_pathSmall;
+    protected $_imgThumb;
 
     /**
      * @column
      * @readwrite
      * @type text
-     * @length 150
+     * @length 250
      * 
-     * @validate required, max(150)
-     * @label origin photo path
+     * @validate required, path, max(250)
+     * @label photo path
      */
-    protected $_pathLarge;
+    protected $_imgMain;
+
+    /**
+     * @column
+     * @readwrite
+     * @type text
+     * @length 250
+     * 
+     * @validate alphanumeric, max(250)
+     * @label description
+     */
+    protected $_description;
 
     /**
      * @column
@@ -92,9 +100,20 @@ class App_Model_Photo extends Model {
     /**
      * @column
      * @readwrite
+     * @type text
+     * @length 10
+     * 
+     * @validate required, alpha, max(8)
+     * @label format
+     */
+    protected $_format;
+
+    /**
+     * @column
+     * @readwrite
      * @type integer
      * 
-     * @validate required, max(8)
+     * @validate required, numeric, max(8)
      * @label size
      */
     protected $_size;
@@ -104,7 +123,7 @@ class App_Model_Photo extends Model {
      * @readwrite
      * @type integer
      * 
-     * @validate required, max(8)
+     * @validate required, numeric, max(8)
      * @label width
      */
     protected $_width;
@@ -114,10 +133,20 @@ class App_Model_Photo extends Model {
      * @readwrite
      * @type integer
      * 
-     * @validate required, max(8)
+     * @validate required, numeric, max(8)
      * @label height
      */
     protected $_height;
+
+    /**
+     * @column
+     * @readwrite
+     * @type tinyint
+     * 
+     * @validate numeric, max(2)
+     * @label priority
+     */
+    protected $_priority;
 
     /**
      * @column
@@ -136,7 +165,8 @@ class App_Model_Photo extends Model {
     /**
      * 
      */
-    public function preSave() {
+    public function preSave()
+    {
         $primary = $this->getPrimaryColumn();
         $raw = $primary["raw"];
 
@@ -145,6 +175,65 @@ class App_Model_Photo extends Model {
             $this->setActive(true);
         }
         $this->setModified(date("Y-m-d H:i:s"));
+    }
+
+    /**
+     * 
+     * @return type
+     */
+    public function getFormatedSize($unit = 'kb')
+    {
+        $bytes = floatval($this->_size);
+
+        $units = array(
+            'b' => 1,
+            'kb' => 1024,
+            'mb' => pow(1024, 2),
+            'gb' => pow(1024, 3)
+        );
+
+        $result = $bytes / $units[strtolower($unit)];
+        $result = strval(round($result, 2)) . ' ' . strtoupper($unit);
+
+        return $result;
+    }
+
+    /**
+     * 
+     * @return type
+     */
+    public function getUnlinkPath($type = true)
+    {
+        if ($type) {
+            if (file_exists($this->_imgMain)) {
+                return $this->_imgMain;
+            } elseif (file_exists('.' . $this->_imgMain)) {
+                return '.' . $this->_imgMain;
+            } elseif (file_exists('./' . $this->_imgMain)) {
+                return './' . $this->_imgMain;
+            }
+        } else {
+            return $this->_imgMain;
+        }
+    }
+
+    /**
+     * 
+     * @return type
+     */
+    public function getUnlinkThumbPath($type = true)
+    {
+        if ($type) {
+            if (file_exists($this->_imgThumb)) {
+                return $this->_imgThumb;
+            } elseif (file_exists('.' . $this->_imgThumb)) {
+                return '.' . $this->_imgThumb;
+            } elseif (file_exists('./' . $this->_imgThumb)) {
+                return './' . $this->_imgThumb;
+            }
+        } else {
+            return $this->_imgThumb;
+        }
     }
 
 }

@@ -2,10 +2,10 @@
 
 namespace THCFrame\Database;
 
-use THCFrame\Core\Base as Base;
-use THCFrame\Events\Events as Events;
-use THCFrame\Registry\Registry as Registry;
-use THCFrame\Database\Exception as Exception;
+use THCFrame\Core\Base;
+use THCFrame\Events\Events as Event;
+use THCFrame\Registry\Registry;
+use THCFrame\Database\Exception;
 
 /**
  * Description of mysqldump
@@ -19,6 +19,7 @@ class Mysqldump extends Base
 
     private $_fileHandler = null;
     private $_filename;
+    private $_backupname;
     private $_settings = array();
     private $_tables = array();
     private $_database;
@@ -26,6 +27,7 @@ class Mysqldump extends Base
     private $_defaultSettings = array(
         'include-tables' => array(),
         'exclude-tables' => array(),
+        'exclude-tables-reqex' => array(),
         'no-data' => false,
         'add-drop-table' => true,
         'single-transaction' => true,
@@ -42,13 +44,15 @@ class Mysqldump extends Base
      */
     public function __construct($settings = null)
     {
+//        ini_set('default_charset', 'UTF-8');
         $this->_database = Registry::get('database');
         $this->_database->connect();
 
         $this->_settings = $this->_extend($this->_defaultSettings, $settings);
         $this->_filename = APP_PATH . '/temp/db/' . $this->_database->getSchema() . '_' . date('Y-m-d') . '.sql';
+        $this->_backupname = $this->_database->getSchema() . '_' . date('Y-m-d') . '.sql';
     }
-    
+
     public function __destruct()
     {
         $this->_database->disconnect();
@@ -63,7 +67,7 @@ class Mysqldump extends Base
     {
         $header = '-- mysqldump-php SQL Dump' . PHP_EOL .
                 '--' . PHP_EOL .
-                '-- Host: {$this->_database->getHost()}' . PHP_EOL .
+                "-- Host: {$this->_database->getHost()}" . PHP_EOL .
                 '-- Generation Time: ' . date('r') . PHP_EOL .
                 '--' . PHP_EOL .
                 "-- Database: `{$this->_database->getSchema()}`" . PHP_EOL .
@@ -84,7 +88,7 @@ class Mysqldump extends Base
         while ($row = $sqlResult->fetch_array(MYSQLI_ASSOC)) {
             if (isset($row['Create Table'])) {
                 $this->_write(
-                        '-------------------------------------------------------' . PHP_EOL .
+                        '-- -----------------------------------------------------' . PHP_EOL .
                         "-- Table structure for table `$tablename` --" . PHP_EOL);
 
                 if ($this->_settings['add-drop-table']) {
@@ -131,10 +135,10 @@ class Mysqldump extends Base
 
             if ($onlyOnce || !$this->_settings['extended-insert']) {
                 $lineSize += $this->_write(html_entity_decode(
-                        "INSERT INTO `$tablename` VALUES ('" . implode("', '", $vals) . "')"));
+                                "INSERT INTO `$tablename` VALUES ('" . implode("', '", $vals) . "')", ENT_QUOTES, 'UTF-8'));
                 $onlyOnce = false;
             } else {
-                $lineSize += $this->_write(html_entity_decode(",('" . implode("', '", $vals) . "')"));
+                $lineSize += $this->_write(html_entity_decode(",('" . implode("', '", $vals) . "')", ENT_QUOTES, 'UTF-8'));
             }
 
             if (($lineSize > Mysqldump::MAXLINESIZE) || !$this->_settings['extended-insert']) {
@@ -243,7 +247,7 @@ class Mysqldump extends Base
             throw new Exception\Backup(sprintf('Output file %s is not writable', $this->_filename), 2);
         }
 
-        Events::fire('framework.mysqldump.create.before', array($this->_filename));
+        Event::fire('framework.mysqldump.create.before', array($this->_filename));
 
         $this->_write($this->_getHeader());
         $this->_tables = array();
@@ -263,35 +267,49 @@ class Mysqldump extends Base
             if (in_array($table, $this->_settings['exclude-tables'], true)) {
                 continue;
             }
+            
+            foreach ($this->_settings['exclude-tables-reqex'] as $regex) {
+                if(mb_ereg_match($regex, $table)){
+                    continue 2;
+                }
+            }
+            
             $is_table = $this->_getTableStructure($table);
             if (true === $is_table && false === $this->_settings['no-data']) {
                 $this->_listValues($table);
             }
         }
 
-        Events::fire('framework.mysqldump.create.after', array($this->_filename));
+        Event::fire('framework.mysqldump.create.after', array($this->_filename));
 
         $this->_close();
-        
+
         return $this;
+    }
+    
+    /**
+     * 
+     * @return type
+     */
+    public function getBackupName()
+    {
+        return $this->_backupname;
     }
 
     /**
-     * 
+     * Extension for view:
+     * <p><span class="labeled-checkbox block">
+      <input type="checkbox" name="downloadDump" value="1">
+      Download database dump</span></p>
      */
     public function downloadDump()
     {
         $this->_mime = 'text/x-sql';
-
-        header('Pragma: public');
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-        header('Cache-Control: private', false);
-        header("Content-Type: text/html; charset=utf-8");
-        header("Content-Disposition: attachment; filename='" . basename($this->_filename) . "'");
+        header('Content-Type: application/octet-stream');
+        header("Content-Transfer-Encoding: Binary");
+        header("Content-Disposition: attachment; filename=\"" . basename($this->_filename) . "\"");
         header('Content-Length: ' . filesize($this->_filename));
         ob_clean();
-        flush();
         readfile($this->_filename);
         exit;
     }
