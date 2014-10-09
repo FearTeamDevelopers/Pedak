@@ -1,8 +1,8 @@
 <?php
 
 use App\Etc\Controller as Controller;
-use THCFrame\Registry\Registry as Registry;
-use THCFrame\Request\RequestMethods as RequestMethods;
+use THCFrame\Registry\Registry;
+use THCFrame\Request\RequestMethods;
 
 /**
  * Description of UserController
@@ -17,20 +17,27 @@ class App_Controller_User extends Controller
      */
     public function login()
     {
-        if (RequestMethods::post('login')) {
+        $view = $this->getActionView();
+        $host = RequestMethods::server('HTTP_HOST');
+        
+        $canonical = 'http://' . $host . '/login';
+
+        $this->getLayoutView()->set('metatitle', 'Peďák - Přihlásit se')
+                ->set('canonical', $canonical);
+
+        if (RequestMethods::post('submitLogin')) {
+
             $email = RequestMethods::post('email');
             $password = RequestMethods::post('password');
-
-            $view = $this->getActionView();
             $error = false;
 
             if (empty($email)) {
-                $view->set('email_error', 'Email not provided');
+                $view->set('email_error', 'Email není vyplňen');
                 $error = true;
             }
 
             if (empty($password)) {
-                $view->set('password_error', 'Password not provided');
+                $view->set('password_error', 'Heslo není vyplněno');
                 $error = true;
             }
 
@@ -39,13 +46,17 @@ class App_Controller_User extends Controller
                     $security = Registry::get('security');
                     $status = $security->authenticate($email, $password);
 
-                    if ($status) {
-                        self::redirect('/');
+                    if ($status === true) {
+                        self::redirect('/admin/');
                     } else {
-                        $view->set('account_error', 'Email address and/or password are incorrect');
+                        $view->set('account_error', 'Email a/nebo heslo je špatně');
                     }
                 } catch (\Exception $e) {
-                    $view->set('account_error', $e->getMessage());
+                    if (ENV == 'dev') {
+                        $view->set('account_error', $e->getMessage());
+                    } else {
+                        $view->set('account_error', 'Email a/nebo heslo je špatně');
+                    }
                 }
             }
         }
@@ -68,51 +79,69 @@ class App_Controller_User extends Controller
     {
         if ($key === '8406c6ad864195ed144ab5c87621b6c233b548baeae6956df3463876aed6bc22d4a') {
             $view = $this->getActionView();
-            $errors = array();
-            $view->set('errors', $errors);
+            $host = RequestMethods::server('HTTP_HOST');
+        
+            $canonical = 'http://' . $host . '/registrace';
+            
+            $this->getLayoutView()->set('metatitle', 'Peďák - Registrace')
+                    ->set('canonical', $canonical);
 
             if (RequestMethods::post('register')) {
                 $security = Registry::get('security');
+                $errors = array();
 
-                $passComparation = $security->comparePasswords(
-                        RequestMethods::post('password'), RequestMethods::post('password2')
-                );
-
-                if (!$passComparation) {
-                    $errors['password2'] = array('Paswords doesnt match');
+                if (RequestMethods::post('password') !== RequestMethods::post('password2')) {
+                    $errors['password2'] = array('Hesla se neshodují');
                 }
 
                 $email = App_Model_User::first(
-                                array('email = ?' => RequestMethods::post('email')), 
-                                array('email')
+                                array('email = ?' => RequestMethods::post('email')), array('email')
                 );
 
                 if ($email) {
-                    $errors['email'] = array('Email is already used');
+                    $errors['email'] = array('Tento email je již použit');
                 }
 
-                $hash = $security->getHash(RequestMethods::post('password'));
+                $fileManager = new FileManager(array(
+                    'thumbWidth' => $this->loadConfigFromDb('thumb_width'),
+                    'thumbHeight' => $this->loadConfigFromDb('thumb_height'),
+                    'thumbResizeBy' => $this->loadConfigFromDb('thumb_resizeby'),
+                    'maxImageWidth' => $this->loadConfigFromDb('photo_maxwidth'),
+                    'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
+                ));
 
-                try {
-                    $im = new ImageManager();
-                    $photoArr = $im->upload('photo', 'team');
-                    $uploaded = ArrayMethods::toObject($photoArr);
-                } catch (Exception $ex) {
-                    $errors['photo'] = $ex->getMessage();
+                $fileErrors = $fileManager->upload('photo', 'team', time() . '_')->getUploadErrors();
+                $files = $fileManager->getUploadedFiles();
+
+                if (!empty($files)) {
+                    foreach ($files as $i => $file) {
+                        if ($file instanceof \THCFrame\Filesystem\Image) {
+                            $photoMain = trim($file->getFilename(), '.');
+                            $photoThumb = trim($file->getThumbname(), '.');
+                            break;
+                        }
+                    }
+                } else {
+                    $errors['photo'] = $fileErrors;
                 }
+
+                $salt = $security->createSalt();
+                $hash = $security->getSaltedHash(RequestMethods::post('password'), $salt);
 
                 $user = new App_Model_User(array(
                     'firstname' => RequestMethods::post('firstname'),
                     'lastname' => RequestMethods::post('lastname'),
                     'email' => RequestMethods::post('email'),
                     'password' => $hash,
+                    'salt' => $salt,
                     'role' => 'role_member',
-                    'dob' => date('Y-m-d', strtotime(RequestMethods::post('dob'))),
+                    'dob' => RequestMethods::post('dob'),
                     'playerNum' => RequestMethods::post('playerNum'),
                     'cfbuPersonalNum' => RequestMethods::post('cfbuPersonalNum'),
                     'team' => RequestMethods::post('team'),
                     'nickname' => RequestMethods::post('nickname'),
-                    'photo' => trim($uploaded->photo->filename, '.'),
+                    'photoMain' => $photoMain,
+                    'photoThumb' => $photoThumb,
                     'position' => RequestMethods::post('position'),
                     'grip' => RequestMethods::post('grip'),
                     'other' => RequestMethods::post('other')
@@ -121,7 +150,7 @@ class App_Controller_User extends Controller
                 if (empty($errors) && $user->validate()) {
                     $user->save();
 
-                    $view->flashMessage('Registration completed');
+                    $view->successMessage('Registrace byla úspěšná');
                     self::redirect('/');
                 } else {
                     $view->set('errors', $errors + $user->getErrors())
@@ -136,9 +165,13 @@ class App_Controller_User extends Controller
     /**
      * @before _secured
      */
-    public function edit()
+    public function profile()
     {
         $view = $this->getActionView();
+        $host = RequestMethods::server('HTTP_HOST');
+        
+        $canonical = 'http://' . $host . '/profil';
+
         $userId = $this->getUser()->getId();
         $errors = array();
 
@@ -147,71 +180,93 @@ class App_Controller_User extends Controller
                     'id = ?' => $userId
         ));
 
+        $this->getLayoutView()->set('metatile', 'Peďák - Můj profil')
+                ->set('canonical', $canonical);
+        $view->set('user', $user);
+
         if (RequestMethods::post('editProfile')) {
             $security = Registry::get('security');
 
-            $passComparation = $security->comparePasswords(
-                    RequestMethods::post('password'), RequestMethods::post('password2')
-            );
-
-            if (!$passComparation) {
-                $errors['password2'] = array('Paswords doesnt match');
+            if (RequestMethods::post('password') !== RequestMethods::post('password2')) {
+                $errors['password2'] = array('Hesla se neshodují');
             }
 
             if (RequestMethods::post('email') != $user->email) {
                 $email = App_Model_User::first(
-                                array('email = ?' => RequestMethods::post('email', $user->email)), 
-                                array('email')
+                                array('email = ?' => RequestMethods::post('email', $user->email)), array('email')
                 );
 
                 if ($email) {
-                    $errors['email'] = array('Email is already used');
+                    $errors['email'] = array('Tento email je již použit');
                 }
             }
 
             $pass = RequestMethods::post('password');
-            if ($pass == '') {
-                $hash = $user->password;
+
+            if ($pass === null || $pass == '') {
+                $salt = $user->getSalt();
+                $hash = $user->getPassword();
             } else {
-                $hash = $security->getHash($pass);
+                $salt = $security->createSalt();
+                $hash = $security->getSaltedHash($pass, $salt);
             }
 
-            if (!empty($_FILES['photo']['name'])) {
-                try {
-                    $im = new ImageManager();
-                    $photoArr = $im->upload('photo', 'team');
-                    $uploaded = ArrayMethods::toObject($photoArr);
-                } catch (Exception $ex) {
-                    $errors['photo'] = $ex->getMessage();
+            if ($user->photoMain == '') {
+                $fileManager = new FileManager(array(
+                    'thumbWidth' => $this->loadConfigFromDb('thumb_width'),
+                    'thumbHeight' => $this->loadConfigFromDb('thumb_height'),
+                    'thumbResizeBy' => $this->loadConfigFromDb('thumb_resizeby'),
+                    'maxImageWidth' => $this->loadConfigFromDb('photo_maxwidth'),
+                    'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
+                ));
+
+                $fileErrors = $fileManager->upload('photo', 'team', time() . '_')->getUploadErrors();
+                $files = $fileManager->getUploadedFiles();
+
+                if (!empty($files)) {
+                    foreach ($files as $i => $file) {
+                        if ($file instanceof \THCFrame\Filesystem\Image) {
+                            $photoMain = trim($file->getFilename(), '.');
+                            $photoThumb = trim($file->getThumbname(), '.');
+                            break;
+                        }
+                    }
+                } else {
+                    $errors['photo'] = $fileErrors;
                 }
+            } else {
+                $photoMain = $user->photoMain;
+                $photoThumb = $user->photoThumb;
             }
 
             $user->firstname = RequestMethods::post('firstname');
             $user->lastname = RequestMethods::post('lastname');
             $user->email = RequestMethods::post('email');
             $user->password = $hash;
-            $user->dob = date('Y-m-d', strtotime(RequestMethods::post('dob')));
-            $user->cfbuPersonalNum = RequestMethods::post('cfbuPersonalNum');
+            $user->salt = $salt;
+            $user->role = $user->getRole();
+            $user->active = $user->getActive();
+            $user->dob = RequestMethods::post('dob');
             $user->playerNum = RequestMethods::post('playerNum');
+            $user->cfbuPersonalNum = RequestMethods::post('cfbuPersonalNum');
             $user->team = RequestMethods::post('team');
             $user->nickname = RequestMethods::post('nickname');
             $user->position = RequestMethods::post('position');
             $user->grip = RequestMethods::post('grip');
             $user->other = RequestMethods::post('other');
-            $user->photo = trim($uploaded->photo->filename, '.');
+            $user->photoMain = $photoMain;
+            $user->photoThumb = $photoThumb;
 
             if (empty($errors) && $user->validate()) {
                 $user->save();
                 $security->setUser($user);
 
-                $view->flashMessage('All changes were successfully saved');
+                $view->successMessage(self::SUCCESS_MESSAGE_2);
                 self::redirect('/');
             } else {
                 $view->set('errors', $errors + $user->getErrors());
             }
         }
-
-        $view->set('user', $user);
     }
 
 }

@@ -21,6 +21,12 @@ class App_Etc_Module extends Module{
     
     protected $_routes = array(
         array(
+            'pattern' => '/admin',
+            'module' => 'admin',
+            'controller' => 'index',
+            'action' => 'index',
+        ),
+        array(
             'pattern' => '/login',
             'module' => 'app',
             'controller' => 'user',
@@ -33,7 +39,7 @@ class App_Etc_Module extends Module{
             'action' => 'logout',
         ),
         array(
-            'pattern' => '/register/:key',
+            'pattern' => '/registrace/:key',
             'module' => 'app',
             'controller' => 'user',
             'action' => 'register',
@@ -49,7 +55,7 @@ class App_Etc_Module extends Module{
             'pattern' => '/profil',
             'module' => 'app',
             'controller' => 'user',
-            'action' => 'edit',
+            'action' => 'profile',
         ),
         array(
             'pattern' => '/kecarna',
@@ -76,14 +82,47 @@ class App_Etc_Module extends Module{
             'action' => 'contact',
         ),
         array(
-            'pattern' => '/novinky/:urlkey',
+            'pattern' => '/novinky',
+            'module' => 'app',
+            'controller' => 'news',
+            'action' => 'index'
+        ),
+        array(
+            'pattern' => '/galerie',
+            'module' => 'app',
+            'controller' => 'gallery',
+            'action' => 'index'
+        ),
+        array(
+            'pattern' => '/galerie/:year',
+            'module' => 'app',
+            'controller' => 'gallery',
+            'action' => 'index',
+            'args' => ':year'
+        ),
+        array(
+            'pattern' => '/galerie/r/:urlkey',
+            'module' => 'app',
+            'controller' => 'gallery',
+            'action' => 'detail',
+            'args' => ':urlkey'
+        ),
+        array(
+            'pattern' => '/novinky/p/:page',
+            'module' => 'app',
+            'controller' => 'news',
+            'action' => 'index',
+            'args' => ':page'
+        ),
+        array(
+            'pattern' => '/novinky/r/:urlkey',
             'module' => 'app',
             'controller' => 'news',
             'action' => 'detail',
             'args' => ':urlkey'
         ),
         array(
-            'pattern' => '/zapasy/detail/:id',
+            'pattern' => '/zapasy/r/:id',
             'module' => 'app',
             'controller' => 'match',
             'action' => 'detail',

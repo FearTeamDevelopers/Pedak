@@ -16,7 +16,30 @@ class App_Controller_Training extends Controller
     public function index()
     {
         $view = $this->getActionView();
+        $host = RequestMethods::server('HTTP_HOST');
+        
+        $canonical = 'http://' . $host . '/treninky';
 
+        $this->getLayoutView()->set('metatitle', 'Peďák - Tréninky')
+                ->set('canonical', $canonical);
+        
+        $cache = Registry::get('cache');
+        
+        $content = $cache->get('trainings');
+        
+        if($content !== null){
+            $trainings = $content;
+        }else{
+            $trainings = App_Model_Training::all(
+                    array('active = ?' => true, 'startDate >= ?' => date('Y-m-d')),
+                    array('*'),
+                    array('startDate' => 'ASC'),
+                    10
+            );
+            $cache->set('trainings', $trainings);
+        }
+        
+        $view->set('trainings', $trainings);
 
     }
 

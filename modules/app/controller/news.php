@@ -42,7 +42,7 @@ class App_Controller_News extends Controller
      */
     private function _parseNewsBody(\App_Model_News $content, $parsedField = 'body')
     {
-        preg_match_all('/\(\!(photo|read)_[0-9a-z]+\!\)/', $content->$parsedField, $matches);
+        preg_match_all('/\(\!(video|photo|read)_[0-9a-z]+\!\)/', $content->$parsedField, $matches);
         $m = array_shift($matches);
 
         foreach ($m as $match) {
@@ -60,15 +60,30 @@ class App_Controller_News extends Controller
 
                 $tag = "<a data-lightbox=\"img\" data-title=\"{$photo->photoName}\" "
                         . "href=\"{$photo->imgMain}\" title=\"{$photo->photoName}\">"
-                        . "<img src=\"{$photo->imgThumb}\" height=\"250px\" alt=\"Karneval\"/></a>";
+                        . "<img src=\"{$photo->imgThumb}\" height=\"250px\" alt=\"Peďák\"/></a>";
 
                 $body = str_replace("(!photo_{$id}!)", $tag, $body);
 
                 $content->$parsedField = $body;
             }
+            
+             if ($type == 'video') {
+                $video = App_Model_Video::first(
+                                array(
+                            'id = ?' => $id,
+                            'active = ?' => true
+                                ), array('title', 'path', 'width', 'height')
+                );
+
+                $tag = "<iframe width=\"{$video->width}\" height=\"{$video->height}\" "
+                        . "src=\"{$video->path}\" frameborder=\"0\" allowfullscreen></iframe>";
+
+                $body = str_replace("(!video_{$id}!)", $tag, $body);
+                $content->$parsedField = $body;
+            }
 
             if ($type == 'read') {
-                $tag = "<a href=\"/novinky/{$content->getUrlKey()}\" class=\"news-read-more\">[Celý článek]</a>";
+                $tag = "<a href=\"/novinky/r/{$content->getUrlKey()}\" class=\"news-read-more\">[Celý článek]</a>";
                 $body = str_replace("(!read_more!)", $tag, $body);
                 $content->$parsedField = $body;
             }
@@ -84,6 +99,7 @@ class App_Controller_News extends Controller
     public function index($page = 1)
     {
         $view = $this->getActionView();
+        $layoutView = $this->getLayoutView();
 
         $npp = (int) $this->loadConfigFromDb('news_per_page');
 
@@ -107,6 +123,8 @@ class App_Controller_News extends Controller
         $newsPageCount = ceil($newsCount / $npp);
         $view->set('newsbatch', $news)
                 ->set('newspagecount', $newsPageCount);
+        
+        $layoutView->set('metatitle', 'Peďák - Aktuality');
     }
 
     /**
@@ -116,6 +134,7 @@ class App_Controller_News extends Controller
     public function detail($urlkey)
     {
         $view = $this->getActionView();
+        $layoutView = $this->getLayoutView();
 
         $news = App_Model_News::first(
                         array(
@@ -124,8 +143,7 @@ class App_Controller_News extends Controller
         ));
 
         $newsParsed = $this->_parseNewsBody($news, 'body');
-
-        $layoutView = $this->getLayoutView();
+        
         $this->_checkMetaData($layoutView, $news);
         $layoutView
                 ->set('article', 1)

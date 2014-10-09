@@ -1,6 +1,7 @@
 <?php
 
 use App\Etc\Controller as Controller;
+use THCFrame\Registry\Registry;
 
 /**
  * Description of App_Controller_Gallery
@@ -12,40 +13,71 @@ class App_Controller_Gallery extends Controller
 
     /**
      * 
+     * @param type $year
      */
-    public function index()
+    public function index($year = null)
     {
         $view = $this->getActionView();
+        $layoutView = $this->getLayoutView();
+        $host = RequestMethods::server('HTTP_HOST');
+        $cache = Registry::get('cache');
 
-        $galleries = App_Model_Gallery::all(
-                        array('active = ?' => true), 
-                        array('*'), 
-                        array('created' => 'ASC')
-        );
+        if ($year == null) {
+            $year = date('Y');
+            $canonical = 'http://' . $host . '/gallerie';
+        } else {
+            $canonical = 'http://' . $host . '/gallerie/' . $year;
+        }
 
-        $view->set('galleries', $galleries);
+        $content = $cache->get('galerie');
+        $contentYears = $cache->get('galerie-year');
+
+        if ($content !== null && $contentYears !== null) {
+            $galleries = $content;
+            $years = $contentYears;
+        } else {
+            $galleries = App_Model_Gallery::fetchGalleriesByYear($year);
+            $cache->set('galerie', $galleries);
+            
+            $galleryYears = App_Model_Gallery::all(
+                    array('showDate <> ?' => ''), 
+                    array('DISTINCT(EXTRACT(YEAR FROM showDate))' => 'year'), 
+                    array('year' => 'ASC')
+            );
+
+            $years = array();
+
+            foreach ($galleryYears as $gallery) {
+                $years[] = $gallery->getYear();
+            }
+        }
+        
+        $view->set('galleries', $galleries)
+                ->set('years', $years);
+
+        $layoutView->set('canonical', $canonical)
+            ->set('metatitle', 'Peďák - Galerie '.$year);
     }
 
     /**
      * 
+     * @param type $urlkey
      */
-    public function detail($id)
+    public function detail($urlkey)
     {
         $view = $this->getActionView();
+        $layoutView = $this->getLayoutView();
+        $host = RequestMethods::server('HTTP_HOST');
 
-        $gallery = App_Model_Gallery::first(array('id = ?' => $id));
-
-        if (NULL === $gallery) {
-            $view->flashMessage('Gallery not found');
-            self::redirect('/galerie');
-        } else {
-            $photos = App_Model_Photo::all(array(
-                        'galleryId = ?' => $id
-            ));
-
-            $view->set('gallery', $gallery)
-                    ->set('photos', $photos);
+        $gallery = App_Model_Gallery::fetchActivePublicGalleryByUrlkey($urlkey);
+        
+        if($gallery !== null){
+            $canonical = 'http://' . $host . '/galerie/r/' . $urlkey;
+            $layoutView->set('canonical', $canonical)
+                    ->set('metatitle', 'Peďák - '.$gallery->getTitle());
         }
+        
+        $view->set('gallery', $gallery);
     }
 
 }

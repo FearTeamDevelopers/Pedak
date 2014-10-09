@@ -115,16 +115,19 @@ class Admin_Controller_User extends Controller
                 'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
             ));
 
-            try {
-                $data = $fileManager->upload('photo', 'team', time().'_');
-            } catch (Exception $ex) {
-                $errors['photo'] = array($ex->getMessage());
-            }
-            
-            if (empty($data['errors']) && empty($errors['photo'])) {
-                foreach ($data['files'] as $i => $value) {
-                    $uploadedFile = ArrayMethods::toObject($value);
+            $fileErrors = $fileManager->upload('photo', 'team', time().'_')->getUploadErrors();
+            $files = $fileManager->getUploadedFiles();
+
+            if (!empty($files)) {
+                foreach ($files as $i => $file) {
+                    if ($file instanceof \THCFrame\Filesystem\Image) {
+                        $photoMain = trim($file->getFilename(), '.');
+                        $photoThumb = trim($file->getThumbname(), '.');
+                        break;
+                    }
                 }
+            }else{
+                $errors['photo'] = $fileErrors;
             }
 
             if (RequestMethods::post('password') !== RequestMethods::post('password2')) {
@@ -152,11 +155,11 @@ class Admin_Controller_User extends Controller
                 'cfbuPersonalNum' => RequestMethods::post('cfbuPersonalNum'),
                 'team' => RequestMethods::post('team'),
                 'nickname' => RequestMethods::post('nickname'),
-                'photoMain' => trim($uploadedFile->file->path, '.'),
-                'photoThumb' => trim($uploadedFile->thumb->path, '.'),
+                'photoMain' => $photoMain,
+                'photoThumb' => $photoThumb,
                 'position' => RequestMethods::post('position'),
                 'grip' => RequestMethods::post('grip'),
-                'other' => RequestMethods::post('other'),
+                'other' => RequestMethods::post('other')
             ));
 
             if (empty($errors) && $user->validate()) {

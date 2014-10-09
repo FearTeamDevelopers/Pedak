@@ -18,20 +18,42 @@ class App_Controller_Match extends Controller
     public function index()
     {
         $view = $this->getActionView();
+        $host = RequestMethods::server('HTTP_HOST');
 
-        $matchesA = App_Model_Match::all(
-                        array(
-                    'team = ?' => 'a',
-                    'active = ?' => true
-                        ), array('id', 'home', 'host', 'hall', 'date', 'scoreHome', 'scoreHost'), array('date' => 'ASC')
-        );
+        $canonical = 'http://' . $host . '/zapasy';
 
-        $matchesB = App_Model_Match::all(
-                        array(
-                    'team = ?' => 'b',
-                    'active = ?' => true
-                        ), array('id', 'home', 'host', 'hall', 'date', 'scoreHome', 'scoreHost'), array('date' => 'ASC')
-        );
+        $this->getLayoutView()->set('metatitle', 'Peďák - Zápasy')
+                ->set('canonical', $canonical);
+
+        $cache = Registry::get('cache');
+
+        $contentA = $cache->get('matchesa');
+
+        if ($contentA !== null) {
+            $matchesA = $contentA;
+        } else {
+            $matchesA = App_Model_Match::all(
+                            array(
+                        'team = ?' => 'a',
+                        'active = ?' => true
+                            ), array('id', 'home', 'away', 'hall', 'date', 'scoreHome', 'scoreAway'), array('date' => 'ASC')
+            );
+            $cache->set('matchesa', $matchesA);
+        }
+
+        $contentB = $cache->get('matchesb');
+
+        if ($contentB !== null) {
+            $matchesB = $contentB;
+        } else {
+            $matchesB = App_Model_Match::all(
+                            array(
+                        'team = ?' => 'b',
+                        'active = ?' => true
+                            ), array('id', 'home', 'away', 'hall', 'date', 'scoreHome', 'scoreAway'), array('date' => 'ASC')
+            );
+            $cache->set('matchesb', $matchesB);
+        }
 
         $view->set('matchesA', $matchesA)
                 ->set('matchesB', $matchesB);
@@ -43,20 +65,25 @@ class App_Controller_Match extends Controller
     public function detail($id)
     {
         $view = $this->getActionView();
+        $host = RequestMethods::server('HTTP_HOST');
 
-        $match = App_Model_Match::first(
-                        array('id = ?' => $id, 'active = ?' => true));
+        $canonical = 'http://' . $host . '/zapasy';
+
+        $this->getLayoutView()->set('metatitle', 'Peďák - Detail zápasu')
+                ->set('canonical', $canonical);
+
+        $match = App_Model_Match::first(array('id = ?' => (int) $id, 'active = ?' => true));
 
         if (NULL === $match) {
-            $view->flashMessage('Match not found');
+            $view->warningMessage('Match not found');
             self::redirect('/zapasy');
         }
 
-        $messages = App_MatchChatModel::all(array(
+        $messages = App_Model_MatchChat::all(array(
                     'matchId = ?' => $id,
                     'active = ?' => true,
                     'reply = ?' => 0
-                        ), array('*'), 'created', 'asc');
+                        ), array('*'), array('created' => 'asc'));
 
         $view->set('messages', $messages)
                 ->set('matchDet', $match);
@@ -69,7 +96,6 @@ class App_Controller_Match extends Controller
      */
     public function addMessage($id)
     {
-
         if (RequestMethods::post('sendMessage')) {
             $user = $this->getUser();
 

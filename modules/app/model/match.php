@@ -94,7 +94,7 @@ class App_Model_Match extends Model
      * @validate numeric, max(2)
      * @label score host
      */
-    protected $_scoreHost;
+    protected $_scoreAway;
 
     /**
      * @column

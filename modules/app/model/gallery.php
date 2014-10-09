@@ -105,11 +105,6 @@ class App_Model_Gallery extends Model
     protected $_photos;
     
     /**
-     * @readwrite
-     */
-    protected $_videos;
-    
-    /**
      * 
      */
     public function preSave()
