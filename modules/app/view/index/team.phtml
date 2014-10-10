@@ -17,7 +17,7 @@
                         <td>Nick</td><td>{echo $member->nickname}</td>
                     </tr>
                     <tr>
-                        <td>Datum narození</td><td>{echo $member->dob}</td>
+                        <td>Datum narození</td><td>{echo date("d.m. Y", strtotime($member->dob))}</td>
                     </tr>
                     <tr>
                         <td>Pozice</td>

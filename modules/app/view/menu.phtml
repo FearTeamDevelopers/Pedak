@@ -13,6 +13,7 @@
         <li {if $activemenu == "chat"}id="active"{/if}><a href="/kecarna">Kecárna</a></li>
         <li {if $activemenu == "training"}id="active"{/if}><a href="/treninky">Tréninky</a></li>
         <li {if $activemenu == "profile"}id="active"{/if}><a href="/profil">Profil</a></li>
+        {if $isAdmin}<li><a href="/admin">Administrace</a></li>
         <li class="end"><a href="/logout">Odhlásit se</a></li>
         {/else}
     </ul>
