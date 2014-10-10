@@ -30,7 +30,7 @@
             <tr>
                 <td>{echo date("d.m. Y", strtotime($match->date))}</td>
                 <td>{echo $match->home}</td>
-                <td>{echo $match->host}</td>
+                <td>{echo $match->away}</td>
                 <td>{echo $match->hall}</td>
             </tr>
             {/foreach}
@@ -46,7 +46,7 @@
             <tr>
                 <td>{echo date("d.m. Y", strtotime($match->date))}</td>
                 <td>{echo $match->home}</td>
-                <td>{echo $match->host}</td>
+                <td>{echo $match->away}</td>
                 <td>{echo $match->hall}</td>
             </tr>
             {/foreach}
@@ -62,10 +62,10 @@
     {if !empty($lastMatch)}
     {foreach $match in $lastMatch}
     <div class="ribbon-wrapper lastmatch">
-        {if (strtoupper(substr($match->home,0,14)) == "FBK VŠSK PEDF") && ($match->scoreHome > $match->scoreHost)}
+        {if (strtoupper(substr($match->home,0,14)) == "FBK VŠSK PEDF") && ($match->scoreHome > $match->scoreAway)}
         <div class="ribbon-wrapper-green"><div class="ribbon-green-left">WIN</div></div>
         {/if}
-        {elseif (strtoupper(substr($match->host,0,14)) == "FBK VŠSK PEDF") && ($match->scoreHost > $match->scoreHome)}
+        {elseif (strtoupper(substr($match->away,0,14)) == "FBK VŠSK PEDF") && ($match->scoreAway > $match->scoreHome)}
         <div class="ribbon-wrapper-green"><div class="ribbon-green-left">WIN</div></div>
         {/elseif}
 
@@ -75,7 +75,7 @@
         </p>
         <p class="lastmatch-right">
             Hala: {echo $match->hall} <br/><br/>
-            <span class="lastmatch-result">{echo $match->scoreHost}</span> {echo $match->host}
+            <span class="lastmatch-result">{echo $match->scoreAway}</span> {echo $match->away}
         </p>
     </div>
     {/foreach}

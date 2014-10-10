@@ -4,24 +4,20 @@
         <tr>
             <td>Datum</td><td>Domaci</td><td>Hoste</td>
             <td>Hala</td><td>Vysledek</td>
-            
-            {if $authUser}
-            <td>Detail</td>
-            {/if}
+            {if $isMember}<td>Detail</td>{/if}
         </tr>
 
         {foreach $match in $matchesA}
         <tr>
             <td>{echo date("d. m. Y", strtotime($match->date))}</td>
             <td>{echo $match->home}</td>
-            <td>{echo $match->host}</td>
+            <td>{echo $match->away}</td>
             <td>{echo $match->hall}</td>
 
             {if $match->scoreHome != -1}
-            <td>{echo $match->scoreHome} - {echo $match->scoreHost}</td>
-            {/if}
-            {else}
-            <td>neodehrano</td>
+            <td>{echo $match->scoreHome} - {echo $match->scoreAway}</td>
+            {/if}{else}
+            <td>Neodehráno</td>
             {/else}
             {if ($isMember)}
             <td><a href="/zapasy/r/{echo $match->id}">Detail</a></td>
@@ -37,23 +33,20 @@
         <tr>
             <td>Datum</td><td>Domaci</td><td>Hoste</td>
             <td>Hala</td><td>Vysledek</td>
-            {if $authUser}
-            <td>Detail</td>
-            {/if}
+            {if $isMember}<td>Detail</td>{/if}
         </tr>
 
         {foreach $match in $matchesB}
         <tr>
             <td>{echo date("d. m. Y", strtotime($match->date))}</td>
             <td>{echo $match->home}</td>
-            <td>{echo $match->host}</td>
+            <td>{echo $match->away}</td>
             <td>{echo $match->hall}</td>
 
             {if $match->scoreHome != -1}
-            <td>{echo $match->scoreHome} - {echo $match->scoreHost}</td>
-            {/if}
-            {else}
-            <td>neodehrano</td>
+            <td>{echo $match->scoreHome} - {echo $match->scoreAway}</td>
+            {/if}{else}
+            <td>Neodehráno</td>
             {/else}
             {if ($isMember)}
             <td><a href="/zapasy/r/{echo $match->id}">Detail</a></td>
