@@ -175,8 +175,8 @@ class App_Model_Gallery extends Model
         $galleryQuery = self::getQuery(array('gl.*'))
                 ->leftjoin('tb_photo', 'ph.id = gl.avatarPhotoId', 'ph', 
                         array('ph.imgMain', 'ph.imgThumb'))
-                ->wheresql('gl.active=1 AND gl.isPublic=1 AND gl.showDate BETWEEN \''.$startDate.'\' AND \''.$endDate.'\'')
-                ->order('gl.showDate', 'DESC');
+                ->wheresql('gl.active=1 AND gl.isPublic=1 AND gl.created BETWEEN \''.$startDate.'\' AND \''.$endDate.'\'')
+                ->order('gl.created', 'DESC');
 
         $galleries = self::initialize($galleryQuery);
 

@@ -2,6 +2,7 @@
 
 use App\Etc\Controller as Controller;
 use THCFrame\Registry\Registry;
+use THCFrame\Request\RequestMethods;
 
 /**
  * Description of App_Controller_Gallery
@@ -40,8 +41,8 @@ class App_Controller_Gallery extends Controller
             $cache->set('galerie', $galleries);
             
             $galleryYears = App_Model_Gallery::all(
-                    array('showDate <> ?' => ''), 
-                    array('DISTINCT(EXTRACT(YEAR FROM showDate))' => 'year'), 
+                    array('active = ?' => true), 
+                    array('DISTINCT(EXTRACT(YEAR FROM created))' => 'year'), 
                     array('year' => 'ASC')
             );
 
