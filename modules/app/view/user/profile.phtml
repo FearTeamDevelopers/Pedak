@@ -1,7 +1,10 @@
 <section class="grid_12 basic">
     <header><h1>Profil</h1></header>
+
     <form method="post" action="#" class="stdform" enctype="multipart/form-data">
         <input type="hidden" name="MAX_FILE_SIZE" value="5000000"/>
+        <input type="hidden" name="tk" id="tk" value="{echo $token}" />
+
         <p>
             <label>Jméno*</label>
             <span class="field">
@@ -18,7 +21,7 @@
             <span class="field">
                 <input type="text" name="lastname" class="longinput" required value="{echo $user->lastname}">
             </span>
-             {if isset($errors["lastname"])}
+            {if isset($errors["lastname"])}
             <span class="error">
                 {echo join("<br/>", $errors["lastname"])}
             </span>
@@ -81,15 +84,26 @@
         </p>
         <p>
             <label>Foto</label>
-            <span class="field">
-                <img src="{echo $user->photo}" alt="" />
-                <input type="file" name="photo" class="longinput">
+            {if $user->photoMain != ""}
+            <span class="field" id="currentLogo">
+                <img src="{echo $user->photoThumb}" alt="" height="100px" />
+                <a href="/app/user/deleteusermainphoto/{echo $user->id}" id="delImg" class="btn btn3 btn_trash" title="Delete logo"></a>
+            </span> 
+
+            <span class="field nodisplay" id="uploadLogo" >
+                <input type="file" name="photo" />
+                {if isset($errors["photo"])}
+                <label class="error">{echo join("<br/>", $errors["photo"])}</label>
+                {/if}
             </span>
-            {if isset($errors["photo"])}
-            <span class="error">
-                {echo join("<br/>", $errors["photo"])}
-            </span>
-            {/if}
+            {/if}{else}
+            <span class="field" id="uploadLogo">
+                <input type="file" name="photo" />
+                {if isset($errors["photo"])}
+                <label class="error">{echo join("<br/>", $errors["photo"])}</label>
+                {/if}
+            </span> 
+            {/else}
         </p>
         <p>
             <label>Číslo dresu*</label>

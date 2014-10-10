@@ -23,7 +23,8 @@ class App_Controller_Match extends Controller
         $canonical = 'http://' . $host . '/zapasy';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Zápasy')
-                ->set('canonical', $canonical);
+                ->set('canonical', $canonical)
+                ->set('activemenu', 'match');
 
         $cache = Registry::get('cache');
 

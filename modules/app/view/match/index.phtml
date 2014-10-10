@@ -23,8 +23,8 @@
             {else}
             <td>neodehrano</td>
             {/else}
-            {if ($member)}
-            <td><a href="/zapasy/detail/{echo $match->id}">Detail</a></td>
+            {if ($isMember)}
+            <td><a href="/zapasy/r/{echo $match->id}">Detail</a></td>
             {/if}
         </tr>
         {/foreach}
@@ -55,8 +55,8 @@
             {else}
             <td>neodehrano</td>
             {/else}
-            {if ($member)}
-            <td><a href="/zapasy/detail/{echo $match->id}">Detail</a></td>
+            {if ($isMember)}
+            <td><a href="/zapasy/r/{echo $match->id}">Detail</a></td>
             {/if}
         </tr>
         {/foreach}

@@ -104,7 +104,7 @@ class App_Model_Chat extends Model {
                         array(
                     "reply = ?" => $this->getId(),
                     "active = ?" => true,
-                        ), array("*"), "created", "desc");
+                        ), array("*"), array( "created" => "desc"));
     }
 
     /**

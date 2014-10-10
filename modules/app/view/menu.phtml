@@ -1,18 +1,18 @@
 <nav>
     <ul>
-        <li id="active"><a href="/">Home</a></li>
+        <li {if $activemenu == "home"}id="active"{/if}><a href="/">Home</a></li>
         {if !isset($authUser)}
-        <li><a href="/team">Team</a></li>
-        <li><a href="/zapasy">Zápasy</a></li>
-        <li><a href="/kontakt">Kontakt</a></li>
-        <li class="end"><a href="/login">Přihlásit se</a></li>
+        <li {if $activemenu == "team"}id="active"{/if}><a href="/team">Team</a></li>
+        <li {if $activemenu == "match"}id="active"{/if}><a href="/zapasy">Zápasy</a></li>
+        <li {if $activemenu == "concact"}id="active"{/if}><a href="/kontakt">Kontakt</a></li>
+        <li {if $activemenu == "login"}id="active"{/if} class="end"><a href="/login">Přihlásit se</a></li>
         {/if}
         {else}
-        <li><a href="/team">Team</a></li>
-        <li><a href="/zapasy">Zápasy</a></li>
-        <li><a href="/kecarna">Kecárna</a></li>
-        <li><a href="/treninky">Tréninky</a></li>
-        <li><a href="/profil">Profil</a></li>
+        <li {if $activemenu == "team"}id="active"{/if}><a href="/team">Team</a></li>
+        <li {if $activemenu == "match"}id="active"{/if}><a href="/zapasy">Zápasy</a></li>
+        <li {if $activemenu == "chat"}id="active"{/if}><a href="/kecarna">Kecárna</a></li>
+        <li {if $activemenu == "training"}id="active"{/if}><a href="/treninky">Tréninky</a></li>
+        <li {if $activemenu == "profile"}id="active"{/if}><a href="/profil">Profil</a></li>
         <li class="end"><a href="/logout">Odhlásit se</a></li>
         {/else}
     </ul>

@@ -82,7 +82,8 @@ class Admin_Controller_User extends Controller
 
         $users = App_Model_User::all(
                     array('role <> ?' => 'role_superadmin'), 
-                    array('id', 'firstname', 'lastname', 'email', 'role', 'active', 'created'), 
+                    array('id', 'firstname', 'lastname', 'email', 'role', 
+                        'active', 'created', 'team', 'photoThumb'), 
                     array('id' => 'asc')
         );
 

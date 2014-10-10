@@ -74,6 +74,14 @@ class App_Controller_Index extends Controller
     {
         $view = $this->getActionView();
 
+        $host = RequestMethods::server('HTTP_HOST');
+
+        $canonical = 'http://' . $host;
+
+        $this->getLayoutView()
+                ->set('canonical', $canonical)
+                ->set('activemenu', 'home');
+        
         //get last 4 news
         $news = App_Model_News::all(
                         array('active = ?' => true, 'expirationDate >= ?' => date('Y-m-d H:i:s')), 
@@ -137,7 +145,8 @@ class App_Controller_Index extends Controller
         $canonical = 'http://' . $host . '/team';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Team')
-                ->set('canonical', $canonical);
+                ->set('canonical', $canonical)
+                ->set('activemenu', 'team');
 
         $cache = Registry::get('cache');
 
@@ -182,7 +191,13 @@ class App_Controller_Index extends Controller
      */
     public function contact()
     {
-        
+        $host = RequestMethods::server('HTTP_HOST');
+
+        $canonical = 'http://' . $host . '/kontakt';
+
+        $this->getLayoutView()->set('metatitle', 'Peďák - Kontakt')
+                ->set('canonical', $canonical)
+                ->set('activemenu', 'concact');
     }
 
     /**
@@ -196,7 +211,8 @@ class App_Controller_Index extends Controller
         $canonical = 'http://' . $host . '/kecarna';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Kecárna')
-                ->set('canonical', $canonical);
+                ->set('canonical', $canonical)
+                ->set('activemenu', 'chat');
 
         $messages = App_Model_Chat::all(array(
                     'active = ?' => true,

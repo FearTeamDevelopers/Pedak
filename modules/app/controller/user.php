@@ -3,6 +3,7 @@
 use App\Etc\Controller as Controller;
 use THCFrame\Registry\Registry;
 use THCFrame\Request\RequestMethods;
+use THCFrame\Filesystem\FileManager;
 
 /**
  * Description of UserController
@@ -23,7 +24,8 @@ class App_Controller_User extends Controller
         $canonical = 'http://' . $host . '/login';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Přihlásit se')
-                ->set('canonical', $canonical);
+                ->set('canonical', $canonical)
+                ->set('activemenu', 'login');
 
         if (RequestMethods::post('submitLogin')) {
 
@@ -47,7 +49,7 @@ class App_Controller_User extends Controller
                     $status = $security->authenticate($email, $password);
 
                     if ($status === true) {
-                        self::redirect('/admin/');
+                        self::redirect('/');
                     } else {
                         $view->set('account_error', 'Email a/nebo heslo je špatně');
                     }
@@ -172,16 +174,16 @@ class App_Controller_User extends Controller
         
         $canonical = 'http://' . $host . '/profil';
 
-        $userId = $this->getUser()->getId();
         $errors = array();
 
         //required to activate database connection
         $user = App_Model_User::first(array(
-                    'id = ?' => $userId
+                    'id = ?' => $this->getUser()->getId()
         ));
 
         $this->getLayoutView()->set('metatile', 'Peďák - Můj profil')
-                ->set('canonical', $canonical);
+                ->set('canonical', $canonical)
+                ->set('activemenu', 'profile');
         $view->set('user', $user);
 
         if (RequestMethods::post('editProfile')) {
@@ -262,11 +264,44 @@ class App_Controller_User extends Controller
                 $security->setUser($user);
 
                 $view->successMessage(self::SUCCESS_MESSAGE_2);
-                self::redirect('/');
+                self::redirect('/profil');
             } else {
                 $view->set('errors', $errors + $user->getErrors());
             }
         }
     }
 
+    /**
+     * @before _secured, _member
+     */
+    public function deleteUserMainPhoto($id)
+    {
+        $this->willRenderActionView = false;
+        $this->willRenderLayoutView = false;
+
+        if ($this->checkToken()) {
+            $user = App_Model_User::first(array('id = ?' => (int) $id));
+
+            if ($user === null) {
+                echo self::ERROR_MESSAGE_2;
+            } else {
+                $unlinkMainImg = $user->getUnlinkPath();
+                $unlinkThumbImg = $user->getUnlinkThumbPath();
+                $user->photoMain = '';
+                $user->photoThumb = '';
+
+                if ($user->validate()) {
+                    $user->save();
+                    @unlink($unlinkMainImg);
+                    @unlink($unlinkThumbImg);
+
+                    echo 'success';
+                } else {
+                    echo self::ERROR_MESSAGE_1;
+                }
+            }
+        } else {
+            echo self::ERROR_MESSAGE_1;
+        }
+    }
 }

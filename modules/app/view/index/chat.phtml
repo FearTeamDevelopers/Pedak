@@ -12,7 +12,7 @@
         </div>
         <div class="clear"></div>
 
-        {script $replies = App_ChatModel::fetchReplies($message->id)}
+        {script $replies = App_Model_Chat::fetchReplies($message->id)}
         {foreach $reply in $replies}
         <div class="reply">
             <span class="title">{echo $reply->title}</span><br />

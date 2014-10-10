@@ -16,28 +16,31 @@
             </div>
             
             {script $ucast = $neucast = $nevi=array();$countU = $countN = $countM=0}
-
-            {foreach $attd in $training->attendance}
-            {if $attd["status"]==1}
-                {script $ucast[] = $attd["firstname"]." ".$attd["lastname"]; $countU++}
+            {script $attd = $training->getAttendance()}
+            
+            {if $attd !== null}
+                {foreach $att in $attd}
+                    {if $att->getStatus() ==1}
+                        {script $ucast[] = $att->firstname." ".$att->lastname; $countU++}
+                    {/if}
+                    {elseif $att->getStatus() == 2}
+                        {script $neucast[] = $att->firstname." ".$att->lastname; $countN++}
+                    {/elseif}
+                    {elseif $att->getStatus() == 3}
+                        {script $nevi[] = $att->firstname." ".$att->lastname; $countM++}
+                    {/elseif}
+                {/foreach}
             {/if}
-            {elseif $attd["status"] == 2}
-                {script $neucast[] = $attd["firstname"]." ".$attd["lastname"]; $countN++}
-            {/elseif}
-            {elseif $attd["status"] == 3}
-                {script $nevi[] = $attd["firstname"]." ".$attd["lastname"]; $countM++}
-            {/elseif}
-            {/foreach}
 
             <div class="trainingResult">
                 <div>
-                    Přijde ({echo $countU}):  {echo implode(", ", $ucast)}
+                    Přijde ({echo $countU}):  {echo join(", ", $ucast)}
                 </div>
                 <div>
-                    Nepřijde ({echo $countN}):  {echo implode(", ", $neucast)}
+                    Nepřijde ({echo $countN}):  {echo join(", ", $neucast)}
                 </div>
                 <div>
-                    Možná ({echo $countM}):  {echo implode(", ", $nevi)}
+                    Možná ({echo $countM}):  {echo join(", ", $nevi)}
                 </div>
             </div>
         </div>

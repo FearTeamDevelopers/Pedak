@@ -114,12 +114,36 @@ class App_Model_Training extends Model
 
     /**
      * 
+     */
+    public static function fetchAllLimited()
+    {
+        $trainings = self::all(
+                    array('active = ?' => true, 'startDate >= ?' => date('Y-m-d')),
+                    array('*'),
+                    array('startDate' => 'ASC'),
+                    10);
+        
+        if($trainings !== null){
+            foreach ($trainings as $i => $training){
+                $training->attendance = $training->getAttendanceByTraining();
+                $trainings[$i] = $training;
+            }
+            
+            return $trainings;
+        }else{
+            return null;
+        }
+        
+    }
+    
+    /**
+     * 
      * @param type $id
      * @return type
      */
     public static function fetchAttendanceByTraining($id)
     {
-        $training = new self(array('id' => (int) $id));
+        $training = self::first(array('id' => (int) $id));
         return $training->getAttendanceByTraining();
     }
 

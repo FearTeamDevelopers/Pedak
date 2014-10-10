@@ -42,6 +42,7 @@
 
                 {include menu.phtml}
             </header>
+
             <footer>
                 <section class="odkazy aligncenter">
                     <h1>Odkazy:</h1>
@@ -65,10 +66,24 @@
 
         <div id="contentWrapper">
             <div class="content">
-                {if !empty($flashMessage)}
+                {if !empty($warningMessage)}
+                <section class="container_12">
+                    <h1 class="visuallyhidden">Warning message</h1>
+                    <div class="ad-notif-warn grid_12"><p>{echo $warningMessage}</p></div>
+                </section>
+                {/if}
+
+                {if !empty($successMessage)}
+                <section class="container_12">
+                    <h1 class="visuallyhidden">Success message</h1>
+                    <div class="ad-notif-success grid_12"><p>{echo $successMessage}</p></div>
+                </section>
+                {/if}
+
+                {if !empty($errorMessage)}
                 <section class="container_12">
                     <h1 class="visuallyhidden">Error message</h1>
-                    <div class="ad-notif-info grid_12"><p>{echo $flashMessage}</p></div>
+                    <div class="ad-notif-error grid_12"><p>{echo $errorMessage}</p></div>
                 </section>
                 {/if}
 

@@ -6,7 +6,7 @@ use THCFrame\Registry\Registry;
 
 
 /**
- * Description of TrainingController
+ * Description of App_Controller_Training
  *
  * @author Tomy
  */
@@ -24,7 +24,8 @@ class App_Controller_Training extends Controller
         $canonical = 'http://' . $host . '/treninky';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Tréninky')
-                ->set('canonical', $canonical);
+                ->set('canonical', $canonical)
+                ->set('activemenu', 'training');
         
         $cache = Registry::get('cache');
         
@@ -33,12 +34,7 @@ class App_Controller_Training extends Controller
         if($content !== null){
             $trainings = $content;
         }else{
-            $trainings = App_Model_Training::all(
-                    array('active = ?' => true, 'startDate >= ?' => date('Y-m-d')),
-                    array('*'),
-                    array('startDate' => 'ASC'),
-                    10
-            );
+            $trainings = App_Model_Training::fetchAllLimited();
             $cache->set('trainings', $trainings);
         }
         
@@ -58,8 +54,7 @@ class App_Controller_Training extends Controller
 
         $attend = App_Model_Attendance::first(array(
                     'userId = ?' => $userId,
-                    'trainingId = ?' => $id,
-                    'active = ?' => true
+                    'trainingId = ?' => $id
         ));
 
         if (NULL !== $attend) {
@@ -68,7 +63,7 @@ class App_Controller_Training extends Controller
             if ($attend->validate()) {
                 $attend->save();
 
-                $view->flashMessage('Your choice has been successfully saved');
+                $view->successMessage('Your choice has been successfully saved');
                 self::redirect('/treninky');
             }
         } else {
@@ -81,7 +76,7 @@ class App_Controller_Training extends Controller
             if ($newAttend->validate()) {
                 $newAttend->save();
 
-                $view->flashMessage('Your choice has been successfully saved');
+                $view->successMessage('Your choice has been successfully saved');
                 self::redirect('/treninky');
             }
         }
