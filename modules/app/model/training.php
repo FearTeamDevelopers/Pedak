@@ -96,6 +96,12 @@ class App_Model_Training extends Model
      * @var type 
      */
     protected $_attendance;
+    
+    /**
+     * @readwrite
+     * @var type 
+     */
+    protected $_hosts;
 
     /**
      * 
@@ -125,7 +131,8 @@ class App_Model_Training extends Model
         
         if($trainings !== null){
             foreach ($trainings as $i => $training){
-                $training->attendance = $training->getAttendanceByTraining();
+                $training->attendance = App_Model_Attendance::fetchAttendanceByTrainingId($training->getId());
+                $training->hosts = App_Model_TrainingHost::fetchHostsByTrainingId($training->getId());
                 $trainings[$i] = $training;
             }
             
@@ -136,17 +143,6 @@ class App_Model_Training extends Model
         
     }
     
-    /**
-     * 
-     * @param type $id
-     * @return type
-     */
-    public static function fetchAttendanceByTraining($id)
-    {
-        $training = self::first(array('id' => (int) $id));
-        return $training->getAttendanceByTraining();
-    }
-
     /**
      * 
      * @return type
@@ -165,7 +161,7 @@ class App_Model_Training extends Model
                 ->groupby('at.userId')
                 ->order('us.lastname', 'ASC');
 
-        $attend = App_Model_User::initialize($query);
+        $attend = App_Model_Attendance::initialize($query);
 
         $ra = array();
 
@@ -178,22 +174,6 @@ class App_Model_Training extends Model
         } else {
             return null;
         }
-    }
-
-    /**
-     * 
-     * @return type
-     */
-    public function getAttendanceByTraining()
-    {
-        $query = App_Model_Attendance::getQuery(array('at.*'))
-                ->join('tb_user', 'at.userId = us.id', 'us', 
-                        array('us.firstname', 'us.lastname'))
-                ->where('at.trainingId = ?', $this->getId());
-
-        $attendance = App_Model_Attendance::initialize($query);
-
-        return $attendance;
     }
 
 }

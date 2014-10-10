@@ -158,7 +158,7 @@ class Admin_Controller_Training extends Controller
             self::redirect('/admin/training/');
         }
         
-        $training->attendance = App_Model_Training::fetchAttendanceByTraining($training->getId());
+        $training->attendance = App_Model_Attendance::fetchAttendanceByTrainingId($training->getId());
         
         $view->set('training', $training);
     }

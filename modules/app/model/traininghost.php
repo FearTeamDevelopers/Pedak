@@ -3,17 +3,17 @@
 use THCFrame\Model\Model as Model;
 
 /**
- * Description of App_Model_Attendance
+ * Description of App_Model_TrainingHost
  *
  * @author Tomy
  */
-class App_Model_Attendance extends Model
+class App_Model_TrainingHost extends Model
 {
 
     /**
      * @readwrite
      */
-    protected $_alias = 'at';
+    protected $_alias = 'th';
 
     /**
      * @column
@@ -48,12 +48,13 @@ class App_Model_Attendance extends Model
     /**
      * @column
      * @readwrite
-     * @type tinyint
+     * @type text
+     * @length 150
      * 
-     * @validate required, numeric, max(2)
-     * @label status
+     * @validate required, alphanumeric, max(150)
+     * @label host name
      */
-    protected $_status;
+    protected $_hostName;
 
     /**
      * @column
@@ -88,25 +89,18 @@ class App_Model_Attendance extends Model
      * @param type $id
      * @return type
      */
-    public static function fetchAttendanceByTrainingId($id)
+    public static function fetchHostsByTrainingId($id)
     {
-        $att = new self(array('trainingId' => (int)$id));
-        return $att->getAttendanceByTrainingId();
+        $hosts = new self(array('trainingId' => (int)$id));
+        return $hosts->getHostsByTrainingId();
     }
     
     /**
      * 
      * @return type
      */
-    public function getAttendanceByTrainingId()
+    public function getHostsByTrainingId()
     {
-        $query = self::getQuery(array('at.*'))
-                ->join('tb_user', 'at.userId = us.id', 'us', 
-                        array('us.firstname', 'us.lastname'))
-                ->where('at.trainingId = ?', $this->getTrainingId());
-
-        $attendance = self::initialize($query);
-        
-        return $attendance;
+        return self::all(array('trainingId = ?' => $this->getTrainingId()));
     }
 }

@@ -17,6 +17,7 @@
             
             {script $ucast = $neucast = $nevi=array();$countU = $countN = $countM=0}
             {script $attd = $training->getAttendance()}
+            {script $hosts = $training->getHosts()}
             
             {if $attd !== null}
                 {foreach $att in $attd}
@@ -32,9 +33,24 @@
                 {/foreach}
             {/if}
 
+            {if !empty($hosts)}
+                {foreach $host in $hosts}
+                    {if $host->getUserId() == $authUser->getId()}
+                        {script $hosti[] = $host->hostName." <a href=\"/app/training/deletehost/".$host->getId()."\">(X)</a>"}
+                    {/if}{else}
+                        {script $hosti[] = $host->hostName}
+                    {/else}
+                {/foreach}
+                {script $countU += count($hosti)}
+            {/if}
+                    
             <div class="trainingResult">
                 <div>
                     Přijde ({echo $countU}):  {echo join(", ", $ucast)}
+                    {if !empty($hosts)}
+                        <br/>
+                        Hosti: {echo join(", ", $hosti)}
+                    {/if}
                 </div>
                 <div>
                     Nepřijde ({echo $countN}):  {echo join(", ", $neucast)}
@@ -42,6 +58,20 @@
                 <div>
                     Možná ({echo $countM}):  {echo join(", ", $nevi)}
                 </div>
+            </div>
+            <div>
+                <form method="post" action="/app/training/addhost/{echo $training->getId()}" class="stdform">
+                    <input type="hidden" name="tk" id="tk" value="{echo $token}" />
+                    <input type="hidden" name="submstoken" id="submstoken" value="{echo $submstoken}" />
+                    
+                    <p>
+                        <label>Host</label>
+                        <span class="field">
+                            <input required type="text" name="hostname" class="microinput"/>
+                            <input type="submit" name="submitAddHost" class="microinput" value="Přidat" />
+                        </span>
+                    </p>
+                </form>
             </div>
         </div>
     </div>
