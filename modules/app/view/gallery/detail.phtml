@@ -1,5 +1,5 @@
-<article class="grid_12">
-    <h1>{echo $gallery->title}</h1>
+<section class="grid_12 basic">
+    <header><h1>{echo $gallery->title}</h1></header>
     <div>
         {echo nl2br($gallery->description)}
     </div>
@@ -13,7 +13,7 @@
         {/foreach}
         {/if}
     </div>
-</article>
+</section>
 
 <script type="text/javascript" src="/public/js/galleria/galleria-1.3.3.min.js"></script>
 <script type="text/javascript" src="/public/js/galleria-init.js"></script>

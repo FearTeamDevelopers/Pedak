@@ -5,14 +5,14 @@
         <meta http-equiv="Content-Language" content="cs" />
         {if $env == "live"}<meta http-equiv="CACHE-CONTROL" content="public, max-age=10800">{/if}
         {else}<meta http-equiv="CACHE-CONTROL" content="no-store">{/else}
-        
+
         <meta name="viewport" content="width=device-width, maximum-scale=2.0, minimum-scale=1.0, initial-scale=1.0" />
         <meta name="language" content="czech" />
         <meta name="description" content="{echo $metadescription}" />
         <meta name="revisit-after" content="4 Days" />
         <meta name="distribution" content="global"/>
         <meta name="robots" content="{echo $metarobots}">
-        
+
         <meta property="og:url" content="{echo $metaogurl}" />
         <meta property="og:title" content="{echo $metatitle}" />
         <meta property="og:description" content="{echo $metadescription}" />
@@ -33,12 +33,33 @@
         <title>Pedak</title>
     </head>
     <body lang="cs">
-        <div id="headerWrapper">
-            <header class="content">
-                <h1><a href="/" id="logo">Pedak BETA</a></h1>
+        <aside>
+            <header>
+                <hgroup>
+                    <h1><a href="/">Peďák</a></h1>
+                    <h3>florbalový klub</h3>    
+                </hgroup>
+
                 {include menu.phtml}
             </header>
-        </div>
+            <footer>
+                <section class="odkazy aligncenter">
+                    <h1>Odkazy:</h1>
+                    <ul>
+                        <li><a href="http://www.floorball.org/default.asp" target=_blank>IFF</a></li>
+                        <li><a href="http://cfbu.cz" target=_blank>CFBU</a></li>
+                        <li><a href="http://florbal.cz/" target=_blank>Florbal.cz</a></li>
+                    </ul>
+                </section>
+
+                <section class="madeBy aligncenter">  
+                    <h1 class="visuallyhidden">Made by</h1>
+                    <span>
+                        Florbal Peďák | Made by<br/> Tomáš Hodáň<br/>  Tomáš Sláma<br/>
+                    </span>
+                </section>
+            </footer>
+        </aside>    
 
         <div class="clear"></div>
 
@@ -46,43 +67,20 @@
             <div class="content">
                 {if !empty($flashMessage)}
                 <section class="container_12">
+                    <h1 class="visuallyhidden">Error message</h1>
                     <div class="ad-notif-info grid_12"><p>{echo $flashMessage}</p></div>
                 </section>
                 {/if}
 
-                <section class="container_12">
+                <div class="container_12">
                     {yield action}
-                </section>
+                </div>
             </div>
         </div>
 
         <div class="clear"></div>
 
-        <div id="footerWrapper">
-            <footer class="content">
-                <section class="container_12">
-                    <div class="grid_4">
-                        <span>
-                            Florbal Peďák | Made by Tomáš Hodáň<br/>
-                        </span>
-                    </div>
-                    <div class="grid_4">
-                        <ul>
-                            <li><a href="http://www.floorball.org/default.asp" target=_blank>IFF</a></li>
-                            <li><a href="http://cfbu.cz" target=_blank>CFBU</a></li>
-                            <li><a href="http://florbal.cz/" target=_blank>Florbal.cz</a></li>
-                        </ul>
-                    </div>
-                    <div class="grid_4">
-                        <ul id="icons">
-                            <li><a href="#"><img src="/public/images/social/facebook.png" alt=""></a></li>
-                            <li><a href="#"><img src="/public/images/social/twitter.png" alt=""></a></li>
-                            <li><a href="#"><img src="/public/images/social/linkedin.png" alt=""></a></li>
-                        </ul>
-                    </div>
-                </section>
-            </footer>
-        </div>
+
 
         <div id="dialog"></div>
 

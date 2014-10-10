@@ -1,8 +1,11 @@
-<article class="grid_12">
+<div class="homepage"></div>
+<section class="grid_12 basic ">
+    <header><h1>Novinky</h1></header>
+    
     {if !empty($news)}
-    <div id="slides">
         {foreach $_news in $news}
-        <div>
+        
+        <div class="grid_6">
             <h2>{echo $_news->title}</h2><br/>
             <p class="newsText">{echo nl2br(substr($_news->body, 0, 900))}... 
                 [ <a href="/novinky/{echo $_news->id}">Celý článek</a> ]</p>
@@ -12,14 +15,15 @@
             </p>
         </div>
         {/foreach}
-    </div>
     {/if} 
-</article>
+</section>
+
+
 
 <div class="clear"></div>
 
-<article class="grid_12 indexNextMatch">
-    <h1>Příští zápasy</h1>
+<section class="grid_12 indexNextMatch basic">
+    <header><h1>Příští zápasy</h1></header>
     {if !empty($nextMatchA)}
     <div class="grid_6">
         <h2>A</h2>
@@ -54,12 +58,12 @@
         </table>
     </div>
     {/if} 
-</article>
+</section>
 
 <div class="clear"></div>
 
-<article class="grid_12">
-    <h1>Poslední zápasy</h1>
+<section class="grid_12 basic">
+    <header><h1>Poslední zápasy</h1></header>
 
     {if !empty($lastMatch)}
     {foreach $match in $lastMatch}
@@ -87,12 +91,12 @@
     {else}
     Žádné výsledky
     {/else}
-</article>
+</section>
 
 <div class="clear"></div>
 
-<article class="grid_12">
-    <h1>Sponzoři</h1>
+<section class="grid_12 basic">
+    <header><h1>Sponzoři</h1></header>
 
     {if !empty($sponsors)}
     <ul class="inline-list">
@@ -105,6 +109,6 @@
         {/foreach}
     </ul>
     {/if}
-</article>
+</section>
 
 <div class="clear"></div>

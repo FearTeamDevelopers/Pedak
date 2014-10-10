@@ -2,7 +2,7 @@
 
 use App\Etc\Controller as Controller;
 use THCFrame\Request\RequestMethods;
-
+use THCFrame\Registry\Registry;
 /**
  * Description of App_Controller_Index
  *

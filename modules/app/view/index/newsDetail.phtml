@@ -1,7 +1,7 @@
 {if $news}
 
-<article class="grid_12">
-    <h1>{echo $news->title}</h1>
+<section class="grid_12 basic">
+    <header><h1>{echo $news->title}</h1></header>
     <div class="newsDetail">
         <p>
             <span class="meta">Autor: {echo $news->author}</span>
@@ -23,6 +23,6 @@
         </ul>
         {/if}
     </div>
-</article>
+</section>
 
 {/if}
