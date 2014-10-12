@@ -100,17 +100,17 @@ class App_Controller_Index extends Controller
         $nextMatchA = App_Model_Match::all(
                         array(
                     'active = ?' => true,
-                    'date >= ?' => date('Y-m-d'),
+                    'startDate >= ?' => date('Y-m-d'),
                     'team = ?' => 'a'
-                        ), array('id', 'home', 'away', 'hall', 'date'), array('date' => 'ASC'), 4
+                        ), array('id', 'home', 'away', 'hall', 'startDate', 'startTime'), array('startDate' => 'ASC'), 4
         );
 
         $nextMatchB = App_Model_Match::all(
                         array(
                     'active = ?' => true,
-                    'date >= ?' => date('Y-m-d'),
+                    'startDate >= ?' => date('Y-m-d'),
                     'team = ?' => 'b'
-                        ), array('id', 'home', 'away', 'hall', 'date'), array('date' => 'ASC'), 4
+                        ), array('id', 'home', 'away', 'hall', 'startDate', 'startTime'), array('startDate' => 'ASC'), 4
         );
 
         //get last 2 matches results
@@ -118,8 +118,8 @@ class App_Controller_Index extends Controller
                         array(
                     'active = ?' => true,
                     'scoreHome <> ?' => -1,
-                    'date <= ?' => date('Y-m-d')
-                        ), array('id', 'home', 'away', 'date', 'hall', 'scoreHome', 'scoreAway'), array('date' => 'DESC'), 2
+                    'startDate <= ?' => date('Y-m-d')
+                        ), array('id', 'home', 'away', 'startDate', 'hall', 'scoreHome', 'scoreAway', 'startTime'), array('startDate' => 'DESC'), 2
         );
 
         //get sponsors

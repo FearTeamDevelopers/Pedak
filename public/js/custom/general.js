@@ -64,7 +64,7 @@ jQuery(document).ready(function () {
 
     jQuery('.stdtable').DataTable({
         'aaSorting': [],
-        'iDisplayLength': 25,
+        'iDisplayLength': 50,
         'sPaginationType': 'full_numbers'
     });
 

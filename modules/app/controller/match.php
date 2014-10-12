@@ -37,7 +37,7 @@ class App_Controller_Match extends Controller
                             array(
                         'team = ?' => 'a',
                         'active = ?' => true
-                            ), array('id', 'home', 'away', 'hall', 'date', 'scoreHome', 'scoreAway'), array('date' => 'ASC')
+                            ), array('id', 'home', 'away', 'hall', 'startDate', 'startTime', 'scoreHome', 'scoreAway'), array('startDate' => 'ASC')
             );
             $cache->set('matchesa', $matchesA);
         }
@@ -51,7 +51,7 @@ class App_Controller_Match extends Controller
                             array(
                         'team = ?' => 'b',
                         'active = ?' => true
-                            ), array('id', 'home', 'away', 'hall', 'date', 'scoreHome', 'scoreAway'), array('date' => 'ASC')
+                            ), array('id', 'home', 'away', 'hall', 'startDate', 'startTime', 'scoreHome', 'scoreAway'), array('startDate' => 'ASC')
             );
             $cache->set('matchesb', $matchesB);
         }

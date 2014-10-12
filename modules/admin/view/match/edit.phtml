@@ -15,7 +15,7 @@
         <p>
             <label>Home*</label>
             <span class="field">
-                <input required type="text" name="title" class="longinput" 
+                <input required type="text" name="home" class="longinput" 
                        value="{echo $match->home}" />
                 {if isset($errors["home"])}
                 <label class="error">{echo join("<br/>", $errors["home"])}</label>
@@ -35,10 +35,20 @@
         <p>
             <label>Date*</label>
             <span class="field">
-                <input required type="text" name="date" class="longinput datepicker" 
-                       value="{echo $match->date}" />
-                {if isset($errors["date"])}
-                <label class="error">{echo join("<br/>", $errors["date"])}</label>
+                <input required type="text" name="startdate" class="longinput datepicker" 
+                       value="{echo $match->startDate}" />
+                {if isset($errors["startDate"])}
+                <label class="error">{echo join("<br/>", $errors["startDate"])}</label>
+                {/if}
+            </span>
+        </p>
+        <p>
+            <label>Time</label>
+            <span class="field">
+                <input type="time" name="starttime" class="longinput" 
+                       value="{echo $match->startTime}" />
+                {if isset($errors["startTime"])}
+                <label class="error">{echo join("<br/>", $errors["startTime"])}</label>
                 {/if}
             </span>
         </p>

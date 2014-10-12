@@ -1,6 +1,8 @@
 <?php
 
 use Admin\Etc\Controller;
+use THCFrame\Request\RequestMethods;
+use THCFrame\Events\Events as Event;
 
 /**
  * Description of Admin_Controller_Match
@@ -38,7 +40,8 @@ class Admin_Controller_Match extends Controller
             $match = new App_Model_Match(array(
                 'home' => RequestMethods::post('home'),
                 'away' => RequestMethods::post('host'),
-                'date' => RequestMethods::post('date'),
+                'startDate' => RequestMethods::post('startdate'),
+                'startTime' => RequestMethods::post('starttime'),
                 'hall' => RequestMethods::post('hall'),
                 'scoreHome' => RequestMethods::post('scoreHome', -1),
                 'scoreAway' => RequestMethods::post('scoreHost', -1),
@@ -84,7 +87,8 @@ class Admin_Controller_Match extends Controller
             
             $match->home = RequestMethods::post('home');
             $match->away = RequestMethods::post('host');
-            $match->date = RequestMethods::post('date');
+            $match->startDate = RequestMethods::post('startdate');
+            $match->startTime = RequestMethods::post('starttime');
             $match->hall = RequestMethods::post('hall');
             $match->scoreHome = RequestMethods::post('scoreHome');
             $match->scoreAway = RequestMethods::post('scoreHost');

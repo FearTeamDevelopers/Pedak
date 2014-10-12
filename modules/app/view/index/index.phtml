@@ -28,7 +28,7 @@
             </tr>
             {foreach $match in $nextMatchA}
             <tr>
-                <td>{echo date("d.m. Y", strtotime($match->date))}</td>
+                <td>{echo date("d.m. Y", strtotime($match->startDate))." ".$match->startTime}</td>
                 <td>{echo $match->home}</td>
                 <td>{echo $match->away}</td>
                 <td>{echo $match->hall}</td>
@@ -44,7 +44,7 @@
             </tr>
             {foreach $match in $nextMatchB}
             <tr>
-                <td>{echo date("d.m. Y", strtotime($match->date))}</td>
+                <td>{echo date("d.m. Y", strtotime($match->startDate))." ".$match->startTime}</td>
                 <td>{echo $match->home}</td>
                 <td>{echo $match->away}</td>
                 <td>{echo $match->hall}</td>
@@ -70,7 +70,7 @@
         {/elseif}
 
         <p class="lastmatch-left">
-            Datum: {echo date("d.m. Y", strtotime($match->date))}<br/><br/>
+            Datum: {echo date("d.m. Y", strtotime($match->startDate))}<br/><br/>
             {echo $match->home} <span class="lastmatch-result">{echo $match->scoreHome}</span>
         </p>
         <p class="lastmatch-right">

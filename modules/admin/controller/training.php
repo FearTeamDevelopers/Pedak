@@ -18,7 +18,7 @@ class Admin_Controller_Training extends Controller
     public function index()
     {
         $view = $this->getActionView();
-        $trainings = App_Model_Training::all();
+        $trainings = App_Model_Training::all(array(), array('*'), array('startDate' => 'asc'));
         $view->set('trainings', $trainings);
     }
 

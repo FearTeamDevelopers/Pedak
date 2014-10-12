@@ -9,7 +9,7 @@
 
         {foreach $match in $matchesA}
         <tr>
-            <td>{echo date("d. m. Y", strtotime($match->date))}</td>
+            <td>{echo date("d. m. Y", strtotime($match->startDate))." ".$match->startTime}</td>
             <td>{echo $match->home}</td>
             <td>{echo $match->away}</td>
             <td>{echo $match->hall}</td>
@@ -38,7 +38,7 @@
 
         {foreach $match in $matchesB}
         <tr>
-            <td>{echo date("d. m. Y", strtotime($match->date))}</td>
+            <td>{echo date("d. m. Y", strtotime($match->startDate))." ".$match->startTime}</td>
             <td>{echo $match->home}</td>
             <td>{echo $match->away}</td>
             <td>{echo $match->hall}</td>

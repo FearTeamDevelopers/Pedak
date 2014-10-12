@@ -53,17 +53,29 @@ class App_Model_Match extends Model
      * @validate required, alphanumeric, max(40)
      * @label host
      */
-    protected $_host;
+    protected $_away;
 
     /**
      * @column
      * @readwrite
-     * @type datetime
+     * @type text
+     * @length 12
      * 
-     * @validate required, date, max(20)
+     * @validate required, date, max(12)
      * @label date
      */
-    protected $_date;
+    protected $_startDate;
+    
+    /**
+     * @column
+     * @readwrite
+     * @type text
+     * @length 12
+     * 
+     * @validate time, max(12)
+     * @label time
+     */
+    protected $_startTime;
 
     /**
      * @column
@@ -102,7 +114,7 @@ class App_Model_Match extends Model
      * @type text
      * @length 10
      * 
-     * @validate required, alphanumeric, max(10)
+     * @validate alphanumeric, max(10)
      * @label season
      */
     protected $_season;

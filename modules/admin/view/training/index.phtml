@@ -16,6 +16,7 @@
                 <col class="con0" /> <col class="con1" />
                 <col class="con0" /> <col class="con1" />
                 <col class="con0" /> <col class="con1" />
+                <col class="con0" />
             </colgroup>
             <thead>
                 <tr>
@@ -23,8 +24,9 @@
                     <th class="head1">Title</th>
                     <th class="head0">Location</th>
                     <th class="head1">Date</th>
-                    <th class="head0">Status</th>
-                    <th class="head1">&nbsp;</th>
+                    <th class="head0">Time</th>
+                    <th class="head1">Status</th>
+                    <th class="head0">&nbsp;</th>
                 </tr> 
             </thead>
 
@@ -37,7 +39,8 @@
                             </td>
                             <td>{echo $training->getTitle()}</td>
                             <td>{echo $training->getLocation()}</td>
-                            <td>{echo $training->getWhen()}</td>
+                            <td>{echo $training->getStartDate()}</td>
+                            <td>{echo $training->getStartTime()}</td>
                             <td>
                                 {if ($training->active)}<span class="labelProduct labelProductGreen">Active</span>{/if}
                             </td>
