@@ -76,7 +76,7 @@ class App_Controller_Match extends Controller
         $match = App_Model_Match::first(array('id = ?' => (int) $id, 'active = ?' => true));
 
         if (NULL === $match) {
-            $view->warningMessage('Match not found');
+            $view->warningMessage('Zápas nenalezen');
             self::redirect('/zapasy');
         }
 
@@ -110,8 +110,7 @@ class App_Controller_Match extends Controller
 
             if ($message->validate()) {
                 $message->save();
-                /** nepouzije se spravne ID.. dunno why */
-                self::redirect('/zapasy/r/{$id}');
+                self::redirect('/zapasy/r/'.$id);
             }
         }
     }

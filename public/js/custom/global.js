@@ -65,7 +65,7 @@ jQuery(document).ready(function () {
 
     jQuery("a.showReplyForm").click(function (e) {
         e.preventDefault();
-        jQuery(this).siblings(".replyForm").toggle(500);
+        jQuery(this).parents(".messageWrapper").find(".replyForm").toggle(500);
         jQuery(".replyForm:visible textarea.mediuminput").focus();
     });
 

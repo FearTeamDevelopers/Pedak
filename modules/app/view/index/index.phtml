@@ -63,10 +63,10 @@
     {foreach $match in $lastMatch}
     <div class="ribbon-wrapper lastmatch">
         {if (strtoupper(substr($match->home,0,14)) == "FBK VŠSK PEDF") && ($match->scoreHome > $match->scoreAway)}
-        <div class="ribbon-wrapper-green"><div class="ribbon-green-left">WIN</div></div>
+        <div class="ribbon-wrapper-green"><div class="ribbon-green-left">Výhra</div></div>
         {/if}
         {elseif (strtoupper(substr($match->away,0,14)) == "FBK VŠSK PEDF") && ($match->scoreAway > $match->scoreHome)}
-        <div class="ribbon-wrapper-green"><div class="ribbon-green-left">WIN</div></div>
+        <div class="ribbon-wrapper-green"><div class="ribbon-green-left">Výhra</div></div>
         {/elseif}
 
         <p class="lastmatch-left">

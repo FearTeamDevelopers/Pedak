@@ -4,32 +4,32 @@
     {if isset($messages)}
     {foreach $message in $messages}
     <article class="messageWrapper relative">
-        <div class="message">
+        <div class="message grid_8">
             <span class="title">{echo $message->title}</span><br/>
-            <p class="messageBody">{echo nl2br($message->body)}</p>
             <span class="meta">Autor: {echo $message->author} </span>
-            <span class="meta">Vytvořeno: {echo date("d.m. Y H:i", strtotime($message->created))} </span><br/>
+            <span class="meta">Vytvořeno: {echo date("d.m. Y H:i", strtotime($message->created))} </span><br/><br/>
+            <p class="messageBody">{echo nl2br($message->body)}</p>
+            <a href="#" class="showReplyForm">Odpovědět</a>
         </div>
         <div class="clear"></div>
 
         {script $replies = App_Model_Chat::fetchReplies($message->id)}
         {foreach $reply in $replies}
-        <div class="reply">
+        <div class="reply grid_8">
             <span class="title">{echo $reply->title}</span><br />
-            <p class="messageBody">{echo nl2br($reply->body)}</p>
             <span class="meta">Autor: {echo $reply->author} </span>
-            <span class="meta">Vytvořeno: {echo date("d.m. Y H:i", strtotime($reply->created))}</span>
+            <span class="meta">Vytvořeno: {echo date("d.m. Y H:i", strtotime($reply->created))}</span><br/><br/>
+            <p class="messageBody">{echo nl2br($reply->body)}</p>
         </div>
         <div class="clear"></div>
 
         {/foreach}
 
-        <a href="#" class="showReplyForm">Reply</a>
         <div class="replyForm">
             <form method="post" action="#" class="stdform">
                 <input type="hidden" value="{echo $message->id}" name="reply" />
                 <p>
-                    <label>Title</label>
+                    <label>Nadpis</label>
                     <span class="field">
                         <input type="text" name="title" class="mediuminput" value="RE {echo $message->title}"/>
                     </span>
@@ -43,7 +43,7 @@
                 <p>
                     <label></label>
                     <span class="field">
-                        <input type="submit" name="sendMessage" value="Send Reply" />
+                        <input type="submit" name="sendMessage" value="Odeslat odpověď" />
                     </span>
                 </p>
             </form>
@@ -54,7 +54,7 @@
 
     <form method="post" action="#" class="stdform">
         <p>
-            <label>Title</label>
+            <label>Nadpis</label>
             <span class="field">
                 <input type="text" name="title" class="mediuminput"/>
             </span>
@@ -68,7 +68,7 @@
         <p>
             <label></label>
             <span class="field">
-                <input type="submit" name="sendMessage" value="Send" />
+                <input type="submit" name="sendMessage" value="Odeslat" />
             </span>
         </p>
     </form>

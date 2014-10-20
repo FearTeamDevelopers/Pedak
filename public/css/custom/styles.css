@@ -158,6 +158,14 @@ footer {
 .detailMatch{
     margin-left:10px;
 }
+
+.detailMatch tr td:nth-child(2){font-weight:bold;}
+.message, .reply{
+    background-color:rgba(125,125,125,0.2);
+    padding:10px;
+    margin:5px;
+}
+.reply{background-color:rgba(125,125,125,0.1)}
 /* FORM */
 .stdform p { margin: 15px 0; }
 .stdform span.field, .stdform div.field { margin-left: 170px; display: block; position: relative; }
@@ -212,12 +220,12 @@ table tr td {padding: 5px 3px;}
     margin-right: 15px;
 }
 
-.messageWrapper{border: 1px solid #999; padding: 15px !important; border-radius: 5px; margin-bottom: 20px; }
+.messageWrapper{border:0px; padding: 15px !important;  margin-bottom: 20px;  }
 .messageWrapper span.title{font-weight: bold;}
 .messageWrapper span.meta{font-size: 12px; font-style: italic; float: left; margin-right: 50px;}
-.message{border-bottom: 1px solid #999; width: 80%; overflow: hidden;}
+.message{overflow: hidden;position:relative;}
 .reply{margin-left: 100px; padding: 10px; overflow: hidden;}
-.showReplyForm{position: absolute; top: 30px; right: 100px;}
+.showReplyForm{position:absolute; top:2%; right:1%;}
 .replyForm{display: none;}
 
 
@@ -229,7 +237,7 @@ table tr td {padding: 5px 3px;}
 .trainingResult{margin-top: 15px;}
 .trainingResult div{margin-bottom: 10px;}
 
-.memberProfile{min-height: 280px; border: 2px solid #999; border-radius: 8px; overflow: hidden; margin: 0 15px 15px 0;}
+.memberProfile{min-height: 280px; border: 2px solid #999; border-radius: 8px; overflow: hidden;margin-bottom:15px;}
 .memberProfile .memberPhoto{float: left; width: 170px; max-height:240px; margin: 15px 10px 15px 10px;}
 .memberProfile .memberData{margin: 15px 0 15px 10px; overflow: hidden;}
 .memberProfile .memberData table tr td:nth-child(2){font-weight: bold;}

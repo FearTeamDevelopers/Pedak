@@ -124,7 +124,7 @@ class App_Model_MatchChat extends Model
                         array(
                     "reply = ?" => $this->getId(),
                     "active = ?" => true,
-                        ), array("*"), "created", "desc");
+                        ), array("*"), array("created" => "desc"));
     }
 
     /**
