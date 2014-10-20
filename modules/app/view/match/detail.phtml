@@ -1,16 +1,16 @@
 <section class="basic">
     <header><h1>Detail zapasu</h1></header>
 
-    <table>
+    <table class="detailMatch">
         <tr></tr>
         <tr>
-            <td>Datum zápasu</td><td>{echo date("d. m. Y", strtotime($matchDet->date))}</td>
+            <td>Datum zápasu</td><td>{echo date("d. m. Y", strtotime($matchDet->startDate))}</td>
         </tr>
         <tr>
             <td>Domácí</td><td>{echo $matchDet->home}</td>
         </tr>
         <tr>
-            <td>Hosté</td><td>{echo $matchDet->host}</td>
+            <td>Hosté</td><td>{echo $matchDet->away}</td>
         </tr>
         <tr>
             <td>Hala</td><td>{echo $matchDet->hall}</td>
@@ -20,7 +20,7 @@
         </tr>
         {if $matchDet->scoreHome != -1}
         <tr>
-            <td>Výsledek</td><td>{echo $matchDet->scoreHome} - {echo $matchDet->scoreHost}</td>
+            <td>Výsledek</td><td>{echo $matchDet->scoreHome} - {echo $matchDet->scoreAway}</td>
         </tr>
         <tr>
             <td colspan="2">{echo $matchDet->report}</td>
@@ -32,10 +32,8 @@
         </tr>
         {/else}
     </table>
-
 </section>
-
-<section>
+<section class="basic">
     <header><h1>K Zápasu</h1></header>
 
     {if isset($messages)}

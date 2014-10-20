@@ -155,6 +155,9 @@ footer {
     margin-left:250px;
 }
 
+.detailMatch{
+    margin-left:10px;
+}
 /* FORM */
 .stdform p { margin: 15px 0; }
 .stdform span.field, .stdform div.field { margin-left: 170px; display: block; position: relative; }

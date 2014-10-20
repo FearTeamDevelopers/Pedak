@@ -110,7 +110,8 @@ class App_Controller_Match extends Controller
 
             if ($message->validate()) {
                 $message->save();
-                self::redirect('/zapasy/detail/{$id}');
+                /** nepouzije se spravne ID.. dunno why */
+                self::redirect('/zapasy/r/{$id}');
             }
         }
     }
