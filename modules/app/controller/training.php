@@ -27,16 +27,7 @@ class App_Controller_Training extends Controller
                 ->set('canonical', $canonical)
                 ->set('activemenu', 'training');
         
-        $cache = Registry::get('cache');
-        
-        $content = $cache->get('trainings');
-        
-        if($content !== null){
-            $trainings = $content;
-        }else{
-            $trainings = App_Model_Training::fetchAllLimited();
-            $cache->set('trainings', $trainings);
-        }
+        $trainings = App_Model_Training::fetchAllLimited();
         
         $view->set('trainings', $trainings);
 

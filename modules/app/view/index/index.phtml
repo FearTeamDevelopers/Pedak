@@ -116,8 +116,8 @@
     <ul class="inline-list">
         {foreach $sponsor in $sponsors}
         <li>
-            <a href="{echo $sponsor->url}" target=_blank>
-                <img src="{echo $sponsor->logo}" alt='' />
+            <a href="{echo $sponsor->web}" target=_blank>
+                <img src="{echo $sponsor->logo}" alt="" />
             </a>
         </li>
         {/foreach}

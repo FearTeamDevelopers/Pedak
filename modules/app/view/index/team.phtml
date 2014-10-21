@@ -24,11 +24,9 @@
                         <td>
                             {if $member->position == "u"}
                             Útočník
-                            {/if}
-                            {elseif $member->position == "o"}
+                            {/if}{elseif $member->position == "o"}
                             Obránce
-                            {/elseif}
-                            {elseif $member->position == "b"}
+                            {/elseif}{elseif $member->position == "b"}
                             Brankář
                             {/elseif}
                         </td>
@@ -41,8 +39,7 @@
                         <td>
                             {if $member->grip == "r"}
                             Pravá
-                            {/if}
-                            {else}
+                            {/if}{else}
                             Levá
                             {/else}
                         </td>
@@ -54,7 +51,7 @@
                     </tr>
                     {/if}
                     <tr>
-                        <td>Další</td><td>{echo $member->other}</td>
+                        <td>Další info</td><td>{echo $member->other}</td>
                     </tr>
                     
                 </table>
@@ -85,18 +82,16 @@
                         <td>Nick</td><td>{echo $member->nickname}</td>
                     </tr>
                     <tr>
-                        <td>Datum narození</td><td>{echo $member->dob}</td>
+                        <td>Datum narození</td><td>{echo date("d.m. Y", strtotime($member->dob))}</td>
                     </tr>
                     <tr>
                         <td>Pozice</td>
                         <td>
                             {if $member->position == "u"}
                             Útočník
-                            {/if}
-                            {elseif $member->position == "o"}
+                            {/if}{elseif $member->position == "o"}
                             Obránce
-                            {/elseif}
-                            {elseif $member->position == "b"}
+                            {/elseif}{elseif $member->position == "b"}
                             Brankář
                             {/elseif}
                         </td>
@@ -109,8 +104,7 @@
                         <td>
                             {if $member->grip == "r"}
                             Pravá
-                            {/if}
-                            {else}
+                            {/if}{else}
                             Levá
                             {/else}
                         </td>
@@ -120,7 +114,7 @@
                         <td><a href="http://fis.cfbu.cz/index.php?pageid=2501&onlycontent=1&personal_id={echo $member->cfbuPersonalNum}" target=_blank>Profil hráče ČFBU</a></td>
                     </tr>
                     <tr>
-                        <td>Další</td><td>{echo $member->other}</td>
+                        <td>Další info</td><td>{echo $member->other}</td>
                     </tr>
                     
                 </table>
