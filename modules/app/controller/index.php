@@ -3,6 +3,7 @@
 use App\Etc\Controller as Controller;
 use THCFrame\Request\RequestMethods;
 use THCFrame\Registry\Registry;
+
 /**
  * Description of App_Controller_Index
  *
@@ -114,9 +115,19 @@ class App_Controller_Index extends Controller
         );
 
         //get last 2 matches results
-        $lastMatch = App_Model_Match::all(
+        $lastMatchA = App_Model_Match::all(
                         array(
                     'active = ?' => true,
+                    'team = ?' => 'a',
+                    'scoreHome <> ?' => -1,
+                    'startDate <= ?' => date('Y-m-d')
+                        ), array('id', 'home', 'away', 'startDate', 'hall', 'scoreHome', 'scoreAway', 'startTime'), array('startDate' => 'DESC'), 2
+        );
+        
+        $lastMatchB = App_Model_Match::all(
+                        array(
+                    'active = ?' => true,
+                    'team = ?' => 'b',
                     'scoreHome <> ?' => -1,
                     'startDate <= ?' => date('Y-m-d')
                         ), array('id', 'home', 'away', 'startDate', 'hall', 'scoreHome', 'scoreAway', 'startTime'), array('startDate' => 'DESC'), 2
@@ -130,7 +141,8 @@ class App_Controller_Index extends Controller
         $view->set('news', $news)
                 ->set('nextMatchA', $nextMatchA)
                 ->set('nextMatchB', $nextMatchB)
-                ->set('lastMatch', $lastMatch)
+                ->set('lastMatchA', $lastMatchA)
+                ->set('lastMatchB', $lastMatchB)
                 ->set('sponsors', $sponsors);
     }
 
@@ -198,44 +210,6 @@ class App_Controller_Index extends Controller
         $this->getLayoutView()->set('metatitle', 'Peďák - Kontakt')
                 ->set('canonical', $canonical)
                 ->set('activemenu', 'concact');
-    }
-
-    /**
-     * @before _secured
-     */
-    public function chat()
-    {
-        $view = $this->getActionView();
-        $host = RequestMethods::server('HTTP_HOST');
-
-        $canonical = 'http://' . $host . '/kecarna';
-
-        $this->getLayoutView()->set('metatitle', 'Peďák - Kecárna')
-                ->set('canonical', $canonical)
-                ->set('activemenu', 'chat');
-
-        $messages = App_Model_Chat::all(array(
-                    'active = ?' => true,
-                    'reply = ?' => 0
-                        ), array('*'), array('created' => 'asc'), 20
-        );
-
-        $view->set('messages', $messages);
-
-        if (RequestMethods::post('sendMessage')) {
-            $chat = new App_Model_Chat(array(
-                'author' => $this->getUser()->getWholeName(),
-                'title' => RequestMethods::post('title'),
-                'body' => RequestMethods::post('body'),
-                'reply' => RequestMethods::post('reply')
-            ));
-
-            if ($chat->validate()) {
-                $chat->save();
-                self::redirect('/kecarna');
-            }
-            $view->set('errors', $chat->getErrors());
-        }
     }
 
 }

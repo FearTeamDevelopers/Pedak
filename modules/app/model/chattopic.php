@@ -3,12 +3,17 @@
 use THCFrame\Model\Model as Model;
 
 /**
- * Description of ChatModel
+ * Description of App_Model_ChatTopic
  *
  * @author Tomy
  */
-class App_Model_Chat extends Model
+class App_Model_ChatTopic extends Model
 {
+
+    /**
+     * @readwrite
+     */
+    protected $_alias = 'cht';
 
     /**
      * @column
@@ -29,33 +34,13 @@ class App_Model_Chat extends Model
     /**
      * @column
      * @readwrite
-     * @type integer
-     * 
-     * @validate numeric, max(8)
-     * @label topic
-     */
-    protected $_topicId;
-
-    /**
-     * @column
-     * @readwrite
-     * @type integer
-     * 
-     * @validate numeric, max(8)
-     * @label reply
-     */
-    protected $_reply;
-
-    /**
-     * @column
-     * @readwrite
      * @type text
-     * @length 85
+     * @length 100
      * 
-     * @validate alphanumeric, max(85)
-     * @label author
+     * @validate alphanumeric, max(100)
+     * @label created by
      */
-    protected $_author;
+    protected $_createdBy;
 
     /**
      * @column
@@ -72,12 +57,12 @@ class App_Model_Chat extends Model
      * @column
      * @readwrite
      * @type text
-     * @length 256
+     * @length 200
      *
-     * @validate required, max(2048)
-     * @label text
+     * @validate required, max(200)
+     * @label url key
      */
-    protected $_body;
+    protected $_urlKey;
 
     /**
      * @column
@@ -106,32 +91,6 @@ class App_Model_Chat extends Model
             $this->setActive(true);
         }
         $this->setModified(date("Y-m-d H:i:s"));
-    }
-
-    /**
-     * 
-     */
-    public function getReplies()
-    {
-        return self::all(
-                        array(
-                    "reply = ?" => $this->getId(),
-                    "active = ?" => true,
-                        ), array("*"), array("created" => "desc"));
-    }
-
-    /**
-     * 
-     * @param type $id
-     * @return type
-     */
-    public static function fetchReplies($id)
-    {
-        $message = new self(array(
-            "id" => $id
-        ));
-
-        return $message->getReplies();
     }
 
 }

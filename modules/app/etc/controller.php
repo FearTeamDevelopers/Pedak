@@ -6,6 +6,7 @@ use THCFrame\Events\Events as Events;
 use THCFrame\Registry\Registry;
 use THCFrame\Controller\Controller as BaseController;
 use THCFrame\Request\RequestMethods;
+use THCFrame\Core\StringMethods;
 
 /**
  * Description of Controller
@@ -83,6 +84,21 @@ class Controller extends BaseController
                 ->set('metaogsitename', $metaData['metaogsitename']);
     }
 
+    /**
+     * 
+     * @param type $string
+     * @return type
+     */
+    protected function _createUrlKey($string)
+    {
+        $string = StringMethods::removeDiacriticalMarks($string);
+        $string = str_replace(array('.', ',', '_', '(', ')', '[', ']', '|', ' '), '-', $string);
+        $string = str_replace(array('?', '!', '@', '&', '*', ':', '+', '=', '~', '°', '´', '`', '%', "'", '"'), '', $string);
+        $string = trim($string);
+        $string = trim($string, '-');
+        return strtolower($string);
+    }
+    
     /**
      * @protected
      */

@@ -60,8 +60,15 @@ class App_Etc_Module extends Module{
         array(
             'pattern' => '/kecarna',
             'module' => 'app',
-            'controller' => 'index',
-            'action' => 'chat',
+            'controller' => 'chat',
+            'action' => 'index',
+        ),
+        array(
+            'pattern' => '/kecarna/:urlKey',
+            'module' => 'app',
+            'controller' => 'chat',
+            'action' => 'topicDetail',
+            'args' => ':urlKey'
         ),
         array(
             'pattern' => '/treninky',

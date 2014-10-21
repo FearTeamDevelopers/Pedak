@@ -1,0 +1,26 @@
+<section class="grid_12 basic">
+    <header><h1>Kecárna</h1></header>
+    <div>
+        <form method="post" action="#" class="stdform">
+            <p>
+                <label>Vytvořit nové téma</label>
+                <span class="field">
+                    <input type="text" name="title" class="mediuminput" value="{echo isset($topic)? $topic->getTitle(): ""}"/>
+                    <input type="submit" name="submitAddTopic" value="Vytvořit" />
+                </span>
+            </p>
+    </div>
+    <table>
+        <tr>
+            <td>Téma</td><td>Vytvořil</td><td>Vytvořeno</td>
+        </tr>
+
+        {foreach $topic in $topics}
+        <tr>
+            <td><a href="/kecarna/{echo $topic->urlKey}">{echo $topic->title}</a></td>
+            <td>{echo $topic->createdBy}</td>
+            <td>{echo $topic->created}</td>
+        </tr>
+        {/foreach}
+    </table>
+</section>

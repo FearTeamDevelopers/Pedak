@@ -1,0 +1,75 @@
+<section class="basic">
+    <header><h1>{echo $topic->title}</h1></header>
+    <a href="/kecarna">Zpět k tématům</a>
+
+    {if isset($messages)}
+        {foreach $message in $messages}
+            <article class="messageWrapper relative">
+                <div class="message grid_8">
+                    <span class="title">{echo $message->title}</span><br/>
+                    <span class="meta">Autor: {echo $message->author} </span>
+                    <span class="meta">Vytvořeno: {echo date("d.m. Y H:i", strtotime($message->created))} </span><br/><br/>
+                    <p class="messageBody">{echo nl2br($message->body)}</p>
+                    <a href="#" class="showReplyForm">Odpovědět</a>
+                </div>
+                <div class="clear"></div>
+
+                {script $replies = App_Model_Chat::fetchReplies($message->id)}
+                {foreach $reply in $replies}
+                    <div class="reply grid_8">
+                        <span class="title">{echo $reply->title}</span><br />
+                        <span class="meta">Autor: {echo $reply->author} </span>
+                        <span class="meta">Vytvořeno: {echo date("d.m. Y H:i", strtotime($reply->created))}</span><br/><br/>
+                        <p class="messageBody">{echo nl2br($reply->body)}</p>
+                    </div>
+                    <div class="clear"></div>
+                {/foreach}
+
+                <div class="replyForm">
+                    <form method="post" action="#" class="stdform">
+                        <input type="hidden" value="{echo $message->id}" name="reply" />
+                        <p>
+                            <label>Nadpis</label>
+                            <span class="field">
+                                <input type="text" name="title" class="mediuminput" value="RE {echo $message->title}"/>
+                            </span>
+                        </p>
+                        <p>
+                            <label>Text</label>
+                            <span class="field">
+                                <textarea name="body" class="mediuminput" rows="5"></textarea>
+                            </span>
+                        </p>
+                        <p>
+                            <label></label>
+                            <span class="field">
+                                <input type="submit" name="sendMessage" value="Odeslat odpověď" />
+                            </span>
+                        </p>
+                    </form>
+                </div>
+            </article>
+        {/foreach}
+    {/if}
+
+    <form method="post" action="#" class="stdform">
+        <p>
+            <label>Nadpis</label>
+            <span class="field">
+                <input type="text" name="title" class="mediuminput"/>
+            </span>
+        </p>
+        <p>
+            <label>Text</label>
+            <span class="field">
+                <textarea name="body" class="mediuminput" rows="5"></textarea>
+            </span>
+        </p>
+        <p>
+            <label></label>
+            <span class="field">
+                <input type="submit" name="sendMessage" value="Odeslat" />
+            </span>
+        </p>
+    </form>
+</section>
