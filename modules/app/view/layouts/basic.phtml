@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <meta http-equiv="Content-Language" content="cs" />
-        {if $env == "live"}<meta http-equiv="CACHE-CONTROL" content="public, max-age=10800">{/if}
-        {else}<meta http-equiv="CACHE-CONTROL" content="no-store">{/else}
+        <meta charset="UTF-8">
+        {if $env == "dev"}<meta http-equiv="Cache-control" content="no-store">{/if}
 
         <meta name="viewport" content="width=device-width, maximum-scale=2.0, minimum-scale=1.0, initial-scale=1.0" />
         <meta name="language" content="czech" />
@@ -23,12 +21,10 @@
         <link href="/public/css/plugins/grid.css" media="screen" rel="stylesheet" type="text/css" />
         <link href="/public/css/plugins/smoothness/jquery-ui-1.10.4.custom.min.css" media="screen" rel="stylesheet" type="text/css" />
         <link href="/public/css/custom/styles.css" media="screen" rel="stylesheet" type="text/css" />
-        <link href="/public/css/plugins/slides.css" media="screen" rel="stylesheet" type="text/css" />
 
         <!--[if lt IE 9]><script type="text/javascript" src="/public/js/html5.js"></script><![endif]-->
         <script type="text/javascript" src="/public/js/plugins/jquery-1.11.1.min.js"></script>
         <script type="text/javascript" src="/public/js/plugins/jquery-ui-1.10.4.custom.min.js"></script>
-        <script type="text/javascript" src="/public/js/plugins/jquery.slides.min.js"></script>
 
         <title>Pedak</title>
     </head>
@@ -93,8 +89,6 @@
         </div>
 
         <div class="clear"></div>
-
-
 
         <div id="dialog"></div>
 
