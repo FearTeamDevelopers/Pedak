@@ -1,19 +1,23 @@
 <section class="grid_12 basic">
     <header><h1>{echo $gallery->title}</h1></header>
+    <div class="goBackWrapper">
+        <a href="/galerie" alt="zpět na seznam galerií">Zpět</a>
+    </div>
     <div>
-        {echo nl2br($gallery->description)}
+        {echo html_entity_decode($gallery->description)}
     </div>
     <br/><br/>
     <div class="galleria">
+        {script $photos = $gallery->getPhotos()}
         {if !empty($photos)}
-        {foreach $photo in $photos}
-        <a href="{echo $photo->pathLarge}">
-            <img src="{echo $photo->pathSmall}" data-big="{echo $photo->pathLarge}" data-title="{echo $photo->photoName}" />
-        </a>
-        {/foreach}
+            {foreach $photo in $photos}
+                <a href="{echo $photo->imgMain}">
+                    <img src="{echo $photo->imgThumb}" data-big="{echo $photo->imgMain}" data-title="{echo $photo->photoName}" />
+                </a>
+            {/foreach}
         {/if}
     </div>
 </section>
 
-<script type="text/javascript" src="/public/js/galleria/galleria-1.3.3.min.js"></script>
-<script type="text/javascript" src="/public/js/galleria-init.js"></script>
+<script type="text/javascript" src="/public/js/plugins/galleria/galleria-1.3.3.min.js"></script>
+<script type="text/javascript" src="/public/js/plugins/galleria-init.js"></script>

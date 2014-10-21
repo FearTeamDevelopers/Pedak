@@ -1,23 +1,30 @@
 <section class="grid_12 basic">
     <header><h1>Galerie</h1></header>
 
-    {if !empty($galleries)}
-    {foreach $gallery in $galleries}
-    <div class="grid_6 gallery-cont">
-        <span class="gallery-avatar">
-            {if $gallery->avatar == ""}
-            <img src="/public/images/icons/focus.png" alt="gallery" width="130" />
-            {/if}
-            {else}
-            <img src="{echo $gallery->avatar}" alt="gallery" width="175" />
-            {/else}
-        </span>
-        <p class="gallery-desc">
-            <a href="/galerie/{echo $gallery->id}">{echo $gallery->title}</a>
-            <br/><br/>
-            {echo nl2br($gallery->description)}
-        </p>
+    <div class="galleryYearsList">
+        {if !empty($years)}
+            {foreach $year in $years}
+                <a href="/galerie/{echo $year}" alt="">{echo $year}</a>
+            {/foreach}
+        {/if}
     </div>
-    {/foreach}
+    
+    {if !empty($galleries)}
+        {foreach $gallery in $galleries}
+            <div class="grid_6 gallery-cont">
+                <span class="gallery-avatar">
+                    {if $gallery->avatarPhotoId == 0}
+                    <img src="/public/images/icons/focus.png" alt="gallery" width="175" />
+                    {/if}{else}
+                    <img src="{echo $gallery->imgThumb}" alt="gallery" width="175" />
+                    {/else}
+                </span>
+                <p class="gallery-desc">
+                    <a href="/galerie/r/{echo $gallery->urlKey}">{echo $gallery->title}</a>
+                    <br/><br/>
+                    {echo html_entity_decode($gallery->description)}
+                </p>
+            </div>
+        {/foreach}
     {/if}
 </section>

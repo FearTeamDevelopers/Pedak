@@ -57,7 +57,7 @@ class App_Controller_Gallery extends Controller
                 ->set('years', $years);
 
         $layoutView->set('canonical', $canonical)
-            ->set('metatitle', 'Peďák - Galerie '.$year);
+            ->set('metatitle', 'Peďák - Galerie');
     }
 
     /**

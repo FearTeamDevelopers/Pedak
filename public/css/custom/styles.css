@@ -48,6 +48,7 @@ body {
 a {color:#FF6A09; text-decoration:underline; outline:none}
 a:hover {text-decoration:none}
 p {padding-bottom: 10px;}
+b, strong{font-weight: bold;}
 
 .basic, article{padding: 20px 0; border-bottom: 1px solid #999;}
 .basic h1{padding: 10px; font-size: 20px; font-weight: bold;}
@@ -235,7 +236,7 @@ table tr td {padding: 5px 3px;}
 .trainingCalIcon{float: left;}
 .trainingControls{margin-left: 30%;}
 .trainingControls a{ margin-left: 30px;}
-.trainingResult{margin-top: 15px;}
+.trainingResult{margin-top: 15px; float: left;}
 .trainingResult div{margin-bottom: 10px;}
 
 .memberProfile{min-height: 280px; border: 2px solid #999; border-radius: 8px; overflow: hidden;margin-bottom:15px;}
@@ -243,6 +244,7 @@ table tr td {padding: 5px 3px;}
 .memberProfile .memberData{margin: 15px 0 15px 10px; overflow: hidden;}
 .memberProfile .memberData table tr td:nth-child(2){font-weight: bold;}
 
+.goBackWrapper{position: absolute; top: 30px; left: 65%; }
 .gallery-cont{}
 .gallery-avatar{float: left;}
 .gallery-desc{margin-left: 140px; padding: 8px;}

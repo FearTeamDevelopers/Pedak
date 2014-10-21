@@ -18,7 +18,7 @@
                         {echo $training->startTime} {echo $training->location}
                     </div>
 
-                    {script $ucast = $neucast = $nevi=array();$countU = $countN = $countM=0}
+                    {script $hosts = $ucast = $neucast = $nevi=array();$countU = $countN = $countM=0}
                     {script $attd = $training->getAttendance()}
                     {script $hosts = $training->getHosts()}
 
@@ -37,6 +37,7 @@
                     {/if}
 
                     {if !empty($hosts)}
+                        {script $hosti = array()}
                         {foreach $host in $hosts}
                             {if $host->getUserId() == $authUser->getId()}
                                 {script $hosti[] = $host->hostName." <a href=\"/app/training/deletehost/".$host->getId()."\">(X)</a>"}
@@ -49,19 +50,20 @@
 
                     <div class="trainingResult">
                         <div>
-                            Přijde ({echo $countU}):  {echo join(", ", $ucast)}
+                            Přijde (<strong>{echo $countU}</strong>):  {echo join(", ", $ucast)}
                             {if !empty($hosts)}
                                 <br/>
                                 Hosti: {echo join(", ", $hosti)}
                             {/if}
                         </div>
                         <div>
-                            Nepřijde ({echo $countN}):  {echo join(", ", $neucast)}
+                            Nepřijde (<strong>{echo $countN}</strong>):  {echo join(", ", $neucast)}
                         </div>
                         <div>
-                            Možná ({echo $countM}):  {echo join(", ", $nevi)}
+                            Možná (<strong>{echo $countM}</strong>):  {echo join(", ", $nevi)}
                         </div>
                     </div>
+                    <div class="clear"></div>
                     <div>
                         <form method="post" action="/app/training/addhost/{echo $training->getId()}" class="stdform">
                             <input type="hidden" name="tk" id="tk" value="{echo $token}" />

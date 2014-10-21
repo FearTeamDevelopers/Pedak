@@ -8,16 +8,6 @@ jQuery(document).ready(function () {
 
     /* GLOBAL SCRIPTS */
 
-    jQuery("#slides").slidesjs({
-        width: 1100,
-        height: 250,
-        play: {
-            auto: true,
-            pauseOnHover: true,
-            interval: 10000,
-        }
-    });
-
     jQuery(".datepicker").datepicker({
         changeMonth: true,
         changeYear: true,
