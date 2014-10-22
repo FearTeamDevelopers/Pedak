@@ -585,29 +585,9 @@ jQuery(document).ready(function () {
         return false;
     });
 
-    //delete image in table list
-    jQuery('.mediatable a.btn_trash').click(function () {
-        var c = confirm('Opravdu smazat?');
-        var parentTr = jQuery(this).parents('tr');
-
-        if (c) {
-            var url = jQuery(this).attr('href');
-            var token = jQuery('#tk').val();
-
-            jQuery.post(url, {tk: token}, function (msg) {
-                if (msg == 'success') {
-                    parentTr.fadeOut();
-                } else {
-                    alert(msg);
-                }
-            });
-        }
-        return false;
-    });
-
     //delete individual row
-    jQuery('.stdtable a.deleteRow').click(function () {
-        var c = confirm('Opravdu smazat?');
+    jQuery('.btn_trash.ajaxBtn').click(function () {
+        var c = confirm('Opravdu chcete pokračovat?');
         var parentTr = jQuery(this).parents('tr');
 
         if (c) {
@@ -625,9 +605,8 @@ jQuery(document).ready(function () {
         return false;
     });
 
-    jQuery('.stdtable a.undeleteRow').click(function () {
-        var c = confirm('Pokračovat v obnovení?');
-        var parentTr = jQuery(this).parents('tr');
+    jQuery('.ajaxBtnReload').click(function () {
+        var c = confirm('Opravdu chcete pokračovat?');
 
         if (c) {
             var url = jQuery(this).attr('href');
@@ -635,7 +614,7 @@ jQuery(document).ready(function () {
 
             jQuery.post(url, {tk: tk}, function (msg) {
                 if (msg == 'success') {
-                    parentTr.fadeOut();
+                    location.reload();
                 } else {
                     alert(msg);
                 }

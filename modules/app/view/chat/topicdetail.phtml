@@ -1,7 +1,10 @@
 <section class="basic">
     <header><h1>{echo $topic->title}</h1></header>
-    <a href="/kecarna">Zpět k tématům</a>
-
+    <div class="grid_12">
+        <a href="/kecarna">Zpět k tématům</a>
+    </div>
+    <br/>
+    
     {if isset($messages)}
         {foreach $message in $messages}
             <article class="messageWrapper relative">

@@ -52,7 +52,7 @@
                             </td>
                             <td>
                                 <a href="/admin/match/edit/{echo $match->id}" class="btn btn3 btn_pencil" title="Edit"></a>
-                                {if $isAdmin}<a href="/admin/match/delete/{echo $match->id}" class="btn btn3 btn_trash deleteRow" title="Delete"></a>{/if}
+                                <a href="/admin/match/delete/{echo $match->id}" class="btn btn3 btn_trash ajaxBtn" title="Delete"></a>
                             </td>
                         </tr>
                     {/foreach}

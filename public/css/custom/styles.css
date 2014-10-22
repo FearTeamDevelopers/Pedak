@@ -247,7 +247,7 @@ table tr td {padding: 5px 3px;}
 .goBackWrapper{position: absolute; top: 30px; left: 65%; }
 .gallery-cont{}
 .gallery-avatar{float: left;}
-.gallery-desc{margin-left: 140px; padding: 8px;}
+.gallery-desc{margin-left: 190px; padding: 10px;}
 .galleria{ max-width: 1100px; height: 800px; background: #000 }
 
 .inline-list{text-align: center;}

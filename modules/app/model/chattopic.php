@@ -28,20 +28,30 @@ class App_Model_ChatTopic extends Model
      * @readwrite
      * @type boolean
      * @index
+     * 
+     * @validate max(3)
      */
     protected $_active;
 
     /**
      * @column
      * @readwrite
-     * @type text
-     * @length 100
+     * @type integer
      * 
-     * @validate alphanumeric, max(100)
-     * @label created by
+     * @validate numeric, max(8)
+     * @label user
      */
-    protected $_createdBy;
+    protected $_userId;
 
+    /**
+     * @column
+     * @readwrite
+     * @type boolean
+     * 
+     * @validate max(3)
+     */
+    protected $_status;
+    
     /**
      * @column
      * @readwrite
@@ -93,4 +103,33 @@ class App_Model_ChatTopic extends Model
         $this->setModified(date("Y-m-d H:i:s"));
     }
 
+    /**
+     * 
+     * @return type
+     */
+    public static function fetchAll()
+    {
+        $query = self::getQuery(array('cht.*'))
+                ->join('tb_user', 'us.id = cht.userId', 'us', 
+                        array('us.firstname', 'us.lastname'));
+        
+        $topics = self::initialize($query);
+        return $topics;
+    }
+    
+    /**
+     * 
+     * @return type
+     */
+    public static function fetchAllActive()
+    {
+        $query = self::getQuery(array('cht.*'))
+                ->join('tb_user', 'us.id = cht.userId', 'us', 
+                        array('us.firstname', 'us.lastname'))
+                ->where('cht.active = ?', true);
+        
+        $topics = self::initialize($query);
+        return $topics;
+    }
+    
 }

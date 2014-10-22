@@ -9,7 +9,7 @@
     </div><!--contenttitle-->
 
     <input type="hidden" name="tk" id="tk" value="{echo $token}" />
-    <table cellpadding="0" cellspacing="0" border="0" class="stdtable mediatable">
+    <table cellpadding="0" cellspacing="0" border="0" class="stdtable">
         <colgroup>
             <col class="con0" /> <col class="con1" />
             <col class="con0" /> <col class="con1" />
@@ -44,7 +44,7 @@
                         </td>
                         <td>
                             <a href="/admin/sponsor/edit/{echo $sponsor->getId()}" class="btn btn3 btn_pencil" title="Edit"></a>
-                            {if $isAdmin}<a href="/admin/sponsor/delete/{echo $sponsor->getId()}" class="btn btn3 btn_trash" title="Delete"></a>{/if}
+                            <a href="/admin/sponsor/delete/{echo $sponsor->getId()}" class="btn btn3 btn_trash ajaxBtn" title="Delete"></a>
                         </td>
                     </tr>
                 {/foreach}

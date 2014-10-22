@@ -28,13 +28,17 @@
                 {foreach $topic in $topics}
                     <tr>
                         <td>{echo $topic->getTitle()}</td>
-                        <td>{echo $topic->getCreatedBy()}</td>
+                        <td>{echo $topic->firstname." ".$topic->lastname}</td>
                         <td>{echo $topic->getCreated()}</td>
                         <td>
-                            {if ($topic->active)}<span class="labelProduct labelProductGreen">Active</span>{/if}
+                            {if $topic->status == 1}<span class="labelProduct labelProductGreen">Active</span>{/if}
+                            {else}<span class="labelProduct labelProductRed">Waiting to approve</span>{/else}
                         </td>
                         <td>
-                            {if $isAdmin}<a href="/admin/chat/delete/{echo $topic->getId()}" class="btn btn3 btn_trash deleteRow" title="Delete"></a>{/if}
+                            {if $topic->status == 0}
+                                <a href="/admin/chat/approve/{echo $topic->getId()}" class="btn btn3 btn_chat ajaxBtnReload" title="Approve"></a>
+                            {/if}
+                            <a href="/admin/chat/delete/{echo $topic->getId()}" class="btn btn3 btn_trash ajaxBtn" title="Delete"></a>
                         </td>
                     </tr>
                 {/foreach}

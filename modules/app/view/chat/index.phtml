@@ -12,14 +12,22 @@
     </div>
     <table>
         <tr>
-            <td>Téma</td><td>Vytvořil</td><td>Vytvořeno</td>
+            <td>Téma</td><td>Vytvořil</td>
+            <td>Vytvořeno</td><td>Stav</td>
         </tr>
 
         {foreach $topic in $topics}
         <tr>
-            <td><a href="/kecarna/{echo $topic->urlKey}">{echo $topic->title}</a></td>
-            <td>{echo $topic->createdBy}</td>
+            <td>
+                {if $topic->status == 0}{echo $topic->title}{/if}
+                {else}<a href="/kecarna/{echo $topic->urlKey}">{echo $topic->title}</a>{/else}
+            </td>
+            <td>{echo $topic->firstname." ".$topic->lastname}</td>
             <td>{echo $topic->created}</td>
+            <td>
+                {if $topic->status == 0}Čeká na schválení{/if}
+                {else}Tady to žije{/else}
+            </td>
         </tr>
         {/foreach}
     </table>

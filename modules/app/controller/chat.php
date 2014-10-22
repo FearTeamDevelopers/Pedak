@@ -35,7 +35,7 @@ class App_Controller_Chat extends Controller
         $view = $this->getActionView();
         $host = RequestMethods::server('HTTP_HOST');
         
-        $topics = App_Model_ChatTopic::all(array('active = ?' => true));
+        $topics = App_Model_ChatTopic::fetchAllActive();
         
         $canonical = 'http://' . $host . '/kecarna';
 
@@ -59,7 +59,8 @@ class App_Controller_Chat extends Controller
             }
             
             $topic = new App_Model_ChatTopic(array(
-                'createdBy' => $this->getUser()->getWholeName(),
+                'userId' => $this->getUser()->getId(),
+                'status' => 0,
                 'title' => RequestMethods::post('title'),
                 'urlKey' => $urlKey
             ));
@@ -85,7 +86,7 @@ class App_Controller_Chat extends Controller
         $view = $this->getActionView();
         $host = RequestMethods::server('HTTP_HOST');
 
-        $topic = App_Model_ChatTopic::first(array('urlKey = ?' => $urlKey));
+        $topic = App_Model_ChatTopic::first(array('urlKey = ?' => $urlKey, 'status = ?' => true));
         
         if($topic === null){
             $view->warningMessage(self::ERROR_MESSAGE_2);

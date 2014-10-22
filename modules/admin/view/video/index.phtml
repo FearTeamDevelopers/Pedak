@@ -46,7 +46,7 @@
                             <td>    
                                 <a href="{echo $video->getPath()}" target=_blank class="btn btn3 btn_video" title="Play"></a>
                                 <a href="/admin/video/edit/{echo $video->getId()}" class="btn btn3 btn_pencil" title="Edit"></a>
-                                {if $isAdmin}<a href="/admin/video/delete/{echo $video->getId()}" class="btn btn3 btn_trash deleteRow" title="Delete"></a>{/if}
+                                <a href="/admin/video/delete/{echo $video->getId()}" class="btn btn3 btn_trash ajaxBtn" title="Delete"></a>
                             </td>
                         </tr>
                     {/foreach}
