@@ -63,17 +63,20 @@
     {foreach $match in $lastMatchA}
     <div class="ribbon-wrapper lastmatch grid_5">
         {if (strtoupper(substr($match->home,0,14)) == "FBK VŠSK PEDF") && ($match->scoreHome > $match->scoreAway)}
-        <div class="ribbon-wrapper-green"><div class="ribbon-left ribbon-green">Výhra</div></div>
+        <div class="ribbon-wrapper-green"><div class="ribbon-green-left">Výhra</div></div>
         {/if}
-        {elseif (strtoupper(substr($match->home,0,14)) == "FBK VŠSK PEDF") && ($match->scoreHome < $match->scoreAway)}
-        <div class="ribbon-wrapper-green"><div class="ribbon-left ribbon-red">Prohra</div></div>
-        {/elseif}
         {elseif (strtoupper(substr($match->away,0,14)) == "FBK VŠSK PEDF") && ($match->scoreAway > $match->scoreHome)}
-        <div class="ribbon-wrapper-green"><div class="ribbon-left ribbon-green">Výhra</div></div>
+        <div class="ribbon-wrapper-green"><div class="ribbon-green-left">Výhra</div></div>
+        {/elseif}
+        {elseif (strtoupper(substr($match->home,0,14)) == "FBK VŠSK PEDF") && ($match->scoreHome < $match->scoreAway)}
+        <div class="ribbon-wrapper-green"><div class="ribbon-red-left">Prohra</div></div>
         {/elseif}
         {elseif (strtoupper(substr($match->away,0,14)) == "FBK VŠSK PEDF") && ($match->scoreAway < $match->scoreHome)}
-        <div class="ribbon-wrapper-green"><div class="ribbon-left ribbon-red">Prohra</div></div>
+        <div class="ribbon-wrapper-green"><div class="ribbon-red-left">Prohra</div></div>
         {/elseif}
+        {else}
+        <div class="ribbon-wrapper-green"><div class="ribbon-orange-left">Remíza</div></div>
+        {/else}
 
         <p class="lastmatch-left">
             Datum: {echo date("d.m. Y", strtotime($match->startDate))}<br/><br/>
@@ -92,18 +95,21 @@
     {if !empty($lastMatchB)}
     {foreach $match in $lastMatchB}
     <div class="ribbon-wrapper lastmatch grid_5">
-             {if (strtoupper(substr($match->home,0,14)) == "FBK VŠSK PEDF") && ($match->scoreHome > $match->scoreAway)}
-        <div class="ribbon-wrapper-green"><div class="ribbon-left ribbon-green">Výhra</div></div>
+        {if (strtoupper(substr($match->home,0,14)) == "FBK VŠSK PEDF") && ($match->scoreHome > $match->scoreAway)}
+        <div class="ribbon-wrapper-green"><div class="ribbon-green-left">Výhra</div></div>
         {/if}
-        {elseif (strtoupper(substr($match->home,0,14)) == "FBK VŠSK PEDF") && ($match->scoreHome < $match->scoreAway)}
-        <div class="ribbon-wrapper-green"><div class="ribbon-left ribbon-red">Prohra</div></div>
-        {/elseif}
         {elseif (strtoupper(substr($match->away,0,14)) == "FBK VŠSK PEDF") && ($match->scoreAway > $match->scoreHome)}
-        <div class="ribbon-wrapper-green"><div class="ribbon-left ribbon-green">Výhra</div></div>
+        <div class="ribbon-wrapper-green"><div class="ribbon-green-left">Výhra</div></div>
+        {/elseif}
+        {elseif (strtoupper(substr($match->home,0,14)) == "FBK VŠSK PEDF") && ($match->scoreHome < $match->scoreAway)}
+        <div class="ribbon-wrapper-green"><div class="ribbon-red-left">Prohra</div></div>
         {/elseif}
         {elseif (strtoupper(substr($match->away,0,14)) == "FBK VŠSK PEDF") && ($match->scoreAway < $match->scoreHome)}
-        <div class="ribbon-wrapper-green"><div class="ribbon-left ribbon-red">Prohra</div></div>
+        <div class="ribbon-wrapper-green"><div class="ribbon-red-left">Prohra</div></div>
         {/elseif}
+        {else}
+        <div class="ribbon-wrapper-green"><div class="ribbon-orange-left">Remíza</div></div>
+        {/else}
 
         <p class="lastmatch-left">
             Datum: {echo date("d.m. Y", strtotime($match->startDate))}<br/><br/>

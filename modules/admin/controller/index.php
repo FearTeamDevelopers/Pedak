@@ -18,7 +18,10 @@ class Admin_Controller_Index extends Controller
         
         $attend = App_Model_Training::fetchPercentAttendance();
         
-        $latestNews = array();
+        $latestNews = App_Model_News::all(
+                array('active = ?' => true), 
+                array('title', 'shortBody', 'created'), 
+                array('created' => 'desc'), 5);
         
         $view->set('attendance', $attend)
                 ->set('latestnews', $latestNews);
