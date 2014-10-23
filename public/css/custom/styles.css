@@ -257,8 +257,8 @@ table tr td {padding: 5px 3px;}
 .ribbon-wrapper {
     min-width: 90px;
     min-height: 90px;
-    background: rgba(125,125,125,0.2);
-    border-radius: 0px;
+    background: #ddd;
+    border-radius: 10px;
     -webkit-box-shadow: 0px 0px 8px rgba(0,0,0,0.3);
     -moz-box-shadow:    0px 0px 8px rgba(0,0,0,0.3);
     box-shadow:         0px 0px 8px rgba(0,0,0,0.3);
@@ -275,7 +275,7 @@ table tr td {padding: 5px 3px;}
     left: -3px;
 }
 
-.ribbon-green-left {
+.ribbon-left {
     font: bold 15px Sans-Serif;
     color: #333;
     text-align: center;
@@ -289,12 +289,7 @@ table tr td {padding: 5px 3px;}
     right: 30px;
     top: 15px;
     width: 120px;
-    background-color: #BFDC7A;
-    background-image: -webkit-gradient(linear, left top, left bottom, from(#BFDC7A),   to(#8EBF45)); 
-    background-image: -webkit-linear-gradient(top, #BFDC7A, #8EBF45); 
-    background-image:    -moz-linear-gradient(top, #BFDC7A, #8EBF45); 
-    background-image:     -ms-linear-gradient(top, #BFDC7A, #8EBF45); 
-    background-image:      -o-linear-gradient(top, #BFDC7A, #8EBF45); 
+
     color: #6a6340;
     -webkit-box-shadow: 0px 0px 3px rgba(0,0,0,0.3);
     -moz-box-shadow:    0px 0px 3px rgba(0,0,0,0.3);
@@ -327,7 +322,7 @@ table tr td {padding: 5px 3px;}
     box-shadow:         0px 0px 3px rgba(0,0,0,0.3);
 }
 
-.ribbon-green-left:before, .ribbon-green-left:after,
+.ribbon-left:before, .ribbon-left:after,
 .ribbon-green-right:before, .ribbon-green-right:after{
     content: "";
     border-top:   3px solid #6e8900;   
@@ -337,13 +332,29 @@ table tr td {padding: 5px 3px;}
     bottom: -3px;
 }
 
-.ribbon-green-left:before, .ribbon-green-right:before {
+.ribbon-left:before, .ribbon-green-right:before {
     right: 0;
 }
-.ribbon-green-left:after, .ribbon-green-right:after {
+.ribbon-left:after, .ribbon-green-right:after {
     left: 0;
 }
-
+.ribbon-green{
+        background-color: #BFDC7A;
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#BFDC7A),   to(#8EBF45)); 
+    background-image: -webkit-linear-gradient(top, #BFDC7A, #8EBF45); 
+    background-image:    -moz-linear-gradient(top, #BFDC7A, #8EBF45); 
+    background-image:     -ms-linear-gradient(top, #BFDC7A, #8EBF45); 
+    background-image:      -o-linear-gradient(top, #BFDC7A, #8EBF45); 
+}
+.ribbon-red{
+         background-color: rgb(248,80,50);
+    background-image: -webkit-gradient(linear, left top, left bottom, from(rgb(248,80,50)),   to(rgb(208,100,50))); 
+    background-image: -webkit-linear-gradient(top, rgb(248,80,50), rgb(208,100,50)); 
+    background-image:    -moz-linear-gradient(top, rgb(248,80,50), rgb(208,100,50)); 
+    background-image:     -ms-linear-gradient(top, rgb(248,80,50), rgb(208,100,50)); 
+    background-image:      -o-linear-gradient(top, rgb(248,80,50), rgb(208,100,50)); 
+    
+}
 /* ------------------------------ BUTTONS ------------------------------ */
 .button-orange {
     -moz-box-shadow:inset 0px 1px 0px 0px #fce2c1;
