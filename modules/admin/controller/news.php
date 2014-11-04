@@ -45,12 +45,12 @@ class Admin_Controller_News extends Controller
     {
         $view = $this->getActionView();
 
-        $view->set('photos', App_Model_Photo::all(array('active = ?' => true)))
+        $view->set('photos', App_Model_Photo::all(array('galleryId = ?' => 1, 'active = ?' => true)))
                 ->set('videos', App_Model_Video::all(array('active = ?' => true)))
                 ->set('submstoken', $this->mutliSubmissionProtectionToken());
         
         if (RequestMethods::post('submitAddNews')) {
-            if($this->checkToken() !== true && 
+            if($this->checkCSRFToken() !== true && 
                     $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
                 self::redirect('/admin/news/');
             }
@@ -105,11 +105,11 @@ class Admin_Controller_News extends Controller
         }
         
         $view->set('news', $news)
-                ->set('photos', App_Model_Photo::all(array('active = ?' => true)))
+                ->set('photos', App_Model_Photo::all(array('galleryId = ?' => 1, 'active = ?' => true)))
                 ->set('videos', App_Model_Video::all(array('active = ?' => true)));
 
         if (RequestMethods::post('submitEditNews')) {
-            if($this->checkToken() !== true){
+            if($this->checkCSRFToken() !== true){
                 self::redirect('/admin/news/');
             }
             
@@ -153,7 +153,7 @@ class Admin_Controller_News extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
         
-        if ($this->checkToken()) {
+        if ($this->checkCSRFToken()) {
             $news = App_Model_News::first(
                             array('id = ?' => (int) $id), array('id')
             );
@@ -177,13 +177,21 @@ class Admin_Controller_News extends Controller
     /**
      * @before _secured, _admin
      */
+    public function insertPhotoDialog()
+    {
+        $this->willRenderLayoutView = false;
+    }
+    
+    /**
+     * @before _secured, _admin
+     */
     public function massAction()
     {
         $view = $this->getActionView();
         $errors = array();
 
         if (RequestMethods::post('performNewsAction')) {
-            if($this->checkToken() !== true){
+            if($this->checkCSRFToken() !== true){
                 self::redirect('/admin/news/');
             }
             

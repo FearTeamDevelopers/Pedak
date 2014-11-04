@@ -6,6 +6,7 @@
     <div class="grid_6">
         <h2>{echo $_news->title}</h2><br/>
         <p class="newsText">{echo html_entity_decode($_news->shortBody)}</p>
+        <div class="clear"></div>
         <p class="fs10">
             <span>Autor: {echo $_news->author}</span>
             <span>Vytvořeno: {echo date("d.m. Y H:i", strtotime($_news->created))}</span>

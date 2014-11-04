@@ -43,10 +43,11 @@ class App_Controller_Chat extends Controller
                 ->set('canonical', $canonical)
                 ->set('activemenu', 'chat');
         
-        $view->set('topics', $topics);
+        $view->set('topics', $topics)
+                ->set('submstoken', $this->mutliSubmissionProtectionToken());
         
         if(RequestMethods::post('submitAddTopic')){
-            if($this->checkToken() !== true && 
+            if($this->checkCSRFToken() !== true && 
                     $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
                 self::redirect('/kecarna');
             }

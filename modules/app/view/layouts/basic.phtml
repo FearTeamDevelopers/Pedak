@@ -5,10 +5,8 @@
         {if $env == "dev"}<meta http-equiv="Cache-control" content="no-store">{/if}
 
         <meta name="viewport" content="width=device-width, maximum-scale=2.0, minimum-scale=1.0, initial-scale=1.0" />
-        <meta name="language" content="czech" />
         <meta name="description" content="{echo $metadescription}" />
         <meta name="revisit-after" content="4 Days" />
-        <meta name="distribution" content="global"/>
         <meta name="robots" content="{echo $metarobots}">
 
         <meta property="og:url" content="{echo $metaogurl}" />
@@ -20,6 +18,7 @@
         <link href="/public/css/plugins/reset.css" media="screen" rel="stylesheet" type="text/css" />
         <link href="/public/css/plugins/grid.css" media="screen" rel="stylesheet" type="text/css" />
         <link href="/public/css/plugins/smoothness/jquery-ui-1.10.4.custom.min.css" media="screen" rel="stylesheet" type="text/css" />
+        <link href="/public/css/plugins/lightbox2.css" media="screen" rel="stylesheet" type="text/css" />
         <link href="/public/css/custom/styles.min.css" media="screen" rel="stylesheet" type="text/css" />
 
         <!--[if lt IE 9]><script type="text/javascript" src="/public/js/html5.js"></script><![endif]-->
@@ -93,7 +92,8 @@
 
         <div id="dialog"></div>
 
-        <script type="text/javascript" src="/public/js/custom/global.js"></script>
+        <script type="text/javascript" src="/public/js/plugins/lightbox.min.js"></script>
+        <script type="text/javascript" src="/public/js/custom/global.min.js"></script>
 
     </body>
 </html>

@@ -32,7 +32,7 @@ class Admin_Controller_Training extends Controller
         $view->set('submstoken', $this->mutliSubmissionProtectionToken());
 
         if (RequestMethods::post('submitAddTraining')) {
-            if ($this->checkToken() !== true &&
+            if ($this->checkCSRFToken() !== true &&
                     $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true) {
                 self::redirect('/admin/training/');
             }
@@ -121,7 +121,7 @@ class Admin_Controller_Training extends Controller
         $view->set('training', $training);
 
         if (RequestMethods::post('submitEditTraining')) {
-            if($this->checkToken() !== true){
+            if($this->checkCSRFToken() !== true){
                 self::redirect('/admin/training/');
             }
 
@@ -171,7 +171,7 @@ class Admin_Controller_Training extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkToken()) {
+        if ($this->checkCSRFToken()) {
             $training = App_Model_Training::first(array('id = ?' => (int)$id));
 
             if (NULL === $training) {
@@ -210,7 +210,7 @@ class Admin_Controller_Training extends Controller
         $errors = array();
 
         if (RequestMethods::post('performTrainingAction')) {
-            if($this->checkToken() !== true){
+            if($this->checkCSRFToken() !== true){
                 self::redirect('/admin/training/');
             }
             

@@ -4,6 +4,10 @@ jQuery(document).ready(function () {
 
     jQuery(window).load(function () {
         jQuery("#loader, .loader").hide();
+
+        jQuery.post('/app/system/showprofiler/', function (msg) {
+            jQuery('body').append(msg);
+        });
     });
 
     /* GLOBAL SCRIPTS */
@@ -21,20 +25,6 @@ jQuery(document).ready(function () {
         yearRange: "1960:2000",
         dateFormat: "yy-mm-dd",
         firstDay: 1
-    });
-
-    jQuery("#report-bug").click(function () {
-        jQuery("#dialog").load('/setting/reportBug').dialog({
-            title: "Report Bug",
-            width: "550px",
-            modal: true,
-            position: {my: "center", at: "top", of: window},
-            buttons: {
-                Cancel: function () {
-                    jQuery(this).dialog("close");
-                }
-            }
-        });
     });
 
     jQuery("button.ajax-button").click(function () {
@@ -62,9 +52,9 @@ jQuery(document).ready(function () {
     jQuery('a#delImg').click(function () {
         event.preventDefault();
         var url = jQuery(this).attr('href');
-        var tk = jQuery('#tk').val();
+        var csrf = jQuery('#csrf').val();
 
-        jQuery.post(url, {tk: tk}, function (msg) {
+        jQuery.post(url, {csrf: csrf}, function (msg) {
             if (msg == 'success') {
                 jQuery('#currentLogo').hide(500);
                 jQuery('#uploadLogo').removeClass('nodisplay');

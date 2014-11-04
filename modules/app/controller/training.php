@@ -84,7 +84,7 @@ class App_Controller_Training extends Controller
         $view->set('submstoken', $this->mutliSubmissionProtectionToken());
         
         if(RequestMethods::post('submitAddHost')){
-            if($this->checkToken() !== true && 
+            if($this->checkCSRFToken() !== true && 
                     $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
                 self::redirect('/treninky');
             }

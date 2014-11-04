@@ -11,7 +11,7 @@ if (preg_match('#^.*\.dev$#i', $_SERVER['SERVER_NAME'])) {
 defined('APP_PATH') ? null : define('APP_PATH', __DIR__);
 
 if (ENV == 'dev') {
-    error_reporting(E_ALL || E_STRICT);
+    error_reporting(E_ALL);
 } else {
     error_reporting(0);
 }

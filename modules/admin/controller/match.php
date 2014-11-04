@@ -32,7 +32,7 @@ class Admin_Controller_Match extends Controller
         $view->set('submstoken', $this->mutliSubmissionProtectionToken());
         
         if (RequestMethods::post('submitAddMatch')) {
-            if($this->checkToken() !== true && 
+            if($this->checkCSRFToken() !== true && 
                     $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
                 self::redirect('/admin/match/');
             }
@@ -81,7 +81,7 @@ class Admin_Controller_Match extends Controller
         $view->set('match', $match);
 
         if (RequestMethods::post('submitEditMatch')) {
-            if($this->checkToken() !== true){
+            if($this->checkCSRFToken() !== true){
                 self::redirect('/admin/match/');
             }
             
@@ -118,7 +118,7 @@ class Admin_Controller_Match extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkToken()) {
+        if ($this->checkCSRFToken()) {
             $match = App_Model_Match::first(array('id = ?' => (int)$id));
 
             if (NULL === $match) {
@@ -146,7 +146,7 @@ class Admin_Controller_Match extends Controller
         $errors = array();
 
         if (RequestMethods::post('performMatchAction')) {
-            if($this->checkToken() !== true){
+            if($this->checkCSRFToken() !== true){
                 self::redirect('/admin/match/');
             }
             

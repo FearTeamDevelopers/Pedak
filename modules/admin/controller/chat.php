@@ -27,7 +27,7 @@ class Admin_Controller_Chat extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkToken()) {
+        if ($this->checkCSRFToken()) {
             $topic = App_Model_ChatTopic::first(array('id = ?' => (int)$id));
 
             if (NULL === $topic) {
@@ -54,7 +54,7 @@ class Admin_Controller_Chat extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkToken()) {
+        if ($this->checkCSRFToken()) {
             $topic = App_Model_ChatTopic::first(array('id = ?' => (int)$id));
 
             if (NULL === $topic) {

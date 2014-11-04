@@ -2,6 +2,8 @@
     <header><h1>Kecárna</h1></header>
     <div>
         <form method="post" action="#" class="stdform">
+            <input type="hidden" name="csrf" id="csrf" value="{echo $token}" />
+            <input type="hidden" name="submstoken" id="submstoken" value="{echo $submstoken}" />
             <p>
                 <label>Vytvořit nové téma</label>
                 <span class="field">
@@ -9,6 +11,7 @@
                     <input type="submit" name="submitAddTopic" value="Vytvořit" />
                 </span>
             </p>
+        </form>
     </div>
     <table>
         <tr>

@@ -4,6 +4,7 @@ use App\Etc\Controller as Controller;
 use THCFrame\Registry\Registry;
 use THCFrame\Request\RequestMethods;
 use THCFrame\Filesystem\FileManager;
+use THCFrame\Security\PasswordManager;
 
 /**
  * Description of UserController
@@ -69,6 +70,9 @@ class App_Controller_User extends Controller
      */
     public function logout()
     {
+        $this->_willRenderActionView = false;
+        $this->_willRenderLayoutView = false;
+        
         $security = Registry::get('security');
         $security->logout();
         self::redirect('/');
@@ -127,9 +131,9 @@ class App_Controller_User extends Controller
                     $errors['photo'] = $fileErrors;
                 }
 
-                $salt = $security->createSalt();
-                $hash = $security->getSaltedHash(RequestMethods::post('password'), $salt);
-
+                $salt = PasswordManager::createSalt();
+                $hash = PasswordManager::_hashPassword(RequestMethods::post('password'), $salt);
+                
                 $user = new App_Model_User(array(
                     'firstname' => RequestMethods::post('firstname'),
                     'lastname' => RequestMethods::post('lastname'),
@@ -209,8 +213,8 @@ class App_Controller_User extends Controller
                 $salt = $user->getSalt();
                 $hash = $user->getPassword();
             } else {
-                $salt = $security->createSalt();
-                $hash = $security->getSaltedHash($pass, $salt);
+                $salt = PasswordManager::createSalt();
+                $hash = PasswordManager::_hashPassword($pass, $salt);
             }
 
             if ($user->photoMain == '') {
@@ -279,7 +283,7 @@ class App_Controller_User extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkToken()) {
+        if ($this->checkCSRFToken()) {
             $user = App_Model_User::first(array('id = ?' => (int) $id));
 
             if ($user === null) {

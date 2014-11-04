@@ -2,6 +2,7 @@
     <header><h1>Registrace</h1></header>
     <form method="post" action="#" class="stdform" enctype="multipart/form-data">
         <input type="hidden" name="MAX_FILE_SIZE" value="5000000"/>
+        <input type="hidden" name="csrf" id="csrf" value="{echo $token}" />
         <p>
             <label>Jméno*</label>
             <span class="field">

@@ -66,7 +66,7 @@
                     <div class="clear"></div>
                     <div>
                         <form method="post" action="/app/training/addhost/{echo $training->getId()}" class="stdform">
-                            <input type="hidden" name="tk" id="tk" value="{echo $token}" />
+                            <input type="hidden" name="csrf" id="csrf" value="{echo $token}" />
                             <input type="hidden" name="submstoken" id="submstoken" value="{echo $submstoken}" />
 
                             <p>

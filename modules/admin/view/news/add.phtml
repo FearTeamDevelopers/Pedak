@@ -11,7 +11,7 @@
             </div><!--contenttitle-->
 
             <form class="stdform stdform2" method="post" action="#" >
-                <input type="hidden" name="tk" id="tk" value="{echo $token}" />
+                <input type="hidden" name="csrf" id="csrf" value="{echo $token}" />
                 <input type="hidden" name="submstoken" id="submstoken" value="{echo $submstoken}" />
                 <p>
                     <label>Title*</label>
@@ -55,6 +55,7 @@
                             <label class="error">{echo join("<br/>", $errors["body"])}</label>
                         {/if}
                         <br/>
+                        <button id="news-text-new-paragraph">New paragraph</button>
                         <button id="news-text-to-teaser">Copy to Teaser</button>
                         <button id="news-clear-text">Clear</button>
                     </span>
@@ -67,6 +68,7 @@
                             <label class="error">{echo join("<br/>", $errors["shortBody"])}</label>
                         {/if}
                         <br/>
+                        <button id="news-teaser-new-paragraph">New paragraph</button>
                         <button id="news-clear-teaser">Clear</button>
                         <button id="news-readmore-link">Add Read More link</button>
                         <button id="news-teaser-to-meta">Copy teaser to meta desc</button>
@@ -119,7 +121,7 @@
                 {if ($photos && !empty($photos))}
                     {foreach $photo in $photos}
                         <span class="news-photo">
-                            <img src="{echo $photo->getThumbPath()}" alt="{echo $photo->getPhotoName()}" width="150px"/>
+                            <img src="{echo $photo->getImgThumb()}" alt="{echo $photo->getPhotoName()}" width="160px"/>
                             <button class="stdbtn img-to-text" value="{echo $photo->getId()}">Txt</button>
                             <button class="stdbtn img-to-teaser" value="{echo $photo->getId()}">Teaser</button>
                             <button class="stdbtn img-to-meta" value="{echo $photo->getPath()}">Meta</button>
@@ -146,4 +148,5 @@
     </div>
 </div>
 <br class="clear-all"/>
+<div id="insert-photo-dialog"><p></p></div>
 <script type="text/javascript" src="/public/js/custom/news.js"></script>

@@ -17,6 +17,8 @@ mark, rp, rt, ruby, summary, time {display:inline;}
 /* Left & Right alignment */
 .left {float:left;}
 .right {float:right;}
+.left-10 {float:left; margin-right: 10px;}
+.right-10 {float:right; margin-left: 10px;}
 .relative {position:relative;}
 .aligncenter{text-align: center;}
 .nodisplay{display: none !important;}

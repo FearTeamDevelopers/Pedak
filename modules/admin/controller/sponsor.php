@@ -33,7 +33,7 @@ class Admin_Controller_Sponsor extends Controller
         $view->set('submstoken', $this->mutliSubmissionProtectionToken());
         
         if (RequestMethods::post('submitAddSponsor')) {
-            if($this->checkToken() !== true && 
+            if($this->checkCSRFToken() !== true && 
                     $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
                 self::redirect('/admin/sponsor/');
             }
@@ -100,7 +100,7 @@ class Admin_Controller_Sponsor extends Controller
         $view->set('sponsor', $sponsor);
 
         if (RequestMethods::post('submitEditSponsor')) {
-            if($this->checkToken() !== true){
+            if($this->checkCSRFToken() !== true){
                 self::redirect('/admin/sponsor/');
             }
             $errors = array();
@@ -158,7 +158,7 @@ class Admin_Controller_Sponsor extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkToken()) {
+        if ($this->checkCSRFToken()) {
             $sponsor = App_Model_Sponsor::first(array('id = ?' => (int)$id));
 
             if (NULL === $sponsor) {
@@ -189,7 +189,7 @@ class Admin_Controller_Sponsor extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkToken()) {
+        if ($this->checkCSRFToken()) {
             $sponsor = App_Model_Sponsor::first(array('id = ?' => (int) $id));
 
             if (NULL === $sponsor) {

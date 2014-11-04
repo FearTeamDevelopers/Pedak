@@ -1,85 +1,14 @@
 <?php
 
-use THCFrame\Model\Model;
-use THCFrame\Security\UserInterface;
+use THCFrame\Security\Model\BasicUser;
 
 /**
  * Description of App_Model_User
  *
  * @author Tomy
  */
-class App_Model_User extends Model implements UserInterface
+class App_Model_User extends BasicUser
 {
-
-    /**
-     * @readwrite
-     */
-    protected $_alias = 'us';
-    
-    /**
-     * @column
-     * @readwrite
-     * @primary
-     * @type auto_increment
-     */
-    protected $_id;
-
-    /**
-     * @column
-     * @readwrite
-     * @type text
-     * @length 60
-     * @index
-     * @unique
-     *
-     * @validate required, email, max(60)
-     * @label email address
-     */
-    protected $_email;
-
-    /**
-     * @column
-     * @readwrite
-     * @type text
-     * @length 200
-     * @index
-     *
-     * @validate required, min(5), max(200)
-     * @label password
-     */
-    protected $_password;
-
-    /**
-     * @column
-     * @readwrite
-     * @type boolean
-     * @index
-     * 
-     * @validate max(3)
-     */
-    protected $_active;
-
-    /**
-     * @column
-     * @readwrite
-     * @type text
-     * @length 25
-     * 
-     * @validate required, alpha, max(25)
-     * @label user role
-     */
-    protected $_role;
-
-    /**
-     * @column
-     * @readwrite
-     * @type text
-     * @length 40
-     * @unique
-     *
-     * @validate required, max(40)
-     */
-    protected $_salt;
 
     /**
      * @column
@@ -213,94 +142,7 @@ class App_Model_User extends Model implements UserInterface
      */
     protected $_other;
 
-    /**
-     * @column
-     * @readwrite
-     * @type datetime
-     */
-    protected $_lastLogin;
 
-    /**
-     * @column
-     * @readwrite
-     * @type text
-     * @length 30
-     *
-     * @validate numeric, max(30)
-     * @label account lockdown time
-     */
-    protected $_loginLockdownTime;
-
-    /**
-     * @column
-     * @readwrite
-     * @type tinyint
-     *
-     * @validate numeric, max(2)
-     * @label login attemp counter
-     */
-    protected $_loginAttempCounter;
-
-    /**
-     * @column
-     * @readwrite
-     * @type datetime
-     */
-    protected $_created;
-
-    /**
-     * @column
-     * @readwrite
-     * @type datetime
-     */
-    protected $_modified;
-
-    /**
-     * 
-     */
-    public function preSave()
-    {
-        $primary = $this->getPrimaryColumn();
-        $raw = $primary["raw"];
-
-        if (empty($this->$raw)) {
-            $this->setCreated(date("Y-m-d H:i:s"));
-            $this->setActive(true);
-        }
-        $this->setModified(date("Y-m-d H:i:s"));
-    }
-
-    /**
-     * 
-     * @param type $datetime
-     */
-    public function setLastLogin($datetime)
-    {
-        $this->_lastLogin = $datetime;
-    }
-    
-    /**
-     * 
-     * @param type $value
-     * @throws \THCFrame\Security\Exception\Role
-     */
-    public function setRole($value)
-    {
-        $role = strtolower(substr($value, 0, 5));
-        if ($role != 'role_') {
-            throw new \THCFrame\Security\Exception\Role(sprintf('Role %s is not valid', $value));
-        } else {
-            $this->_role = $value;
-        }
-    }
-
-    /**
-     * 
-     */
-    public function isActive()
-    {
-        return (boolean) $this->_active;
-    }
 
     /**
      * 
