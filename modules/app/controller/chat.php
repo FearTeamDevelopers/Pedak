@@ -33,11 +33,10 @@ class App_Controller_Chat extends Controller
     public function index()
     {
         $view = $this->getActionView();
-        $host = RequestMethods::server('HTTP_HOST');
         
         $topics = App_Model_ChatTopic::fetchAllActive();
         
-        $canonical = 'http://' . $host . '/kecarna';
+        $canonical = 'http://' . $this->getServerHost() . '/kecarna';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Kecárna')
                 ->set('canonical', $canonical)
@@ -85,7 +84,6 @@ class App_Controller_Chat extends Controller
     public function topicDetail($urlKey)
     {
         $view = $this->getActionView();
-        $host = RequestMethods::server('HTTP_HOST');
 
         $topic = App_Model_ChatTopic::first(array('urlKey = ?' => $urlKey, 'status = ?' => true));
         
@@ -94,7 +92,7 @@ class App_Controller_Chat extends Controller
             self::redirect('/kecarna');
         }
         
-        $canonical = 'http://' . $host . '/kecarna/'.$urlKey;
+        $canonical = 'http://' . $this->getServerHost() . '/kecarna/'.$urlKey;
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Kecárna')
                 ->set('canonical', $canonical)

@@ -20,9 +20,8 @@ class App_Controller_User extends Controller
     public function login()
     {
         $view = $this->getActionView();
-        $host = RequestMethods::server('HTTP_HOST');
         
-        $canonical = 'http://' . $host . '/login';
+        $canonical = 'http://' . $this->getServerHost() . '/login';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Přihlásit se')
                 ->set('canonical', $canonical)
@@ -85,9 +84,8 @@ class App_Controller_User extends Controller
     {
         if ($key === '8406c6ad864195ed144ab5c87621b6c233b548baeae6956df3463876aed6bc22d4a') {
             $view = $this->getActionView();
-            $host = RequestMethods::server('HTTP_HOST');
         
-            $canonical = 'http://' . $host . '/registrace';
+            $canonical = 'http://' . $this->getServerHost() . '/registrace';
             
             $this->getLayoutView()->set('metatitle', 'Peďák - Registrace')
                     ->set('canonical', $canonical);
@@ -132,7 +130,7 @@ class App_Controller_User extends Controller
                 }
 
                 $salt = PasswordManager::createSalt();
-                $hash = PasswordManager::_hashPassword(RequestMethods::post('password'), $salt);
+                $hash = PasswordManager::hashPassword(RequestMethods::post('password'), $salt);
                 
                 $user = new App_Model_User(array(
                     'firstname' => RequestMethods::post('firstname'),
@@ -169,18 +167,16 @@ class App_Controller_User extends Controller
     }
 
     /**
-     * @before _secured
+     * @before _secured, _member
      */
     public function profile()
     {
         $view = $this->getActionView();
-        $host = RequestMethods::server('HTTP_HOST');
         
-        $canonical = 'http://' . $host . '/profil';
+        $canonical = 'http://' . $this->getServerHost() . '/profil';
 
         $errors = array();
 
-        //required to activate database connection
         $user = App_Model_User::first(array(
                     'id = ?' => $this->getUser()->getId()
         ));
@@ -214,7 +210,7 @@ class App_Controller_User extends Controller
                 $hash = $user->getPassword();
             } else {
                 $salt = PasswordManager::createSalt();
-                $hash = PasswordManager::_hashPassword($pass, $salt);
+                $hash = PasswordManager::hashPassword($pass, $salt);
             }
 
             if ($user->photoMain == '') {
@@ -278,13 +274,13 @@ class App_Controller_User extends Controller
     /**
      * @before _secured, _member
      */
-    public function deleteUserMainPhoto($id)
+    public function deleteUserMainPhoto()
     {
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
         if ($this->checkCSRFToken()) {
-            $user = App_Model_User::first(array('id = ?' => (int) $id));
+            $user = App_Model_User::first(array('id = ?' => (int) $this->getUser()->getId()));
 
             if ($user === null) {
                 echo self::ERROR_MESSAGE_2;

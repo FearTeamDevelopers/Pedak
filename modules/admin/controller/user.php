@@ -141,7 +141,7 @@ class Admin_Controller_User extends Controller
             }
 
             $salt = PasswordManager::createSalt();
-            $hash = PasswordManager::_hashPassword(RequestMethods::post('password'), $salt);
+            $hash = PasswordManager::hashPassword(RequestMethods::post('password'), $salt);
 
             $user = new App_Model_User(array(
                 'firstname' => RequestMethods::post('firstname'),
@@ -250,7 +250,7 @@ class Admin_Controller_User extends Controller
                 $hash = $user->getPassword();
             } else {
                 $salt = PasswordManager::createSalt();
-                $hash = PasswordManager::_hashPassword($pass, $salt);
+                $hash = PasswordManager::hashPassword($pass, $salt);
             }
 
             $user->firstname = RequestMethods::post('firstname');
@@ -361,7 +361,7 @@ class Admin_Controller_User extends Controller
                 $hash = $user->getPassword();
             } else {
                 $salt = PasswordManager::createSalt();
-                $hash = PasswordManager::_hashPassword($pass, $salt);
+                $hash = PasswordManager::hashPassword($pass, $salt);
             }
 
             $user->firstname = RequestMethods::post('firstname');

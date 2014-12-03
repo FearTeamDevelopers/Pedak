@@ -7,13 +7,10 @@ use THCFrame\Database\Exception as Exception;
 use THCFrame\Profiler\Profiler;
 
 /**
- * Description of Mysql
  * The Database\Connector\Mysql class defines a handful of adaptable 
  * properties and methods used to perform MySQLi class-specific functions, 
  * and return MySQLi class-specific properties. We want to isolate these from 
  * the outside so that our system is essentially plug-and-play
- * 
- * @author Tomy
  */
 class Mysql extends Database\Connector
 {
@@ -166,13 +163,13 @@ class Mysql extends Database\Connector
             throw new Exception\Service('Not connected to a valid database service');
         }
 
-        $profiler = Profiler::getProfiler();
+        $profiler = Profiler::getInstance();
         $profiler->dbQueryStart($sql);
         $args = func_get_args();
 
         if (count($args) == 1) {
             $result = $this->_service->query($sql);
-            $profiler->dbQueryEnd($this->getAffectedRows());
+            $profiler->dbQueryStop($this->getAffectedRows());
             return $result;
         }
 
@@ -199,7 +196,7 @@ class Mysql extends Database\Connector
         $bindParamsMethod->invokeArgs($stmt, $bindParamsReferences);
 
         $stmt->execute();
-        $profiler->dbQueryEnd($stmt->affected_rows);
+        $profiler->dbQueryStop($stmt->affected_rows);
         $meta = $stmt->result_metadata();
 
         if ($meta) {

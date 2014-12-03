@@ -18,17 +18,14 @@ class App_Controller_Match extends Controller
     public function index()
     {
         $view = $this->getActionView();
-        $host = RequestMethods::server('HTTP_HOST');
 
-        $canonical = 'http://' . $host . '/zapasy';
+        $canonical = 'http://' . $this->getServerHost() . '/zapasy';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Zápasy')
                 ->set('canonical', $canonical)
                 ->set('activemenu', 'match');
 
-        $cache = Registry::get('cache');
-
-        $contentA = $cache->get('matchesa');
+        $contentA = $this->getCache()->get('matchesa');
 
         if ($contentA !== null) {
             $matchesA = $contentA;
@@ -39,7 +36,7 @@ class App_Controller_Match extends Controller
                         'active = ?' => true
                             ), array('id', 'home', 'away', 'hall', 'startDate', 'startTime', 'scoreHome', 'scoreAway'), array('startDate' => 'ASC')
             );
-            $cache->set('matchesa', $matchesA);
+            $this->getCache()->set('matchesa', $matchesA);
         }
 
         $contentB = $cache->get('matchesb');
@@ -53,7 +50,7 @@ class App_Controller_Match extends Controller
                         'active = ?' => true
                             ), array('id', 'home', 'away', 'hall', 'startDate', 'startTime', 'scoreHome', 'scoreAway'), array('startDate' => 'ASC')
             );
-            $cache->set('matchesb', $matchesB);
+            $this->getCache()->set('matchesb', $matchesB);
         }
 
         $view->set('matchesA', $matchesA)
@@ -66,9 +63,7 @@ class App_Controller_Match extends Controller
     public function detail($id)
     {
         $view = $this->getActionView();
-        $host = RequestMethods::server('HTTP_HOST');
-
-        $canonical = 'http://' . $host . '/zapasy';
+        $canonical = 'http://' . $this->getServerHost() . '/zapasy';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Detail zápasu')
                 ->set('canonical', $canonical);

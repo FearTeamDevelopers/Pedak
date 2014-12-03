@@ -10,9 +10,7 @@ use THCFrame\Security\Model\Authtoken;
 use THCFrame\Core\Rand;
 
 /**
- * Description of user
- *
- * @author Tomy
+ * Basic user class
  */
 class BasicUser extends Model
 {
@@ -256,12 +254,12 @@ class BasicUser extends Model
      */
     public function resetPassword($oldPassword, $newPassword)
     {
-        if (!PasswordManager::_validatePassword($oldPassword, $this->getPassword(), $this->getSalt())){
+        if (!PasswordManager::validatePassword($oldPassword, $this->getPassword(), $this->getSalt())){
             throw new Exception\WrongPassword('Wrong Password provided');
         }
 
         $this->salt = PasswordManager::createSalt();
-        $this->password = PasswordManager::_hashPassword($newPassword, $this->getSalt);
+        $this->password = PasswordManager::hashPassword($newPassword, $this->getSalt);
         
         if($this->validate()){
             $this->save();
@@ -280,7 +278,7 @@ class BasicUser extends Model
     public function forceResetPassword($newPassword)
     {
         $this->salt = PasswordManager::createSalt();
-        $this->password = PasswordManager::_hashPassword($newPassword, $this->getSalt);
+        $this->password = PasswordManager::hashPassword($newPassword, $this->getSalt);
         
         if($this->validate()){
             $this->save();
@@ -365,7 +363,7 @@ class BasicUser extends Model
     {
         if (RequestMethods::cookie('AUTHID') != '') {
             Authtoken::deleteAll(array('token = ?' => RequestMethods::cookie('AUTHID')));
-            \setcookie('AUTHID', '');
+            \setcookie('AUTHID', '', time()-1800);
         }
     }
 

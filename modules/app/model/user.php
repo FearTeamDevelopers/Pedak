@@ -169,7 +169,7 @@ class App_Model_User extends BasicUser
      */
     public function getUnlinkPath($type = true)
     {
-        if ($type) {
+        if ($type && !empty($this->_photoMain)) {
             if (file_exists($this->_photoMain)) {
                 return $this->_photoMain;
             } elseif (file_exists('.' . $this->_photoMain)) {
@@ -188,7 +188,7 @@ class App_Model_User extends BasicUser
      */
     public function getUnlinkThumbPath($type = true)
     {
-        if ($type) {
+        if ($type && !empty($this->_photoThumb)) {
             if (file_exists($this->_photoThumb)) {
                 return $this->_photoThumb;
             } elseif (file_exists('.' . $this->_photoThumb)) {

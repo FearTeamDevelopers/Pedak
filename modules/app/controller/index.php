@@ -83,9 +83,7 @@ class App_Controller_Index extends Controller
     {
         $view = $this->getActionView();
 
-        $host = RequestMethods::server('HTTP_HOST');
-
-        $canonical = 'http://' . $host;
+        $canonical = 'http://' . $this->getServerHost();
 
         $this->getLayoutView()
                 ->set('canonical', $canonical)
@@ -160,17 +158,14 @@ class App_Controller_Index extends Controller
     public function team()
     {
         $view = $this->getActionView();
-        $host = RequestMethods::server('HTTP_HOST');
 
-        $canonical = 'http://' . $host . '/team';
+        $canonical = 'http://' . $this->getServerHost() . '/team';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Team')
                 ->set('canonical', $canonical)
                 ->set('activemenu', 'team');
 
-        $cache = Registry::get('cache');
-
-        $contentA = $cache->get('teama');
+        $contentA = $this->getCache()->get('teama');
 
         if ($contentA !== null) {
             $teamA = $contentA;
@@ -183,10 +178,10 @@ class App_Controller_Index extends Controller
                         'playerNum', 'cfbuPersonalNum', 'team',
                         'nickname', 'photoMain', 'photoThumb', 'position', 'grip', 'other'), array('lastname' => 'asc')
             );
-            $cache->set('teama', $teamA);
+            $this->getCache()->set('teama', $teamA);
         }
 
-        $contentB = $cache->get('teamb');
+        $contentB = $this->getCache()->get('teamb');
 
         if ($contentB !== null) {
             $teamB = $contentB;
@@ -199,7 +194,7 @@ class App_Controller_Index extends Controller
                         'playerNum', 'cfbuPersonalNum', 'team',
                         'nickname', 'photoMain', 'photoThumb', 'position', 'grip', 'other'), array('lastname' => 'asc')
             );
-            $cache->set('teamb', $teamB);
+            $this->getCache()->set('teamb', $teamB);
         }
 
         $view->set('teamA', $teamA)
@@ -211,9 +206,7 @@ class App_Controller_Index extends Controller
      */
     public function contact()
     {
-        $host = RequestMethods::server('HTTP_HOST');
-
-        $canonical = 'http://' . $host . '/kontakt';
+        $canonical = 'http://' . $this->getServerHost() . '/kontakt';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Kontakt')
                 ->set('canonical', $canonical)

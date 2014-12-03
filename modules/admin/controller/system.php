@@ -82,7 +82,9 @@ class Admin_Controller_System extends Controller
         $view->set('config', $config);
 
         if (RequestMethods::post('submitEditSet')) {
-            $this->checkCSRFToken();
+            if ($this->checkCSRFToken() !== true){
+                self::redirect('/admin/');
+            }
             $errors = array();
 
             foreach ($config as $conf) {
@@ -145,7 +147,7 @@ class Admin_Controller_System extends Controller
 
         
 
-        file_put_contents('./sitemap.xml', $xml . $pageContentXml . $categoryXml . $productXml . $xmlEnd);
+        file_put_contents('./sitemap.xml', $xml . $pageContentXml . $xmlEnd);
 
         Event::fire('admin.log', array('success'));
         $view->successMessage('Soubor sitemap.xml byl aktualizován');

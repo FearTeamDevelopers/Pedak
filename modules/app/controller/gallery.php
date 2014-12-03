@@ -20,25 +20,23 @@ class App_Controller_Gallery extends Controller
     {
         $view = $this->getActionView();
         $layoutView = $this->getLayoutView();
-        $host = RequestMethods::server('HTTP_HOST');
-        $cache = Registry::get('cache');
 
         if ($year == null) {
             $year = date('Y');
-            $canonical = 'http://' . $host . '/gallerie';
+            $canonical = 'http://' . $this->getServerHost() . '/gallerie';
         } else {
-            $canonical = 'http://' . $host . '/gallerie/' . $year;
+            $canonical = 'http://' . $this->getServerHost() . '/gallerie/' . $year;
         }
 
-        $content = $cache->get('galerie');
-        $contentYears = $cache->get('galerie-year');
+        $content = $this->getCache()->get('galerie');
+        $contentYears = $this->getCache()->get('galerie-year');
 
         if ($content !== null && $contentYears !== null) {
             $galleries = $content;
             $years = $contentYears;
         } else {
             $galleries = App_Model_Gallery::fetchGalleriesByYear($year);
-            $cache->set('galerie', $galleries);
+            $this->getCache()->set('galerie', $galleries);
             
             $galleryYears = App_Model_Gallery::all(
                     array('active = ?' => true), 
@@ -68,12 +66,11 @@ class App_Controller_Gallery extends Controller
     {
         $view = $this->getActionView();
         $layoutView = $this->getLayoutView();
-        $host = RequestMethods::server('HTTP_HOST');
 
         $gallery = App_Model_Gallery::fetchActivePublicGalleryByUrlkey($urlkey);
         
         if($gallery !== null){
-            $canonical = 'http://' . $host . '/galerie/r/' . $urlkey;
+            $canonical = 'http://' . $this->getServerHost() . '/galerie/r/' . $urlkey;
             $layoutView->set('canonical', $canonical)
                     ->set('metatitle', 'Peďák - '.$gallery->getTitle());
         }

@@ -14,11 +14,6 @@ class App_Etc_Module extends Module{
      */
     protected $_moduleName = "App";
     
-    /**
-     * @read 
-     */
-    protected $_observerClass = '';
-    
     protected $_routes = array(
         array(
             'pattern' => '/admin',

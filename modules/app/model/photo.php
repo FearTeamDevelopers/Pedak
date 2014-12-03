@@ -204,7 +204,7 @@ class App_Model_Photo extends Model
      */
     public function getUnlinkPath($type = true)
     {
-        if ($type) {
+        if ($type && !empty($this->_imgMain)) {
             if (file_exists($this->_imgMain)) {
                 return $this->_imgMain;
             } elseif (file_exists('.' . $this->_imgMain)) {
@@ -223,7 +223,7 @@ class App_Model_Photo extends Model
      */
     public function getUnlinkThumbPath($type = true)
     {
-        if ($type) {
+        if ($type && !empty($this->_imgThumb)) {
             if (file_exists($this->_imgThumb)) {
                 return $this->_imgThumb;
             } elseif (file_exists('.' . $this->_imgThumb)) {

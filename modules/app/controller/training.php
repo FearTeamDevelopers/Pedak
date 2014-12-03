@@ -19,9 +19,8 @@ class App_Controller_Training extends Controller
     public function index()
     {
         $view = $this->getActionView();
-        $host = RequestMethods::server('HTTP_HOST');
         
-        $canonical = 'http://' . $host . '/treninky';
+        $canonical = 'http://' . $this->getServerHost() . '/treninky';
 
         $this->getLayoutView()->set('metatitle', 'Peďák - Tréninky')
                 ->set('canonical', $canonical)

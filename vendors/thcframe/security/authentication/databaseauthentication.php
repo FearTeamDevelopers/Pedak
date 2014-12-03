@@ -16,20 +16,24 @@ class DatabaseAuthentication extends Authentication implements AuthenticationInt
 {
 
     /**
+     * First credential used for authentication
+     * 
      * @readwrite
-     * @var type 
+     * @var string   
      */
     protected $_name = 'email';
 
     /**
+     * Second credential used for authentication
+     * 
      * @readwrite
-     * @var type 
+     * @var string 
      */
     protected $_pass = 'password';
 
     /**
      * @readwrite
-     * @var type 
+     * @var boolean 
      */
     protected $_bruteForceDetection = true;
     
@@ -90,8 +94,8 @@ class DatabaseAuthentication extends Authentication implements AuthenticationInt
      * based on two credentials such as username and password. These login
      * credentials are set in database.
      * 
-     * @param string $name
-     * @param string $pass
+     * @param string $name  Username or email
+     * @param string $pass  Password
      */
     public function authenticate($name, $pass)
     {
@@ -105,7 +109,7 @@ class DatabaseAuthentication extends Authentication implements AuthenticationInt
             throw new Exception\UserNotExists($errMessage);
         }
         
-        $passVerify = PasswordManager::_validatePassword($pass, $user->getPassword(), $user->getSalt());
+        $passVerify = PasswordManager::validatePassword($pass, $user->getPassword(), $user->getSalt());
         
         if ($passVerify === true) {
             if ($user instanceof AdvancedUser) {

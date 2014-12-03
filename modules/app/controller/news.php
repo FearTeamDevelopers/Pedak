@@ -16,8 +16,6 @@ class App_Controller_News extends Controller
      */
     private function _checkMetaData($layoutView, \App_Model_News $object)
     {
-        $host = RequestMethods::server('HTTP_HOST');
-
         if ($object->getMetaTitle() != '') {
             $layoutView->set('metatitle', $object->getMetaTitle());
         }
@@ -27,10 +25,10 @@ class App_Controller_News extends Controller
         }
 
         if ($object->getMetaImage() != '') {
-            $layoutView->set('metaogimage', "http://{$host}/public/images/meta_image.jpg");
+            $layoutView->set('metaogimage', "http://{$this->getServerHost()}/public/images/meta_image.jpg");
         }
 
-        $layoutView->set('metaogurl', "http://{$host}/novinky/" . $object->getUrlKey());
+        $layoutView->set('metaogurl', "http://{$this->getServerHost()}/novinky/" . $object->getUrlKey());
         $layoutView->set('metaogtype', 'article');
 
         return;

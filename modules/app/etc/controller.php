@@ -16,10 +16,25 @@ class Controller extends BaseController
 {
 
     /**
-     *
+     * Store security context object
      * @var type 
+     * @read
      */
-    private $_security;
+    protected $_security;
+    
+    /**
+     * Store initialized cache object
+     * @var type 
+     * @read
+     */
+    protected $_cache;
+    
+    /**
+     * Store server host name
+     * @var type 
+     * @read
+     */
+    protected $_serverHost;
     
     const SUCCESS_MESSAGE_1 = ' byl(a) úspěšně vytovřen(a)';
     const SUCCESS_MESSAGE_2 = 'Všechny změny byly úspěšně uloženy';
@@ -47,6 +62,9 @@ class Controller extends BaseController
         parent::__construct($options);
 
         $this->_security = Registry::get('security');
+        $this->_serverHost = RequestMethods::server('HTTP_HOST');
+        $this->_cache = Registry::get('cache');
+        $cfg = Registry::get('configuration');
 
         // schedule disconnect from database 
         Events::add('framework.controller.destruct.after', function($name) {
@@ -61,13 +79,13 @@ class Controller extends BaseController
             $metaData = $metaData;
         } else {
             $metaData = array(
-                'metadescription' => $this->loadConfigFromDb('meta_description'),
-                'metarobots' => $this->loadConfigFromDb('meta_robots'),
-                'metatitle' => $this->loadConfigFromDb('meta_title'),
-                'metaogurl' => $this->loadConfigFromDb('meta_og_url'),
-                'metaogtype' => $this->loadConfigFromDb('meta_og_type'),
-                'metaogimage' => $this->loadConfigFromDb('meta_og_image'),
-                'metaogsitename' => $this->loadConfigFromDb('meta_og_site_name')
+                'metadescription' => $cfg->meta_description,
+                'metarobots' => $cfg->meta_robots,
+                'metatitle' => $cfg->meta_title,
+                'metaogurl' => $cfg->meta_og_url,
+                'metaogtype' => $cfg->meta_og_type,
+                'metaogimage' => $cfg->meta_og_image,
+                'metaogsitename' => $cfg->meta_og_site_name
             );
 
             $cache->set('global_meta_data', $metaData);
@@ -90,12 +108,11 @@ class Controller extends BaseController
      */
     protected function _createUrlKey($string)
     {
-        $string = StringMethods::removeDiacriticalMarks($string);
-        $string = str_replace(array('.', ',', '_', '(', ')', '[', ']', '|', ' '), '-', $string);
-        $string = str_replace(array('?', '!', '@', '&', '*', ':', '+', '=', '~', '°', '´', '`', '%', "'", '"'), '', $string);
-        $string = trim($string);
-        $string = trim($string, '-');
-        return strtolower($string);
+        $neutralChars = array('.', ',', '_', '(', ')', '[', ']', '|', ' ');
+        $preCleaned = StringMethods::fastClean($string, $neutralChars, '-');
+        $cleaned = StringMethods::fastClean($preCleaned);
+        $return = trim(trim($cleaned), '-');
+        return strtolower($return);
     }
     
     /**
