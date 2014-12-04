@@ -39,7 +39,7 @@ class App_Controller_Match extends Controller
             $this->getCache()->set('matchesa', $matchesA);
         }
 
-        $contentB = $cache->get('matchesb');
+        $contentB = $this->getCache()->get('matchesb');
 
         if ($contentB !== null) {
             $matchesB = $contentB;

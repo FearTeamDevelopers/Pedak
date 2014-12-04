@@ -117,8 +117,7 @@ class Admin_Controller_System extends Controller
         $this->_willRenderActionView = false;
         $this->_willRenderLayoutView = false;
 
-        $profiler = Profiler::getProfiler();
-        echo $profiler->printProfilerRecord();
+        echo Profiler::getInstance()->display();
     }
 
     /**
