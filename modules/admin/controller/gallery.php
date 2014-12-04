@@ -11,7 +11,7 @@ use THCFrame\Registry\Registry;
  */
 class Admin_Controller_Gallery extends Controller
 {
-    
+
     /**
      * 
      * @param type $key
@@ -50,15 +50,15 @@ class Admin_Controller_Gallery extends Controller
     public function add()
     {
         $view = $this->getActionView();
-        
+
         $view->set('submstoken', $this->mutliSubmissionProtectionToken());
 
         if (RequestMethods::post('submitAddGallery')) {
-            if($this->checkCSRFToken() !== true && 
-                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
+            if ($this->checkCSRFToken() !== true &&
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true) {
                 self::redirect('/admin/gallery/');
             }
-            
+
             $errors = array();
             $urlKey = $this->_createUrlKey(RequestMethods::post('title'));
 
@@ -78,7 +78,7 @@ class Admin_Controller_Gallery extends Controller
                 $id = $gallery->save();
 
                 Event::fire('admin.log', array('success', 'Gallery id: ' . $id));
-                $view->successMessage('Gallery'.self::SUCCESS_MESSAGE_1);
+                $view->successMessage('Gallery' . self::SUCCESS_MESSAGE_1);
                 self::redirect('/admin/gallery/');
             } else {
                 Event::fire('admin.log', array('fail'));
@@ -131,10 +131,10 @@ class Admin_Controller_Gallery extends Controller
         $view->set('gallery', $gallery);
 
         if (RequestMethods::post('submitEditGallery')) {
-            if($this->checkCSRFToken() !== true){
+            if ($this->checkCSRFToken() !== true) {
                 self::redirect('/admin/gallery/');
             }
-            
+
             $errors = array();
             $urlKey = $this->_createUrlKey(RequestMethods::post('title'));
 
@@ -175,8 +175,7 @@ class Admin_Controller_Gallery extends Controller
         $view = $this->getActionView();
 
         $gallery = App_Model_Gallery::first(
-                        array('id = ?' => (int)$id), 
-                        array('id', 'title', 'created')
+                        array('id = ?' => (int) $id), array('id', 'title', 'created')
         );
 
         if (NULL === $gallery) {
@@ -187,7 +186,7 @@ class Admin_Controller_Gallery extends Controller
         $view->set('gallery', $gallery);
 
         if (RequestMethods::post('submitDeleteGallery')) {
-            if($this->checkCSRFToken() !== true){
+            if ($this->checkCSRFToken() !== true) {
                 self::redirect('/admin/gallery/');
             }
 
@@ -203,8 +202,8 @@ class Admin_Controller_Gallery extends Controller
                     $pathToThumbs = 'public/uploads/images';
                 }
 
-                $photos = App_Model_Photo::all(array('galleryId = ?' => (int)$id));
-                
+                $photos = App_Model_Photo::all(array('galleryId = ?' => (int) $id));
+
                 $ids = array();
                 foreach ($photos as $colPhoto) {
                     $ids[] = $colPhoto->getId();
@@ -233,7 +232,7 @@ class Admin_Controller_Gallery extends Controller
 
             if ($gallery->delete()) {
                 Event::fire('admin.log', array('success', 'Gallery id: ' . $id));
-                $view->successMessage('Galerie'.self::SUCCESS_MESSAGE_3);
+                $view->successMessage('Galerie' . self::SUCCESS_MESSAGE_3);
                 self::redirect('/admin/gallery/');
             } else {
                 Event::fire('admin.log', array('fail', 'Gallery id: ' . $id));
@@ -270,8 +269,8 @@ class Admin_Controller_Gallery extends Controller
                 ->set('submstoken', $this->mutliSubmissionProtectionToken());
 
         if (RequestMethods::post('submitAddPhoto')) {
-            if($this->checkCSRFToken() !== true && 
-                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
+            if ($this->checkCSRFToken() !== true &&
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true) {
                 self::redirect('/admin/gallery/');
             }
             $errors = array();
@@ -284,7 +283,7 @@ class Admin_Controller_Gallery extends Controller
                 'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
             ));
 
-            $fileErrors = $fileManager->upload('secondfile', 'gallery/' . $gallery->getId(), time().'_')->getUploadErrors();
+            $fileErrors = $fileManager->upload('secondfile', 'gallery/' . $gallery->getId(), time() . '_')->getUploadErrors();
             $files = $fileManager->getUploadedFiles();
 
             if (!empty($files)) {
@@ -340,27 +339,23 @@ class Admin_Controller_Gallery extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkCSRFToken()) {
-            $photo = App_Model_Photo::first(
-                            array('id = ?' => $id), array('id', 'imgMain', 'imgThumb')
-            );
+        $photo = App_Model_Photo::first(
+                        array('id = ?' => $id), array('id', 'imgMain', 'imgThumb')
+        );
 
-            if (null === $photo) {
-                echo self::ERROR_MESSAGE_2;
-            } else {
-                @unlink($photo->getUnlinkPath());
-                @unlink($photo->getUnlinkThumbPath());
-
-                if ($photo->delete()) {
-                    Event::fire('admin.log', array('success', 'Photo id: ' . $id));
-                    echo 'success';
-                } else {
-                    Event::fire('admin.log', array('fail', 'Photo id: ' . $id));
-                    echo self::ERROR_MESSAGE_1;
-                }
-            }
+        if (null === $photo) {
+            echo self::ERROR_MESSAGE_2;
         } else {
-            echo self::ERROR_MESSAGE_1;
+            @unlink($photo->getUnlinkPath());
+            @unlink($photo->getUnlinkThumbPath());
+
+            if ($photo->delete()) {
+                Event::fire('admin.log', array('success', 'Photo id: ' . $id));
+                echo 'success';
+            } else {
+                Event::fire('admin.log', array('fail', 'Photo id: ' . $id));
+                echo self::ERROR_MESSAGE_1;
+            }
         }
     }
 
@@ -376,35 +371,31 @@ class Admin_Controller_Gallery extends Controller
         $this->willRenderLayoutView = false;
         $this->willRenderActionView = false;
 
-        if ($this->checkCSRFToken()) {
-            $photo = App_Model_Photo::first(array('id = ?' => $id));
+        $photo = App_Model_Photo::first(array('id = ?' => $id));
 
-            if (null === $photo) {
-                echo self::ERROR_MESSAGE_2;
-            } else {
-                if (!$photo->active) {
-                    $photo->active = true;
+        if (null === $photo) {
+            echo self::ERROR_MESSAGE_2;
+        } else {
+            if (!$photo->active) {
+                $photo->active = true;
 
-                    if ($photo->validate()) {
-                        $photo->save();
-                        Event::fire('admin.log', array('success', 'Photo id: ' . $id));
-                        echo 'active';
-                    } else {
-                        echo join('<br/>', $photo->getErrors());
-                    }
-                } elseif ($photo->active) {
-                    $photo->active = false;
-                    if ($photo->validate()) {
-                        $photo->save();
-                        Event::fire('admin.log', array('success', 'Photo id: ' . $id));
-                        echo 'inactive';
-                    } else {
-                        echo join('<br/>', $photo->getErrors());
-                    }
+                if ($photo->validate()) {
+                    $photo->save();
+                    Event::fire('admin.log', array('success', 'Photo id: ' . $id));
+                    echo 'active';
+                } else {
+                    echo join('<br/>', $photo->getErrors());
+                }
+            } elseif ($photo->active) {
+                $photo->active = false;
+                if ($photo->validate()) {
+                    $photo->save();
+                    Event::fire('admin.log', array('success', 'Photo id: ' . $id));
+                    echo 'inactive';
+                } else {
+                    echo join('<br/>', $photo->getErrors());
                 }
             }
-        } else {
-            echo self::ERROR_MESSAGE_1;
         }
     }
 

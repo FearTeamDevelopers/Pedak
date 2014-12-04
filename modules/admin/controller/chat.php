@@ -27,25 +27,21 @@ class Admin_Controller_Chat extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkCSRFToken()) {
-            $topic = App_Model_ChatTopic::first(array('id = ?' => (int)$id));
+        $topic = App_Model_ChatTopic::first(array('id = ?' => (int) $id));
 
-            if (NULL === $topic) {
-                echo self::ERROR_MESSAGE_2;
-            } else {
-                if ($topic->delete()) {
-                    Event::fire('admin.log', array('success', 'Topic id: ' . $id));
-                    echo 'success';
-                } else {
-                    Event::fire('admin.log', array('fail', 'Topic id: ' . $id));
-                    echo self::ERROR_MESSAGE_1;
-                }
-            }
+        if (NULL === $topic) {
+            echo self::ERROR_MESSAGE_2;
         } else {
-            echo self::ERROR_MESSAGE_1;
+            if ($topic->delete()) {
+                Event::fire('admin.log', array('success', 'Topic id: ' . $id));
+                echo 'success';
+            } else {
+                Event::fire('admin.log', array('fail', 'Topic id: ' . $id));
+                echo self::ERROR_MESSAGE_1;
+            }
         }
     }
-    
+
     /**
      * @before _secured, _admin
      */
@@ -54,25 +50,22 @@ class Admin_Controller_Chat extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkCSRFToken()) {
-            $topic = App_Model_ChatTopic::first(array('id = ?' => (int)$id));
+        $topic = App_Model_ChatTopic::first(array('id = ?' => (int) $id));
 
-            if (NULL === $topic) {
-                echo self::ERROR_MESSAGE_2;
-            } else {
-                $topic->status = 1;
-                if ($topic->validate()) {
-                    $topic->save();
-                    
-                    Event::fire('admin.log', array('success', 'Topic id: ' . $id));
-                    echo 'success';
-                } else {
-                    Event::fire('admin.log', array('fail', 'Topic id: ' . $id));
-                    echo self::ERROR_MESSAGE_1;
-                }
-            }
+        if (NULL === $topic) {
+            echo self::ERROR_MESSAGE_2;
         } else {
-            echo self::ERROR_MESSAGE_1;
+            $topic->status = 1;
+            if ($topic->validate()) {
+                $topic->save();
+
+                Event::fire('admin.log', array('success', 'Topic id: ' . $id));
+                echo 'success';
+            } else {
+                Event::fire('admin.log', array('fail', 'Topic id: ' . $id));
+                echo self::ERROR_MESSAGE_1;
+            }
         }
     }
+
 }

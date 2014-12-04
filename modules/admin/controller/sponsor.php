@@ -29,12 +29,12 @@ class Admin_Controller_Sponsor extends Controller
     public function add()
     {
         $view = $this->getActionView();
-        
+
         $view->set('submstoken', $this->mutliSubmissionProtectionToken());
-        
+
         if (RequestMethods::post('submitAddSponsor')) {
-            if($this->checkCSRFToken() !== true && 
-                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
+            if ($this->checkCSRFToken() !== true &&
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true) {
                 self::redirect('/admin/sponsor/');
             }
             $errors = array();
@@ -47,7 +47,7 @@ class Admin_Controller_Sponsor extends Controller
                 'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
             ));
 
-            $fileErrors = $fileManager->upload('logo', 'sponsors', time().'_', false)->getUploadErrors();
+            $fileErrors = $fileManager->upload('logo', 'sponsors', time() . '_', false)->getUploadErrors();
             $files = $fileManager->getUploadedFiles();
 
             if (!empty($files)) {
@@ -92,7 +92,7 @@ class Admin_Controller_Sponsor extends Controller
         $view = $this->getActionView();
 
         $sponsor = App_Model_Sponsor::first(array('id = ?' => (int) $id));
-        
+
         if (NULL === $sponsor) {
             $view->warningMessage(self::ERROR_MESSAGE_2);
             self::redirect('/admin/sponsor/');
@@ -100,7 +100,7 @@ class Admin_Controller_Sponsor extends Controller
         $view->set('sponsor', $sponsor);
 
         if (RequestMethods::post('submitEditSponsor')) {
-            if($this->checkCSRFToken() !== true){
+            if ($this->checkCSRFToken() !== true) {
                 self::redirect('/admin/sponsor/');
             }
             $errors = array();
@@ -114,7 +114,7 @@ class Admin_Controller_Sponsor extends Controller
                     'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
                 ));
 
-                $fileErrors = $fileManager->upload('logo', 'sponsors', time().'_', false)->getUploadErrors();
+                $fileErrors = $fileManager->upload('logo', 'sponsors', time() . '_', false)->getUploadErrors();
                 $files = $fileManager->getUploadedFiles();
 
                 if (!empty($files)) {
@@ -126,7 +126,7 @@ class Admin_Controller_Sponsor extends Controller
                     }
 
                     $logo = trim($file->getFilename(), '.');
-                }else{
+                } else {
                     $errors['logo'] = $fileErrors;
                 }
             } else {
@@ -158,25 +158,21 @@ class Admin_Controller_Sponsor extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkCSRFToken()) {
-            $sponsor = App_Model_Sponsor::first(array('id = ?' => (int)$id));
+        $sponsor = App_Model_Sponsor::first(array('id = ?' => (int) $id));
 
-            if (NULL === $sponsor) {
-                echo self::ERROR_MESSAGE_2;
-            } else {
-                $path = $sponsor->getUnlinkLogoPath();
-                
-                if ($sponsor->delete()) {
-                    @unlink($path);
-                    Event::fire('admin.log', array('success', 'Sponsor id: ' . $id));
-                    echo 'success';
-                } else {
-                    Event::fire('admin.log', array('fail', 'Sponsor id: ' . $id));
-                    echo self::ERROR_MESSAGE_1;
-                }
-            }
+        if (NULL === $sponsor) {
+            echo self::ERROR_MESSAGE_2;
         } else {
-            echo self::ERROR_MESSAGE_1;
+            $path = $sponsor->getUnlinkLogoPath();
+
+            if ($sponsor->delete()) {
+                @unlink($path);
+                Event::fire('admin.log', array('success', 'Sponsor id: ' . $id));
+                echo 'success';
+            } else {
+                Event::fire('admin.log', array('fail', 'Sponsor id: ' . $id));
+                echo self::ERROR_MESSAGE_1;
+            }
         }
     }
 
@@ -213,4 +209,5 @@ class Admin_Controller_Sponsor extends Controller
             echo self::ERROR_MESSAGE_1;
         }
     }
+
 }

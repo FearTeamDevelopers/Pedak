@@ -70,11 +70,10 @@ class Controller extends BaseController
     public function _secured()
     {
         $session = Registry::get('session');
-
         $user = $this->_security->getUser();
 
         if (!$user) {
-            self::redirect('/login');
+            self::redirect('/admin/login');
         }
 
         //30min inactivity till logout

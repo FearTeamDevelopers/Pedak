@@ -118,22 +118,18 @@ class Admin_Controller_Match extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkCSRFToken()) {
-            $match = App_Model_Match::first(array('id = ?' => (int)$id));
+        $match = App_Model_Match::first(array('id = ?' => (int)$id));
 
-            if (NULL === $match) {
-                echo self::ERROR_MESSAGE_2;
-            } else {
-                if ($match->delete()) {
-                    Event::fire('admin.log', array('success', 'Match id: ' . $id));
-                    echo 'success';
-                } else {
-                    Event::fire('admin.log', array('fail', 'Match id: ' . $id));
-                    echo self::ERROR_MESSAGE_1;
-                }
-            }
+        if (NULL === $match) {
+            echo self::ERROR_MESSAGE_2;
         } else {
-            echo self::ERROR_MESSAGE_1;
+            if ($match->delete()) {
+                Event::fire('admin.log', array('success', 'Match id: ' . $id));
+                echo 'success';
+            } else {
+                Event::fire('admin.log', array('fail', 'Match id: ' . $id));
+                echo self::ERROR_MESSAGE_1;
+            }
         }
     }
 

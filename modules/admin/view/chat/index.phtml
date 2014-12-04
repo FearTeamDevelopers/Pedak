@@ -36,9 +36,9 @@
                         </td>
                         <td>
                             {if $topic->status == 0}
-                                <a href="/admin/chat/approve/{echo $topic->getId()}" class="btn btn3 btn_chat ajaxBtnReload" title="Approve"></a>
+                                <a href="/admin/chat/approve/{echo $topic->getId()}" class="btn btn3 btn_chat ajaxReload" title="Approve"></a>
                             {/if}
-                            <a href="/admin/chat/delete/{echo $topic->getId()}" class="btn btn3 btn_trash ajaxBtn" title="Delete"></a>
+                            <a href="/admin/chat/delete/{echo $topic->getId()}" class="btn btn3 btn_trash ajaxDelete" title="Delete"></a>
                         </td>
                     </tr>
                 {/foreach}

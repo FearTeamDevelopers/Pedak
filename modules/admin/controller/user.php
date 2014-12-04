@@ -81,10 +81,8 @@ class Admin_Controller_User extends Controller
         $superAdmin = $security->isGranted('role_superadmin');
 
         $users = App_Model_User::all(
-                    array('role <> ?' => 'role_superadmin'), 
-                    array('id', 'firstname', 'lastname', 'email', 'role', 
-                        'active', 'created', 'team', 'photoThumb'), 
-                    array('id' => 'asc')
+                        array('role <> ?' => 'role_superadmin'), array('id', 'firstname', 'lastname', 'email', 'role',
+                    'active', 'created', 'team', 'photoThumb'), array('id' => 'asc')
         );
 
         $view->set('users', $users)
@@ -97,16 +95,16 @@ class Admin_Controller_User extends Controller
     public function add()
     {
         $view = $this->getActionView();
-        
+
         $view->set('submstoken', $this->mutliSubmissionProtectionToken());
-        
+
         if (RequestMethods::post('submitAddUser')) {
-            if($this->checkCSRFToken() !== true && 
-                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
+            if ($this->checkCSRFToken() !== true &&
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true) {
                 self::redirect('/admin/user/');
             }
             $errors = array();
-            
+
             $fileManager = new FileManager(array(
                 'thumbWidth' => $this->loadConfigFromDb('thumb_width'),
                 'thumbHeight' => $this->loadConfigFromDb('thumb_height'),
@@ -115,7 +113,7 @@ class Admin_Controller_User extends Controller
                 'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
             ));
 
-            $fileErrors = $fileManager->upload('photo', 'team', time().'_')->getUploadErrors();
+            $fileErrors = $fileManager->upload('photo', 'team', time() . '_')->getUploadErrors();
             $files = $fileManager->getUploadedFiles();
 
             if (!empty($files)) {
@@ -126,7 +124,7 @@ class Admin_Controller_User extends Controller
                         break;
                     }
                 }
-            }else{
+            } else {
                 $errors['photo'] = $fileErrors;
             }
 
@@ -166,7 +164,7 @@ class Admin_Controller_User extends Controller
                 $id = $user->save();
 
                 Event::fire('admin.log', array('success', 'User id: ' . $id));
-                $view->successMessage('User'.self::SUCCESS_MESSAGE_1);
+                $view->successMessage('User' . self::SUCCESS_MESSAGE_1);
                 self::redirect('/admin/user/');
             } else {
                 Event::fire('admin.log', array('fail'));
@@ -186,7 +184,7 @@ class Admin_Controller_User extends Controller
         $loggedUser = $this->getUser();
 
         $user = App_Model_User::first(
-                array('active = ?' => true, 'id = ?' => $loggedUser->getId()));
+                        array('active = ?' => true, 'id = ?' => $loggedUser->getId()));
 
         if (NULL === $user) {
             $view->warningMessage(self::ERROR_MESSAGE_2);
@@ -195,7 +193,7 @@ class Admin_Controller_User extends Controller
         $view->set('user', $user);
 
         if (RequestMethods::post('submitUpdateProfile')) {
-            if($this->checkCSRFToken() !== true){
+            if ($this->checkCSRFToken() !== true) {
                 self::redirect('/admin/user/');
             }
             $errors = array();
@@ -209,7 +207,7 @@ class Admin_Controller_User extends Controller
                     'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
                 ));
 
-                $fileErrors = $fileManager->upload('photo', 'team', time().'_')->getUploadErrors();
+                $fileErrors = $fileManager->upload('photo', 'team', time() . '_')->getUploadErrors();
                 $files = $fileManager->getUploadedFiles();
 
                 if (!empty($files)) {
@@ -220,7 +218,7 @@ class Admin_Controller_User extends Controller
                             break;
                         }
                     }
-                }else{
+                } else {
                     $errors['photo'] = $fileErrors;
                 }
             } else {
@@ -234,8 +232,7 @@ class Admin_Controller_User extends Controller
 
             if (RequestMethods::post('email') != $user->email) {
                 $email = App_Model_User::first(
-                                array('email = ?' => RequestMethods::post('email', $user->email)), 
-                                array('email')
+                                array('email = ?' => RequestMethods::post('email', $user->email)), array('email')
                 );
 
                 if ($email) {
@@ -292,7 +289,7 @@ class Admin_Controller_User extends Controller
     {
         $view = $this->getActionView();
 
-        $user = App_Model_User::first(array('id = ?' => (int)$id));
+        $user = App_Model_User::first(array('id = ?' => (int) $id));
 
         if (NULL === $user) {
             $view->warningMessage(self::ERROR_MESSAGE_2);
@@ -305,12 +302,12 @@ class Admin_Controller_User extends Controller
         $view->set('user', $user);
 
         if (RequestMethods::post('submitEditUser')) {
-            if($this->checkCSRFToken() !== true){
+            if ($this->checkCSRFToken() !== true) {
                 self::redirect('/admin/user/');
             }
-            
+
             $errors = array();
-         
+
             if ($user->photoMain == '') {
                 $fileManager = new FileManager(array(
                     'thumbWidth' => $this->loadConfigFromDb('thumb_width'),
@@ -320,7 +317,7 @@ class Admin_Controller_User extends Controller
                     'maxImageHeight' => $this->loadConfigFromDb('photo_maxheight')
                 ));
 
-                $fileErrors = $fileManager->upload('photo', 'team', time().'_')->getUploadErrors();
+                $fileErrors = $fileManager->upload('photo', 'team', time() . '_')->getUploadErrors();
                 $files = $fileManager->getUploadedFiles();
 
                 if (!empty($files)) {
@@ -331,22 +328,21 @@ class Admin_Controller_User extends Controller
                             break;
                         }
                     }
-                }else{
+                } else {
                     $errors['photo'] = $fileErrors;
                 }
             } else {
                 $photoMain = $user->photoMain;
                 $photoThumb = $user->photoThumb;
             }
-            
+
             if (RequestMethods::post('password') !== RequestMethods::post('password2')) {
                 $errors['password2'] = array('Paswords doesnt match');
             }
 
             if (RequestMethods::post('email') != $user->email) {
                 $email = App_Model_User::first(
-                                array('email = ?' => RequestMethods::post('email', $user->email)), 
-                                array('email')
+                                array('email = ?' => RequestMethods::post('email', $user->email)), array('email')
                 );
 
                 if ($email) {
@@ -405,22 +401,18 @@ class Admin_Controller_User extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkCSRFToken()) {
-            $user = App_Model_User::first(array('id = ?' => $id));
+        $user = App_Model_User::first(array('id = ?' => $id));
 
-            if (NULL === $user) {
-                echo self::ERROR_MESSAGE_2;
-            } else {
-                if ($user->delete()) {
-                    Event::fire('admin.log', array('success', 'User id: ' . $id));
-                    echo 'success';
-                } else {
-                    Event::fire('admin.log', array('fail', 'User id: ' . $id));
-                    echo self::ERROR_MESSAGE_1;
-                }
-            }
+        if (NULL === $user) {
+            echo self::ERROR_MESSAGE_2;
         } else {
-            echo self::ERROR_MESSAGE_1;
+            if ($user->delete()) {
+                Event::fire('admin.log', array('success', 'User id: ' . $id));
+                echo 'success';
+            } else {
+                Event::fire('admin.log', array('fail', 'User id: ' . $id));
+                echo self::ERROR_MESSAGE_1;
+            }
         }
     }
 
@@ -459,4 +451,5 @@ class Admin_Controller_User extends Controller
             echo self::ERROR_MESSAGE_1;
         }
     }
+
 }

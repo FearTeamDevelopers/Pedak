@@ -113,7 +113,7 @@ class Admin_Controller_Training extends Controller
         $view = $this->getActionView();
 
         $training = App_Model_Training::first(array('id = ?' => (int) $id));
-        
+
         if (NULL === $training) {
             $view->warningMessage(self::ERROR_MESSAGE_2);
             self::redirect('/admin/training/');
@@ -121,7 +121,7 @@ class Admin_Controller_Training extends Controller
         $view->set('training', $training);
 
         if (RequestMethods::post('submitEditTraining')) {
-            if($this->checkCSRFToken() !== true){
+            if ($this->checkCSRFToken() !== true) {
                 self::redirect('/admin/training/');
             }
 
@@ -152,14 +152,14 @@ class Admin_Controller_Training extends Controller
         $view = $this->getActionView();
 
         $training = App_Model_Training::first(array('id = ?' => (int) $id));
-        
+
         if (NULL === $training) {
             $view->warningMessage(self::ERROR_MESSAGE_2);
             self::redirect('/admin/training/');
         }
-        
+
         $training->attendance = App_Model_Attendance::fetchAttendanceByTrainingId($training->getId());
-        
+
         $view->set('training', $training);
     }
 
@@ -171,32 +171,28 @@ class Admin_Controller_Training extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkCSRFToken()) {
-            $training = App_Model_Training::first(array('id = ?' => (int)$id));
+        $training = App_Model_Training::first(array('id = ?' => (int) $id));
 
-            if (NULL === $training) {
-                echo self::ERROR_MESSAGE_2;
-            } else {
-                if ($training->delete()) {
-                    Event::fire('admin.log', array('success', 'Training id: ' . $id));
-                    echo 'success';
-                } else {
-                    Event::fire('admin.log', array('fail', 'Training id: ' . $id));
-                    echo self::ERROR_MESSAGE_1;
-                }
-            }
+        if (NULL === $training) {
+            echo self::ERROR_MESSAGE_2;
         } else {
-            echo self::ERROR_MESSAGE_1;
+            if ($training->delete()) {
+                Event::fire('admin.log', array('success', 'Training id: ' . $id));
+                echo 'success';
+            } else {
+                Event::fire('admin.log', array('fail', 'Training id: ' . $id));
+                echo self::ERROR_MESSAGE_1;
+            }
         }
     }
-    
+
     /**
      * @before _secured, _admin
      */
     public function attendance()
     {
         $view = $this->getActionView();
-        
+
         $attend = App_Model_Training::fetchPercentAttendance();
         $view->set('attendance', $attend);
     }
@@ -210,10 +206,10 @@ class Admin_Controller_Training extends Controller
         $errors = array();
 
         if (RequestMethods::post('performTrainingAction')) {
-            if($this->checkCSRFToken() !== true){
+            if ($this->checkCSRFToken() !== true) {
                 self::redirect('/admin/training/');
             }
-            
+
             $ids = RequestMethods::post('trainingids');
             $action = RequestMethods::post('action');
 

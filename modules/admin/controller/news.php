@@ -9,7 +9,7 @@ use THCFrame\Events\Events as Event;
  */
 class Admin_Controller_News extends Controller
 {
-    
+
     /**
      * 
      * @param type $key
@@ -34,7 +34,7 @@ class Admin_Controller_News extends Controller
         $view = $this->getActionView();
 
         $news = App_Model_News::all();
-        
+
         $view->set('news', $news);
     }
 
@@ -48,17 +48,17 @@ class Admin_Controller_News extends Controller
         $view->set('photos', App_Model_Photo::all(array('galleryId = ?' => 1, 'active = ?' => true)))
                 ->set('videos', App_Model_Video::all(array('active = ?' => true)))
                 ->set('submstoken', $this->mutliSubmissionProtectionToken());
-        
+
         if (RequestMethods::post('submitAddNews')) {
-            if($this->checkCSRFToken() !== true && 
-                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
+            if ($this->checkCSRFToken() !== true &&
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true) {
                 self::redirect('/admin/news/');
             }
-            
+
             $errors = array();
             $urlKey = $this->_createUrlKey(RequestMethods::post('title'));
-            
-            if(!$this->_checkUrlKey($urlKey)){
+
+            if (!$this->_checkUrlKey($urlKey)) {
                 $errors['title'] = array('This title is already used');
             }
 
@@ -79,7 +79,7 @@ class Admin_Controller_News extends Controller
                 $id = $news->save();
 
                 Event::fire('admin.log', array('success', 'News id: ' . $id));
-                $view->successMessage('News'.self::SUCCESS_MESSAGE_1);
+                $view->successMessage('News' . self::SUCCESS_MESSAGE_1);
                 self::redirect('/admin/news/');
             } else {
                 Event::fire('admin.log', array('fail'));
@@ -97,29 +97,29 @@ class Admin_Controller_News extends Controller
     {
         $view = $this->getActionView();
 
-        $news = App_Model_News::first(array('id = ?' => (int)$id));
+        $news = App_Model_News::first(array('id = ?' => (int) $id));
 
         if ($news === null) {
             $view->warningMessage(self::ERROR_MESSAGE_2);
             self::redirect('/admin/news/');
         }
-        
+
         $view->set('news', $news)
                 ->set('photos', App_Model_Photo::all(array('galleryId = ?' => 1, 'active = ?' => true)))
                 ->set('videos', App_Model_Video::all(array('active = ?' => true)));
 
         if (RequestMethods::post('submitEditNews')) {
-            if($this->checkCSRFToken() !== true){
+            if ($this->checkCSRFToken() !== true) {
                 self::redirect('/admin/news/');
             }
-            
+
             $errors = array();
             $urlKey = $this->_createUrlKey(RequestMethods::post('title'));
 
-            if($news->urlKey != $urlKey && !$this->_checkUrlKey($urlKey)){
+            if ($news->urlKey != $urlKey && !$this->_checkUrlKey($urlKey)) {
                 $errors['title'] = array('This title is already used');
             }
-            
+
             $news->title = RequestMethods::post('title');
             $news->urlKey = $urlKey;
             $news->author = RequestMethods::post('author', $this->getUser()->getWholeName());
@@ -152,25 +152,21 @@ class Admin_Controller_News extends Controller
     {
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
-        
-        if ($this->checkCSRFToken()) {
-            $news = App_Model_News::first(
-                            array('id = ?' => (int) $id), array('id')
-            );
 
-            if (NULL === $news) {
-                echo self::ERROR_MESSAGE_2;
-            } else {
-                if ($news->delete()) {
-                    Event::fire('admin.log', array('success', 'News id: ' . $id));
-                    echo 'success';
-                } else {
-                    Event::fire('admin.log', array('fail', 'News id: ' . $id));
-                    echo self::ERROR_MESSAGE_1;
-                }
-            }
+        $news = App_Model_News::first(
+                        array('id = ?' => (int) $id), array('id')
+        );
+
+        if (NULL === $news) {
+            echo self::ERROR_MESSAGE_2;
         } else {
-            echo self::ERROR_MESSAGE_1;
+            if ($news->delete()) {
+                Event::fire('admin.log', array('success', 'News id: ' . $id));
+                echo 'success';
+            } else {
+                Event::fire('admin.log', array('fail', 'News id: ' . $id));
+                echo self::ERROR_MESSAGE_1;
+            }
         }
     }
 
@@ -181,7 +177,7 @@ class Admin_Controller_News extends Controller
     {
         $this->willRenderLayoutView = false;
     }
-    
+
     /**
      * @before _secured, _admin
      */
@@ -191,10 +187,10 @@ class Admin_Controller_News extends Controller
         $errors = array();
 
         if (RequestMethods::post('performNewsAction')) {
-            if($this->checkCSRFToken() !== true){
+            if ($this->checkCSRFToken() !== true) {
                 self::redirect('/admin/news/');
             }
-            
+
             $ids = RequestMethods::post('newsids');
             $action = RequestMethods::post('action');
 

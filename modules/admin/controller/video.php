@@ -29,12 +29,12 @@ class Admin_Controller_Video extends Controller
         $view->set('submstoken', $this->mutliSubmissionProtectionToken());
 
         if (RequestMethods::post('submitAddVideo')) {
-            if($this->checkCSRFToken() !== true && 
-                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true){
+            if ($this->checkCSRFToken() !== true &&
+                    $this->checkMutliSubmissionProtectionToken(RequestMethods::post('submstoken')) !== true) {
                 self::redirect('/admin/video/');
             }
             $path = str_replace('watch?v=', 'embed/', RequestMethods::post('path'));
-            
+
             $video = new App_Model_Video(array(
                 'title' => RequestMethods::post('title'),
                 'path' => $path,
@@ -47,14 +47,13 @@ class Admin_Controller_Video extends Controller
                 $id = $video->save();
 
                 Event::fire('admin.log', array('success', 'Video id: ' . $id));
-                $view->successMessage('Video'.self::SUCCESS_MESSAGE_1);
+                $view->successMessage('Video' . self::SUCCESS_MESSAGE_1);
                 self::redirect('/admin/video/');
             } else {
                 Event::fire('admin.log', array('fail'));
                 $view->set('errors', $video->getErrors())
                         ->set('submstoken', $this->revalidateMutliSubmissionProtectionToken())
                         ->set('video', $video);
-                
             }
         }
     }
@@ -66,7 +65,7 @@ class Admin_Controller_Video extends Controller
     {
         $view = $this->getActionView();
 
-        $video = App_Model_Video::first(array('id = ?' => (int)$id));
+        $video = App_Model_Video::first(array('id = ?' => (int) $id));
 
         if (NULL === $video) {
             $view->warningMessage(self::ERROR_MESSAGE_2);
@@ -76,12 +75,12 @@ class Admin_Controller_Video extends Controller
         $view->set('video', $video);
 
         if (RequestMethods::post('submitEditVideo')) {
-            if($this->checkCSRFToken() !== true){
+            if ($this->checkCSRFToken() !== true) {
                 self::redirect('/admin/video/');
             }
-            
+
             $path = str_replace('watch?v=', 'embed/', RequestMethods::post('path'));
-            
+
             $video->title = RequestMethods::post('title');
             $video->path = $path;
             $video->width = RequestMethods::post('width', 500);
@@ -98,7 +97,6 @@ class Admin_Controller_Video extends Controller
             } else {
                 Event::fire('admin.log', array('fail', 'Video id: ' . $id));
                 $view->set('errors', $video->getErrors());
-                
             }
         }
     }
@@ -111,24 +109,20 @@ class Admin_Controller_Video extends Controller
         $this->willRenderActionView = false;
         $this->willRenderLayoutView = false;
 
-        if ($this->checkCSRFToken()) {
-            $video = App_Model_Video::first(
-                            array('id = ?' => (int) $id), array('id')
-            );
+        $video = App_Model_Video::first(
+                        array('id = ?' => (int) $id), array('id')
+        );
 
-            if (NULL === $video) {
-                echo self::ERROR_MESSAGE_2;
-            } else {
-                if ($video->delete()) {
-                    Event::fire('admin.log', array('success', 'Video id: ' . $id));
-                    echo 'success';
-                } else {
-                    Event::fire('admin.log', array('fail', 'Video id: ' . $id));
-                    echo self::ERROR_MESSAGE_1;
-                }
-            }
+        if (NULL === $video) {
+            echo self::ERROR_MESSAGE_2;
         } else {
-            echo self::ERROR_MESSAGE_1;
+            if ($video->delete()) {
+                Event::fire('admin.log', array('success', 'Video id: ' . $id));
+                echo 'success';
+            } else {
+                Event::fire('admin.log', array('fail', 'Video id: ' . $id));
+                echo self::ERROR_MESSAGE_1;
+            }
         }
     }
 
@@ -141,10 +135,10 @@ class Admin_Controller_Video extends Controller
         $errors = array();
 
         if (RequestMethods::post('performVideoAction')) {
-            if($this->checkCSRFToken() !== true){
+            if ($this->checkCSRFToken() !== true) {
                 self::redirect('/admin/video/');
             }
-            
+
             $ids = RequestMethods::post('videoids');
             $action = RequestMethods::post('action');
 
